@@ -70,7 +70,19 @@
     .error-banner { display:none; align-items:center; gap:10px; padding:12px 14px; background:var(--danger-lt); color:var(--danger); border-radius:0 var(--r-md) var(--r-md) 0; font-size:14px; margin-bottom:20px; border-left:3px solid var(--danger); animation:fadeUp .25s ease; }
     .error-banner.show { display:flex; }
 
-    @media(max-width:860px){ body{grid-template-columns:1fr} .login-left{display:none} .login-right{padding:40px 24px;min-height:100vh} }
+    @media(max-width:860px){
+      body { grid-template-columns:1fr; }
+      .login-left { display:none; }
+      .login-right { padding:32px 20px; min-height:100vh; }
+      .login-form-wrap { max-width:100%; }
+      .form-top h1 { font-size:26px; }
+      .role-grid { grid-template-columns:repeat(3,1fr); gap:6px; }
+      .btn-submit { padding:12px; }
+    }
+    @media(max-width:400px){
+      .role-grid { grid-template-columns:1fr; }
+      .demo-row { flex-direction:column; }
+    }
   </style>
 </head>
 <body>
