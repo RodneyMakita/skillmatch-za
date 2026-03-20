@@ -44,6 +44,42 @@
     .notif-btn { width:34px; height:34px; border-radius:8px; border:1px solid rgba(14,17,23,.1); background:var(--white); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-soft); position:relative; transition:background .15s; }
     .notif-btn:hover { background:var(--paper-2); }
     .notif-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; border-radius:50%; background:var(--coral); border:1.5px solid var(--paper); }
+    .notif-panel { position:absolute; top:52px; right:0; width:320px; background:var(--white); border:1px solid rgba(14,17,23,.1); border-radius:14px; box-shadow:0 8px 32px rgba(14,17,23,.12); z-index:100; overflow:hidden; display:none; }
+    .notif-panel.open { display:block; animation:vIn .2s ease; }
+    .notif-panel-head { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(14,17,23,.07); }
+    .notif-panel-title { font-family:var(--font-display); font-size:14px; font-weight:700; }
+    .notif-mark-all { font-size:12px; color:var(--teal); background:none; border:none; cursor:pointer; font-family:var(--font-body); padding:0; }
+    .notif-mark-all:hover { text-decoration:underline; }
+    .notif-item { display:flex; gap:10px; padding:12px 16px; border-bottom:1px solid rgba(14,17,23,.05); cursor:pointer; transition:background .15s; }
+    .notif-item:last-child { border-bottom:none; }
+    .notif-item:hover { background:var(--paper); }
+    .notif-item.unread { background:var(--teal-lt); }
+    .notif-dot-item { width:8px; height:8px; border-radius:50%; background:var(--teal); flex-shrink:0; margin-top:5px; }
+    .notif-dot-item.read { background:transparent; }
+    .notif-item-content { flex:1; min-width:0; }
+    .notif-item-title { font-size:13px; font-weight:500; color:var(--ink); margin-bottom:2px; }
+    .notif-item-msg { font-size:12px; color:var(--ink-muted); line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .notif-item-time { font-size:11px; color:var(--ink-muted); margin-top:3px; }
+    .notif-empty { padding:32px 16px; text-align:center; color:var(--ink-muted); font-size:13px; }
+    .status-actions { display:inline-flex; gap:4px; flex-wrap:wrap; }
+    .sa-btn { font-size:11px; padding:4px 10px; border-radius:99px; border:1.5px solid; cursor:pointer; font-family:var(--font-body); font-weight:500; transition:all .15s; white-space:nowrap; }
+    .sa-btn:disabled { opacity:.45; cursor:not-allowed; }
+    .sa-review    { border-color:rgba(14,17,23,.2);   color:var(--ink-soft); background:var(--paper-2); }
+    .sa-shortlist { border-color:rgba(13,122,95,.3);  color:var(--teal);     background:var(--teal-lt); }
+    .sa-review:hover,.sa-shortlist:hover { background:var(--teal); color:var(--white); border-color:var(--teal); }
+    .sa-interview { border-color:rgba(124,58,237,.3); color:#7c3aed;         background:#f0eeff; }
+    .sa-interview:hover { background:#7c3aed; color:var(--white); }
+    .sa-approve   { border-color:rgba(13,122,95,.5);  color:var(--white);    background:var(--teal); }
+    .sa-approve:hover { background:#0a6750; }
+    .sa-reject    { border-color:rgba(217,95,59,.3);  color:var(--coral);    background:var(--coral-lt); }
+    .sa-reject:hover { background:var(--coral); color:var(--white); }
+    .pill-applied      { background:var(--paper-2);    color:var(--ink-muted); }
+    .pill-under_review { background:var(--gold-lt);    color:var(--warning); }
+    .pill-shortlisted  { background:var(--teal-lt);    color:var(--teal); }
+    .pill-interview    { background:#f0eeff;            color:#7c3aed; }
+    .pill-approved     { background:var(--success-lt); color:var(--success); }
+    .pill-rejected     { background:var(--coral-lt);   color:var(--coral); }
+    .pill-placed       { background:var(--success-lt); color:var(--success); font-weight:600; }
     .content { padding:30px 34px; }
 
     /* Views */
@@ -170,11 +206,9 @@
     .empty-state h3 { font-size:16px; color:var(--ink-soft); margin-bottom:6px; }
     .empty-state p  { font-size:13px; }
 
-    /* Mobile sidebar toggle */
     .mob-menu-btn { display:none; background:none; border:1px solid rgba(14,17,23,.12); border-radius:8px; width:34px; height:34px; cursor:pointer; align-items:center; justify-content:center; color:var(--ink-soft); flex-shrink:0; }
     .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(14,17,23,.5); z-index:29; }
     .sidebar-overlay.open { display:block; }
-
     @media(max-width:1024px){
       .shell { grid-template-columns:1fr; }
       .sidebar { display:none; position:fixed; top:0; left:0; height:100vh; width:240px; z-index:30; transform:translateX(-100%); transition:transform .25s ease; }
@@ -182,19 +216,15 @@
       .mob-menu-btn { display:flex; }
       .two-col { grid-template-columns:1fr; }
       .stats-4 { grid-template-columns:repeat(2,1fr); }
-      .topbar { padding:14px 16px; }
-      .sb-logo { font-size:15px; }
     }
     @media(max-width:600px){
       .content { padding:14px 12px; }
-      .topbar { padding:12px 14px; gap:8px; }
+      .topbar { padding:12px 14px; }
       .stats-4,.stats-3 { grid-template-columns:repeat(2,1fr); gap:8px; }
       .scard { padding:12px 14px; }
-      .scard-val { font-size:22px; }
-      .page-head h1 { font-size:20px; }
-      .mc-score { font-size:17px; }
-      .panel-body { padding:12px 14px; }
-      .notif-panel { right:8px; width:calc(100vw - 16px); }
+      .scard-val { font-size:20px; }
+      .page-head h1 { font-size:18px; }
+      .notif-panel { right:0; width:calc(100vw - 28px); }
     }
   </style>
 </head>
@@ -254,7 +284,19 @@
         <span class="topbar-title" id="topbarTitle">Dashboard</span>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
-        <div class="notif-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-dot"></span></div>
+        <div style="position:relative">
+          <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel(event)" title="Notifications">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot" id="notifDot" style="display:none"></span>
+          </button>
+          <div class="notif-panel" id="notifPanel">
+            <div class="notif-panel-head">
+              <span class="notif-panel-title">Notifications</span>
+              <button class="notif-mark-all" onclick="markAllRead()">Mark all read</button>
+            </div>
+            <div id="notifList"><div class="notif-empty">No notifications yet</div></div>
+          </div>
+        </div>
         <a href="browse.html" class="btn btn-primary btn-sm">Browse all</a>
       </div>
     </div>
@@ -536,6 +578,7 @@
   if (role === 'learner')  await bootLearner(name);
   if (role === 'employer') await bootEmployer();
   if (role === 'admin')    await bootAdmin();
+  loadNotifications();
 })();
 
 /* ── View switcher ── */
@@ -875,42 +918,68 @@ async function loadAllListings() {
   wrap.innerHTML = listings.map(o => oppRow(o, 0, true)).join('');
 }
 
+const STATUS_LABELS = {
+  applied:'Applied', under_review:'Under review', shortlisted:'Shortlisted',
+  interview:'Interview', approved:'Approved', rejected:'Unsuccessful', placed:'Placed',
+};
+function statusActions(appId, st) {
+  const b = (lbl, cls, next) => `<button class="sa-btn ${cls}" onclick="setAppStatus('${appId}','${next}',this)">${lbl}</button>`;
+  switch(st) {
+    case 'applied':      return [b('Review','sa-review','under_review'), b('Shortlist','sa-shortlist','shortlisted'), b('Unsuccessful','sa-reject','rejected')];
+    case 'under_review': return [b('Shortlist','sa-shortlist','shortlisted'), b('Unsuccessful','sa-reject','rejected')];
+    case 'shortlisted':  return [b('Interview','sa-interview','interview'), b('Approve','sa-approve','approved'), b('Unsuccessful','sa-reject','rejected')];
+    case 'interview':    return [b('Approve','sa-approve','approved'), b('Unsuccessful','sa-reject','rejected')];
+    case 'approved':     return [b('Place','sa-approve','placed'), b('Unsuccessful','sa-reject','rejected')];
+    case 'rejected':     return [b('Shortlist','sa-shortlist','shortlisted')];
+    case 'placed':       return [];
+    default:             return [b('Shortlist','sa-shortlist','shortlisted')];
+  }
+}
+let _applicantsCache = {};
 async function loadApplicants() {
   const tbody = document.getElementById('applicantsTbody');
   tbody.dataset.loaded = '1';
-  const res = await getApplicantsForEmployer();
+  tbody.innerHTML = `<tr><td colspan="6" style="padding:20px;text-align:center"><div class="skeleton" style="height:12px;width:60%;margin:auto"></div></td></tr>`;
+  const res  = await getApplicantsForEmployer();
   const apps = res.data || [];
   document.getElementById('applicantsTitle').textContent = `All applicants (${apps.length})`;
   if (!apps.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--ink-muted)">No applicants yet</td></tr>`; return; }
-
-  const statusPills = {
-    applied:      `<span class="status-pill sp-inactive">Applied</span>`,
-    under_review: `<span class="status-pill sp-searching">Under review</span>`,
-    shortlisted:  `<span class="status-pill sp-matched">Shortlisted</span>`,
-    placed:       `<span class="status-pill sp-placed">Placed</span>`,
-    rejected:     `<span class="status-pill sp-inactive">Not selected</span>`,
-  };
-
+  _applicantsCache = {};
+  apps.forEach(a => {
+    const u = a.learners?.users;
+    _applicantsCache[a.id] = { userId: a.learners?.user_id||'', email: u?.email||'', name: `${u?.first_name||''} ${u?.last_name||''}`.trim()||'Learner' };
+  });
   tbody.innerHTML = apps.map(a => {
-    const l = a.learners;
-    const u = l?.users;
-    const n = `${u?.first_name||''} ${u?.last_name||''}`.trim() || 'Learner';
-    const mc = (a.match_score||0) >= 80 ? 'var(--teal)' : (a.match_score||0) >= 65 ? 'var(--gold)' : 'var(--ink-muted)';
-    return `<tr>
-      <td class="td-name">${esc(n)}</td>
-      <td class="td-muted">${esc(a.opportunities?.title||'')}</td>
-      <td><strong style="color:${mc}">${a.match_score||'—'}%</strong></td>
-      <td class="td-muted">${esc(l?.qualification||'—')}</td>
-      <td>${statusPills[a.status]||''}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="shortlistApplicant('${a.id}',this)">Shortlist</button></td>
+    const l = a.learners, u = l?.users;
+    const n  = `${u?.first_name||''} ${u?.last_name||''}`.trim()||'Learner';
+    const mc = (a.match_score||0)>=80?'var(--teal)':(a.match_score||0)>=65?'var(--gold)':'var(--ink-muted)';
+    const st = a.status||'applied';
+    return `<tr id="app-row-${a.id}">
+      <td><div class="td-name">${esc(n)}</div><div style="font-size:11px;color:var(--ink-muted)">${esc(u?.province||'')}</div></td>
+      <td class="td-muted" style="font-size:12px">${esc(a.opportunities?.title||'')}</td>
+      <td><strong style="color:${mc};font-family:var(--font-display)">${a.match_score||'—'}%</strong></td>
+      <td class="td-muted" style="font-size:12px">${esc(l?.qualification||'—')}</td>
+      <td><span class="status-pill pill-${st}">${STATUS_LABELS[st]||st}</span></td>
+      <td><div class="status-actions">${statusActions(a.id,st).join('')}</div></td>
     </tr>`;
   }).join('');
 }
-
-async function shortlistApplicant(appId, btn) {
-  const res = await updateApplicationStatus(appId, 'shortlisted');
-  if (res.success) { btn.textContent = '✓ Shortlisted'; btn.disabled = true; showToast('✓ Applicant shortlisted'); }
-  else showToast('✗ Error — try again');
+async function setAppStatus(appId, newStatus, btn) {
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = '…';
+  const res = await updateApplicationStatus(appId, newStatus);
+  if (!res.success) { btn.disabled=false; btn.textContent=orig; showToast('✗ '+(res.error||'try again')); return; }
+  const row = document.getElementById(`app-row-${appId}`);
+  if (row) {
+    row.children[4].innerHTML = `<span class="status-pill pill-${newStatus}">${STATUS_LABELS[newStatus]||newStatus}</span>`;
+    row.children[5].innerHTML = `<div class="status-actions">${statusActions(appId,newStatus).join('')}</div>`;
+  }
+  const toasts = { under_review:'Moved to review', shortlisted:'Shortlisted', interview:'Interview scheduled', approved:'Approved', rejected:'Marked unsuccessful', placed:'Placement confirmed!' };
+  showToast('✓ '+(toasts[newStatus]||'Status updated'));
+  try {
+    const c = _applicantsCache[appId]||{};
+    const oppTitle = row?.children[1]?.textContent?.trim()||'';
+    if (c.userId) await notifyLearner({ userId:c.userId, learnerEmail:c.email, learnerName:c.name, oppTitle, employerName:localStorage.getItem('sm_name')||'Employer', newStatus });
+  } catch(e) { console.warn('Notify:',e.message); }
 }
 
 async function postOpportunity() {
@@ -1201,12 +1270,61 @@ function showToast(msg){
   setTimeout(() => t.classList.remove('show'), 2800);
 }
 
+/* ── Mobile sidebar ── */
 function toggleMobSidebar() {
-  const sb  = document.querySelector('.sidebar');
-  const ov  = document.getElementById('sidebarOverlay');
-  sb.classList.toggle('mob-open');
-  ov.classList.toggle('open');
+  document.querySelector('.sidebar').classList.toggle('mob-open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
 }
+
+/* ── Notification panel ── */
+let _notifOpen = false;
+async function loadNotifications() {
+  try {
+    const res = await getNotifications(30);
+    const notifs = res.data || [];
+    const unread = notifs.filter(n => !n.is_read).length;
+    const dot = document.getElementById('notifDot');
+    if (dot) dot.style.display = unread > 0 ? 'block' : 'none';
+    const list = document.getElementById('notifList');
+    if (!list) return;
+    if (!notifs.length) { list.innerHTML = '<div class="notif-empty">No notifications yet</div>'; return; }
+    list.innerHTML = notifs.map(n => `
+      <div class="notif-item ${n.is_read?'':'unread'}" onclick="openNotif('${n.id}','${n.link||''}')">
+        <div class="notif-dot-item ${n.is_read?'read':''}"></div>
+        <div class="notif-item-content">
+          <div class="notif-item-title">${esc(n.title)}</div>
+          <div class="notif-item-msg">${esc((n.message||'').replace(/<[^>]+>/g,' '))}</div>
+          <div class="notif-item-time">${timeAgo(n.created_at)}</div>
+        </div>
+      </div>`).join('');
+  } catch(e) { console.warn('loadNotifications:',e.message); }
+}
+function toggleNotifPanel(e) {
+  if (e) e.stopPropagation();
+  _notifOpen = !_notifOpen;
+  const panel = document.getElementById('notifPanel');
+  if (panel) panel.classList.toggle('open', _notifOpen);
+  if (_notifOpen) loadNotifications();
+}
+async function openNotif(notifId, link) {
+  await markNotificationsRead(notifId);
+  const panel = document.getElementById('notifPanel');
+  if (panel) panel.classList.remove('open');
+  _notifOpen = false;
+  loadNotifications();
+  if (link) { const h = (link.split('#')[1]||'').replace(/[^a-z0-9-]/gi,''); if (h) showView(h,null); }
+}
+async function markAllRead() { await markNotificationsRead(null); loadNotifications(); }
+document.addEventListener('click', e => {
+  if (!_notifOpen) return;
+  const panel = document.getElementById('notifPanel');
+  const btn   = document.getElementById('notifBtn');
+  if (panel && !panel.contains(e.target) && btn && !btn.contains(e.target)) {
+    panel.classList.remove('open'); _notifOpen = false;
+  }
+});
+setInterval(() => { if (localStorage.getItem('sm_auth')) loadNotifications(); }, 60000);
+
 </script>
 </body>
 </html>

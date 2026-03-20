@@ -51,8 +51,7 @@
     .nav-logo span { color: var(--teal); }
 
     .nav-links { display: flex; align-items: center; gap: 10px; }
-
-    .nav-hamburger { display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:4px; z-index:200; }
+    .nav-hamburger { display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:6px; z-index:200; }
     .nav-hamburger span { display:block; width:22px; height:2px; background:var(--ink); border-radius:2px; transition:all .25s; }
     .nav-hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
     .nav-hamburger.open span:nth-child(2) { opacity:0; }
@@ -525,41 +524,28 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 900px) {
-      nav { padding: 14px 20px; }
-      .nav-logo { font-size: 17px; }
-      .nav-hamburger { display: flex; }
-      .nav-links {
-        display: none; flex-direction: column; gap: 10px;
-        position: absolute; top: 100%; left: 0; right: 0;
-        background: var(--paper); padding: 16px 20px 20px;
-        border-bottom: 1px solid rgba(14,17,23,.1);
-        box-shadow: 0 8px 24px rgba(14,17,23,.08);
-      }
-      .nav-links.open { display: flex; }
-      .nav-links .btn { width: 100%; text-align: center; justify-content: center; }
+      nav { padding: 14px 20px; position:relative; flex-wrap:wrap; }
+      .nav-logo { font-size:17px; }
+      .nav-hamburger { display:flex; }
+      .nav-links { display:none; flex-direction:column; gap:10px; width:100%; padding:12px 0 4px; }
+      .nav-links.open { display:flex; }
+      .nav-links .btn { width:100%; text-align:center; }
       .hero { grid-template-columns: 1fr; min-height: auto; }
       .hero-left { padding: 80px 20px 40px; }
       .hero-right { display: none; }
-      .hero-left h1 { font-size: clamp(32px, 8vw, 52px); }
-      .hero-ctas { flex-direction: column; }
-      .hero-ctas .btn { width: 100%; text-align: center; }
-      .hero-proof { flex-wrap: wrap; gap: 16px; }
+      .hero-left h1 { font-size:clamp(28px,8vw,48px); }
+      .hero-ctas { flex-direction:column; }
+      .hero-ctas .btn { width:100%; text-align:center; }
       .section { padding: 50px 20px; }
-      .steps-grid { grid-template-columns: 1fr; gap: 16px; }
+      .steps-grid { grid-template-columns: 1fr; gap:14px; }
       .who-section { padding: 50px 20px; }
-      .who-grid { grid-template-columns: 1fr; gap: 16px; }
+      .who-grid { grid-template-columns: 1fr; gap:14px; }
       .stats-banner { grid-template-columns: 1fr 1fr; padding: 32px 20px; }
       .institutions { padding: 40px 20px; }
-      .inst-logos { gap: 16px; }
       .cta-section { padding: 50px 20px; }
-      .cta-section h2 { font-size: clamp(24px, 6vw, 36px); }
-      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; gap: 8px; }
+      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; gap:8px; }
     }
-    @media (max-width: 480px) {
-      .stats-banner { grid-template-columns: 1fr; }
-      .proof-divider { display: none; }
-      .hero-proof { gap: 10px; }
-    }
+    @media(max-width:480px){ .stats-banner{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
@@ -795,18 +781,13 @@
 
   <script>
     function toggleMobileNav() {
-      const btn   = document.getElementById('navHamburger');
-      const links = document.getElementById('navLinks');
-      btn.classList.toggle('open');
-      links.classList.toggle('open');
+      document.getElementById('navHamburger').classList.toggle('open');
+      document.getElementById('navLinks').classList.toggle('open');
     }
     document.addEventListener('click', e => {
-      const nav   = document.getElementById('mainNav');
-      const btn   = document.getElementById('navHamburger');
-      const links = document.getElementById('navLinks');
-      if (!nav.contains(e.target)) {
-        btn.classList.remove('open');
-        links.classList.remove('open');
+      if (!document.getElementById('mainNav').contains(e.target)) {
+        document.getElementById('navHamburger').classList.remove('open');
+        document.getElementById('navLinks').classList.remove('open');
       }
     });
   </script>

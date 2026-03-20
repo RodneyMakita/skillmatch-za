@@ -156,7 +156,7 @@ async function fetchFromRSS(skills, field, qual, province, city) {
       fetch(CLAUDE_PROXY_URL, {
         method:  'POST',
         headers: { ...headers, 'X-Action': 'jobs' },
-        body:    JSON.stringify({ keywords: kw, province, field })
+        body:    JSON.stringify({ keywords: kw, province, field, skills })
       })
       .then(r => r.ok ? r.json() : { data: [] })
       .catch(() => ({ data: [] }))
