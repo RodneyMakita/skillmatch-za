@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — SkillsMatch ZA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+
+    body {
+      min-height: 100vh;
+      background: var(--paper);
+    }
+
+    /* ── Top bar ── */
+    .top-bar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 48px;
+      background: var(--paper);
+      border-bottom: 1px solid rgba(14,17,23,.07);
+    }
+
+    .top-bar-logo {
+      font-family: var(--font-display);
+      font-size: 20px; font-weight: 800;
+      color: var(--ink); text-decoration: none;
+      letter-spacing: -.5px;
+    }
+
+    .top-bar-logo span { color: var(--teal); }
+
+    .top-bar-right {
+      font-size: 14px; color: var(--ink-soft);
+    }
+
+    .top-bar-right a {
+      color: var(--teal); font-weight: 500;
+      text-decoration: none;
+    }
+
+    .top-bar-right a:hover { text-decoration: underline; }
+
+    /* ── Page wrapper ── */
+    .page-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 52px 24px 80px;
+    }
+
+    /* ── Heading ── */
+    .page-heading {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeUp .5s ease both;
+    }
+
+    .page-heading h1 {
+      font-size: clamp(28px, 4vw, 40px);
+      letter-spacing: -1.5px;
+      margin-bottom: 10px;
+    }
+
+    .page-heading p {
+      font-size: 16px;
+      color: var(--ink-soft);
+      max-width: 480px;
+      margin-inline: auto;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Role switcher ── */
+    .role-switcher {
+      display: flex;
+      background: var(--paper-2);
+      border-radius: 12px;
+      padding: 5px;
+      gap: 5px;
+      margin-bottom: 36px;
+      max-width: 520px;
+      margin-inline: auto;
+    }
+
+    .role-tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 9px;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-soft);
+      cursor: pointer;
+      transition: background var(--ease), color var(--ease), box-shadow var(--ease);
+    }
+
+    .role-tab .tab-icon { font-size: 18px; }
+
+    .role-tab.active {
+      background: var(--white);
+      color: var(--ink);
+      box-shadow: 0 1px 6px rgba(14,17,23,.1);
+    }
+
+    /* ── Form card ── */
+    .form-card {
+      background: var(--white);
+      border: 1px solid rgba(14,17,23,.08);
+      border-radius: 20px;
+      padding: 44px 48px;
+      box-shadow: 0 4px 24px rgba(14,17,23,.06);
+      animation: fadeUp .45s .1s ease both;
+    }
+
+    /* ── Form sections ── */
+    .form-section {
+      margin-bottom: 36px;
+      padding-bottom: 36px;
+      border-bottom: 1px solid rgba(14,17,23,.06);
+    }
+
+    .form-section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .form-section-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+      color: var(--ink);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(14,17,23,.07);
+    }
+
+    /* ── Grid layouts ── */
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* ── Skill tag input ── */
+    .skill-input-area {
+      min-height: 52px;
+      border: 1.5px solid rgba(14,17,23,.15);
+      border-radius: var(--r-md);
+      padding: 8px 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      background: var(--white);
+      cursor: text;
+      transition: border-color var(--ease), box-shadow var(--ease);
+    }
+
+    .skill-input-area:focus-within {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(13,122,95,.12);
+    }
+
+    .skill-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--teal-lt);
+      color: var(--teal);
+      border-radius: 99px;
+      padding: 4px 10px 4px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .skill-tag-remove {
+      background: none; border: none;
+      cursor: pointer; color: var(--teal);
+      opacity: .6; font-size: 16px; line-height: 1;
+      padding: 0; display: flex; align-items: center;
+      transition: opacity var(--ease);
+    }
+
+    .skill-tag-remove:hover { opacity: 1; }
+
+    .skill-text-input {
+      border: none !important; outline: none !important;
+      box-shadow: none !important;
+      padding: 4px 6px !important;
+      min-width: 120px; flex: 1;
+      font-size: 14px; color: var(--ink);
+      background: transparent;
+    }
+
+    .skill-text-input::placeholder { color: var(--ink-muted); }
+
+    .skill-hint { font-size: 12px; color: var(--ink-muted); margin-top: 6px; }
+
+    .skill-suggestions {
+      display: flex; flex-wrap: wrap;
+      gap: 6px; margin-top: 10px;
+      align-items: center;
+    }
+
+    .skill-suggest-btn {
+      font-size: 12px; padding: 4px 12px;
+      border-radius: 99px;
+      border: 1px dashed rgba(14,17,23,.2);
+      background: transparent; color: var(--ink-soft);
+      cursor: pointer;
+      transition: background var(--ease), color var(--ease), border-color var(--ease);
+    }
+
+    .skill-suggest-btn:hover {
+      background: var(--teal-lt); color: var(--teal);
+      border-color: rgba(13,122,95,.3); border-style: solid;
+    }
+
+    /* ── Password strength ── */
+    .pw-strength-bar { display: flex; gap: 4px; margin-top: 8px; }
+
+    .pw-seg {
+      flex: 1; height: 3px;
+      border-radius: 99px;
+      background: var(--paper-2);
+      transition: background .3s;
+    }
+
+    .pw-seg.weak   { background: var(--coral); }
+    .pw-seg.fair   { background: var(--gold); }
+    .pw-seg.strong { background: var(--teal); }
+
+    .pw-strength-label {
+      font-size: 12px; color: var(--ink-muted); margin-top: 5px;
+    }
+
+    /* ── Password toggle ── */
+    .input-wrap { position: relative; }
+    .input-wrap input { padding-right: 44px; }
+
+    .pw-toggle {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--ink-muted); padding: 4px;
+      display: flex; align-items: center;
+      transition: color var(--ease);
+    }
+
+    .pw-toggle:hover { color: var(--ink); }
+
+    /* ── Terms checkbox ── */
+    .terms-row {
+      display: flex; align-items: flex-start;
+      gap: 12px; margin-top: 28px;
+    }
+
+    .terms-row input[type="checkbox"] {
+      width: 18px; height: 18px;
+      accent-color: var(--teal);
+      flex-shrink: 0; margin-top: 2px; cursor: pointer;
+    }
+
+    .terms-row label {
+      font-size: 14px; color: var(--ink-soft);
+      line-height: 1.5; cursor: pointer;
+    }
+
+    .terms-row a { color: var(--teal); text-decoration: none; font-weight: 500; }
+    .terms-row a:hover { text-decoration: underline; }
+
+    /* ── Submit ── */
+    .submit-row {
+      display: flex; flex-direction: column;
+      align-items: stretch; gap: 14px; margin-top: 32px;
+    }
+
+    .btn-register {
+      width: 100%; padding: 14px;
+      font-size: 16px; justify-content: center;
+      border-radius: var(--r-md);
+    }
+
+    .btn-register.loading { opacity: .7; pointer-events: none; }
+
+    /* ── Banners ── */
+    .form-banner {
+      display: none; align-items: center;
+      gap: 10px; padding: 13px 16px;
+      font-size: 14px; margin-bottom: 24px;
+      animation: fadeUp .25s ease;
+      border-radius: 0 var(--r-md) var(--r-md) 0;
+    }
+
+    .form-banner.show { display: flex; }
+
+    .form-banner.error {
+      background: var(--danger-lt); color: var(--danger);
+      border-left: 3px solid var(--danger);
+    }
+
+    .form-banner.success {
+      background: var(--success-lt); color: var(--success);
+      border-left: 3px solid var(--success);
+    }
+
+    .login-prompt {
+      text-align: center; font-size: 14px; color: var(--ink-muted);
+    }
+
+    .login-prompt a {
+      color: var(--teal); font-weight: 500; text-decoration: none;
+    }
+
+    .login-prompt a:hover { text-decoration: underline; }
+
+    /* ── Panels ── */
+    .role-panel { display: none; }
+    .role-panel.active { display: block; }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .top-bar { padding: 14px 20px; }
+      .page-wrap { padding: 36px 16px 60px; }
+      .form-card { padding: 28px 20px; }
+      .g2 { grid-template-columns: 1fr; }
+      .g3 { grid-template-columns: 1fr; }
+      .role-switcher { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <a href="index.html" class="top-bar-logo">Skills<span>Match</span> ZA</a>
+    <span class="top-bar-right">Already have an account? <a href="login.html">Log in</a></span>
+  </div>
+
+  <div class="page-wrap">
+
+    <div class="page-heading">
+      <h1>Create your account</h1>
+      <p>Join thousands of learners and employers already on SkillsMatch ZA</p>
+    </div>
+
+    <!-- Role switcher -->
+    <div class="role-switcher">
+      <button class="role-tab active" data-role="learner" onclick="switchRole('learner')">
+        <span class="tab-icon">&#127891;</span> Learner / Graduate
+      </button>
+      <button class="role-tab" data-role="employer" onclick="switchRole('employer')">
+        <span class="tab-icon">&#127970;</span> Employer
+      </button>
+    </div>
+
+    <!-- Banners -->
+    <div class="form-banner error" id="errorBanner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="errorText">Please fill in all required fields.</span>
+    </div>
+
+    <div class="form-banner success" id="successBanner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>Account created! Redirecting you to your dashboard…</span>
+    </div>
+
+    <!-- ════════════════════════
+         LEARNER FORM
+    ════════════════════════ -->
+    <div class="form-card role-panel active" id="panel-learner">
+
+      <!-- Personal info -->
+      <div class="form-section">
+        <div class="form-section-title">Personal information</div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label required" for="l-firstname">First name</label>
+            <input type="text" id="l-firstname" placeholder="Thabo" autocomplete="given-name"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label required" for="l-lastname">Last name</label>
+            <input type="text" id="l-lastname" placeholder="Mokoena" autocomplete="family-name"/>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label required" for="l-email">Email address</label>
+            <input type="email" id="l-email" placeholder="you@example.com" autocomplete="email"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="l-phone">Phone number</label>
+            <input type="tel" id="l-phone" placeholder="0712 345 678"/>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label required" for="l-province">Province</label>
+            <select id="l-province">
+              <option value="">Select province</option>
+              <option>Gauteng</option>
+              <option>Western Cape</option>
+              <option>KwaZulu-Natal</option>
+              <option>Eastern Cape</option>
+              <option>Limpopo</option>
+              <option>Mpumalanga</option>
+              <option>North West</option>
+              <option>Free State</option>
+              <option>Northern Cape</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="l-city">City / Town</label>
+            <input type="text" id="l-city" placeholder="Mahikeng"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Education -->
+      <div class="form-section">
+        <div class="form-section-title">Education &amp; qualification</div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label required" for="l-inst-type">Institution type</label>
+            <select id="l-inst-type">
+              <option value="">Select type</option>
+              <option value="tvet">TVET College</option>
+              <option value="university">University</option>
+              <option value="seta">SETA Programme</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label required" for="l-institution">Institution name</label>
+            <input type="text" id="l-institution" placeholder="e.g. Orbit TVET College"/>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label required" for="l-qualification">Qualification / Programme</label>
+            <input type="text" id="l-qualification" placeholder="e.g. N6 Information Technology"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label required" for="l-status">Study status</label>
+            <select id="l-status">
+              <option value="">Select status</option>
+              <option>Completed</option>
+              <option>Currently studying</option>
+              <option>WIL / Internship phase</option>
+            </select>
+          </div>
+        </div>
+        <div class="g3">
+          <div class="form-group">
+            <label class="form-label" for="l-year">Year completed</label>
+            <select id="l-year">
+              <option value="">Year</option>
+              <option>2025</option><option>2024</option><option>2023</option>
+              <option>2022</option><option>2021</option><option>2020</option>
+              <option>2019</option><option>2018</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="l-nqf">NQF level</label>
+            <select id="l-nqf">
+              <option value="">NQF level</option>
+              <option>Level 3</option><option>Level 4</option><option>Level 5</option>
+              <option>Level 6</option><option>Level 7</option><option>Level 8</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="l-sector">Sector / Field</label>
+            <select id="l-sector">
+              <option value="">Select sector</option>
+              <option>ICT</option>
+              <option>Engineering</option>
+              <option>Business &amp; Commerce</option>
+              <option>Finance &amp; Accounting</option>
+              <option>Health Sciences</option>
+              <option>Agriculture</option>
+              <option>Hospitality</option>
+              <option>Education</option>
+              <option>Construction</option>
+              <option>Creative Arts</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="form-section">
+        <div class="form-section-title">Skills profile</div>
+        <div class="form-group">
+          <label class="form-label">
+            Your skills
+            <span style="font-weight:400;color:var(--ink-muted);font-size:13px"> — type and press Enter or comma</span>
+          </label>
+          <div class="skill-input-area" id="skillArea" onclick="document.getElementById('skillInput').focus()">
+            <input type="text" id="skillInput" class="skill-text-input" placeholder="e.g. Python, HTML, Networking…"/>
+          </div>
+          <div class="skill-hint">Add at least 3 skills to boost your AI match score</div>
+        </div>
+        <div class="skill-suggestions">
+          <span style="font-size:12px;color:var(--ink-muted);margin-right:4px;">Suggested:</span>
+          <button class="skill-suggest-btn" onclick="addSkill('Python')">Python</button>
+          <button class="skill-suggest-btn" onclick="addSkill('HTML/CSS')">HTML/CSS</button>
+          <button class="skill-suggest-btn" onclick="addSkill('JavaScript')">JavaScript</button>
+          <button class="skill-suggest-btn" onclick="addSkill('MS Office')">MS Office</button>
+          <button class="skill-suggest-btn" onclick="addSkill('Networking')">Networking</button>
+          <button class="skill-suggest-btn" onclick="addSkill('SQL')">SQL</button>
+          <button class="skill-suggest-btn" onclick="addSkill('Customer service')">Customer service</button>
+          <button class="skill-suggest-btn" onclick="addSkill('Project management')">Project management</button>
+          <button class="skill-suggest-btn" onclick="addSkill('Communication')">Communication</button>
+        </div>
+      </div>
+
+      <!-- Preferences -->
+      <div class="form-section">
+        <div class="form-section-title">What are you looking for?</div>
+        <div class="g3">
+          <label class="check-label"><input type="checkbox" value="job" checked> Full-time job</label>
+          <label class="check-label"><input type="checkbox" value="learnership" checked> Learnership</label>
+          <label class="check-label"><input type="checkbox" value="internship"> Internship</label>
+          <label class="check-label"><input type="checkbox" value="project"> Project / freelance</label>
+          <label class="check-label"><input type="checkbox" value="funding"> Entrepreneurship funding</label>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-section">
+        <div class="form-section-title">Account security</div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label required" for="l-password">Password</label>
+            <div class="input-wrap">
+              <input type="password" id="l-password" placeholder="Create a password" oninput="checkStrength(this.value)"/>
+              <button type="button" class="pw-toggle" onclick="togglePw('l-password', this)" aria-label="Show password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="pw-strength-bar">
+              <div class="pw-seg" id="seg1"></div>
+              <div class="pw-seg" id="seg2"></div>
+              <div class="pw-seg" id="seg3"></div>
+              <div class="pw-seg" id="seg4"></div>
+            </div>
+            <div class="pw-strength-label" id="pwLabel">Use 8+ characters with letters and numbers</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label required" for="l-confirm">Confirm password</label>
+            <div class="input-wrap">
+              <input type="password" id="l-confirm" placeholder="Repeat your password"/>
+              <button type="button" class="pw-toggle" onclick="togglePw('l-confirm', this)" aria-label="Show password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terms + Submit -->
+      <div class="terms-row">
+        <input type="checkbox" id="l-terms"/>
+        <label for="l-terms">
+          I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+          I understand my data will be used to match me with opportunities in accordance with POPIA.
+        </label>
+      </div>
+
+      <div class="submit-row">
+        <button class="btn btn-primary btn-register" id="learnerSubmitBtn" onclick="submitLearner()">
+          Create learner account
+        </button>
+        <div class="login-prompt">Already have an account? <a href="login.html">Log in instead</a></div>
+      </div>
+
+    </div><!-- /panel-learner -->
+
+
+    <!-- ════════════════════════
+         EMPLOYER FORM
+    ════════════════════════ -->
+    <div class="form-card role-panel" id="panel-employer">
+
+      <!-- Company info -->
+      <div class="form-section">
+        <div class="form-section-title">Company information</div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label required" for="e-company">Company name</label>
+            <input type="text" id="e-company" placeholder="e.g. Telkom SA"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label required" for="e-sector">Industry / Sector</label>
+            <select id="e-sector">
+              <option value="">Select sector</option>
+              <option>ICT &amp; Technology</option>
+              <option>Engineering &amp; Manufacturing</option>
+              <option>Finance &amp; Banking</option>
+              <option>Retail &amp; Commerce</option>
+              <option>Health &amp; Pharmaceuticals</option>
+              <option>Agriculture</option>
+              <option>Education &amp; Training</option>
+              <option>Government / Public Sector</option>
+              <option>Construction &amp; Infrastructure</option>
+              <option>Media &amp; Creative</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label" for="e-reg">Company registration number</label>
+            <input type="text" id="e-reg" placeholder="e.g. 2003/034788/06"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="e-size">Company size</label>
+            <select id="e-size">
+              <option value="">Select size</option>
+              <option>1–10 employees</option>
+              <option>11–50 employees</option>
+              <option>51–200 employees</option>
+              <option>201–1000 employees</option>
+              <option>1000+ employees</option>
+            </select>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label required" for="e-province">Province (HQ)</label>
+            <select id="e-province">
+              <option value="">Select province</option>
+              <option>Gauteng</option>
+              <option>Western Cape</option>
+              <option>KwaZulu-Natal</option>
+              <option>Eastern Cape</option>
+              <option>Limpopo</option>
+              <option>Mpumalanga</option>
+              <option>North West</option>
+              <option>Free State</option>
+              <option>Northern Cape</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="e-website">Website (optional)</label>
+            <input type="text" id="e-website" placeholder="https://yourcompany.co.za"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact person -->
+      <div class="form-section">
+        <div class="form-section-title">Contact person</div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label required" for="e-firstname">First name</label>
+            <input type="text" id="e-firstname" placeholder="Nomsa" autocomplete="given-name"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label required" for="e-lastname">Last name</label>
+            <input type="text" id="e-lastname" placeholder="Dlamini" autocomplete="family-name"/>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label required" for="e-email">Work email</label>
+            <input type="email" id="e-email" placeholder="nomsa@company.co.za" autocomplete="email"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="e-jobtitle">Job title</label>
+            <input type="text" id="e-jobtitle" placeholder="e.g. HR Manager"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Opportunities offered -->
+      <div class="form-section">
+        <div class="form-section-title">Opportunities you offer</div>
+        <div class="g3">
+          <label class="check-label"><input type="checkbox" value="job" checked> Full-time jobs</label>
+          <label class="check-label"><input type="checkbox" value="learnership"> Learnerships</label>
+          <label class="check-label"><input type="checkbox" value="internship"> Internships</label>
+          <label class="check-label"><input type="checkbox" value="apprenticeship"> Apprenticeships</label>
+          <label class="check-label"><input type="checkbox" value="bursary"> Bursaries</label>
+        </div>
+        <div class="form-group" style="margin-top:20px;margin-bottom:0">
+          <label class="form-label" for="e-about">Brief company description</label>
+          <textarea id="e-about" rows="3" placeholder="Tell learners what your company does and why they should join you…"></textarea>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-section">
+        <div class="form-section-title">Account security</div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label required" for="e-password">Password</label>
+            <div class="input-wrap">
+              <input type="password" id="e-password" placeholder="Create a password"/>
+              <button type="button" class="pw-toggle" onclick="togglePw('e-password', this)" aria-label="Show password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label required" for="e-confirm">Confirm password</label>
+            <div class="input-wrap">
+              <input type="password" id="e-confirm" placeholder="Repeat your password"/>
+              <button type="button" class="pw-toggle" onclick="togglePw('e-confirm', this)" aria-label="Show password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terms + Submit -->
+      <div class="terms-row">
+        <input type="checkbox" id="e-terms"/>
+        <label for="e-terms">
+          I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+          I confirm this company is registered in South Africa and will comply with POPIA when handling learner data.
+        </label>
+      </div>
+
+      <div class="submit-row">
+        <button class="btn btn-primary btn-register" id="employerSubmitBtn" onclick="submitEmployer()">
+          Create employer account
+        </button>
+        <div class="login-prompt">Already have an account? <a href="login.html">Log in instead</a></div>
+      </div>
+
+    </div><!-- /panel-employer -->
+
+  </div><!-- /page-wrap -->
+
+  <script>
+    /* ── Role switcher ── */
+    function switchRole(role) {
+      document.querySelectorAll('.role-tab').forEach(t =>
+        t.classList.toggle('active', t.dataset.role === role));
+      document.querySelectorAll('.role-panel').forEach(p =>
+        p.classList.toggle('active', p.id === `panel-${role}`));
+      hideError();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* Pre-select role from URL param (?role=employer) */
+    const urlRole = new URLSearchParams(window.location.search).get('role');
+    if (urlRole === 'employer') switchRole('employer');
+
+    /* ── Password show/hide ── */
+    const eyeOpen = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+    const eyeOff  = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+
+    function togglePw(id, btn) {
+      const inp = document.getElementById(id);
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      btn.querySelector('svg').innerHTML = show ? eyeOff : eyeOpen;
+    }
+
+    /* ── Password strength ── */
+    function checkStrength(val) {
+      const segs = ['seg1','seg2','seg3','seg4'].map(id => document.getElementById(id));
+      const lbl  = document.getElementById('pwLabel');
+      segs.forEach(s => { s.className = 'pw-seg'; });
+
+      let score = 0;
+      if (val.length >= 8)          score++;
+      if (/[A-Z]/.test(val))        score++;
+      if (/[0-9]/.test(val))        score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+
+      const cls = ['', 'weak', 'fair', 'strong', 'strong'];
+      const lbs = [
+        'Use 8+ characters with letters and numbers',
+        'Weak — add more variety',
+        'Fair — add a number or symbol',
+        'Strong password',
+        'Very strong password'
+      ];
+
+      for (let i = 0; i < score; i++) segs[i].classList.add(cls[score]);
+      lbl.textContent = val.length ? lbs[score] : lbs[0];
+    }
+
+    /* ── Skill tag input ── */
+    const skills = new Set();
+
+    function addSkill(name) {
+      const clean = name.trim();
+      if (!clean || skills.has(clean.toLowerCase())) return;
+      skills.add(clean.toLowerCase());
+
+      const tag = document.createElement('div');
+      tag.className = 'skill-tag';
+      tag.dataset.key = clean.toLowerCase();
+      tag.innerHTML = `${clean}<button class="skill-tag-remove" type="button" onclick="removeSkill(this,'${clean.toLowerCase()}')">&times;</button>`;
+
+      const inp = document.getElementById('skillInput');
+      document.getElementById('skillArea').insertBefore(tag, inp);
+      inp.value = '';
+      inp.focus();
+    }
+
+    function removeSkill(btn, key) {
+      skills.delete(key);
+      btn.parentElement.remove();
+    }
+
+    document.getElementById('skillInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        addSkill(e.target.value.replace(',', ''));
+      }
+    });
+
+    /* ── Banners ── */
+    function showError(msg) {
+      document.getElementById('errorText').textContent = msg;
+      document.getElementById('errorBanner').classList.add('show');
+      document.getElementById('successBanner').classList.remove('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showSuccess() {
+      document.getElementById('errorBanner').classList.remove('show');
+      document.getElementById('successBanner').classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function hideError() {
+      document.getElementById('errorBanner').classList.remove('show');
+    }
+
+    function isValidEmail(v) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    }
+
+    /* ── Learner submit ── */
+    function submitLearner() {
+      const v = {
+        firstName:   document.getElementById('l-firstname').value.trim(),
+        lastName:    document.getElementById('l-lastname').value.trim(),
+        email:       document.getElementById('l-email').value.trim(),
+        province:    document.getElementById('l-province').value,
+        instType:    document.getElementById('l-inst-type').value,
+        institution: document.getElementById('l-institution').value.trim(),
+        qual:        document.getElementById('l-qualification').value.trim(),
+        status:      document.getElementById('l-status').value,
+        password:    document.getElementById('l-password').value,
+        confirm:     document.getElementById('l-confirm').value,
+        terms:       document.getElementById('l-terms').checked,
+      };
+
+      if (!v.firstName || !v.lastName)        return showError('Please enter your full name.');
+      if (!v.email || !isValidEmail(v.email)) return showError('Please enter a valid email address.');
+      if (!v.province)                        return showError('Please select your province.');
+      if (!v.instType)                        return showError('Please select your institution type.');
+      if (!v.institution)                     return showError('Please enter your institution name.');
+      if (!v.qual)                            return showError('Please enter your qualification.');
+      if (!v.status)                          return showError('Please select your study status.');
+      if (skills.size < 1)                    return showError('Please add at least one skill to your profile.');
+      if (v.password.length < 6)              return showError('Password must be at least 6 characters.');
+      if (v.password !== v.confirm)           return showError('Passwords do not match. Please try again.');
+      if (!v.terms)                           return showError('Please accept the Terms of Service to continue.');
+
+      const btn = document.getElementById('learnerSubmitBtn');
+      btn.textContent = 'Creating account…';
+      btn.classList.add('loading');
+
+      /* Save to localStorage — swap for real API call when backend is ready */
+      localStorage.setItem('sm_role',   'learner');
+      localStorage.setItem('sm_email',  v.email);
+      localStorage.setItem('sm_name',   `${v.firstName} ${v.lastName}`);
+      localStorage.setItem('sm_skills', JSON.stringify([...skills]));
+      localStorage.setItem('sm_auth',   'true');
+
+      setTimeout(() => {
+        showSuccess();
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1400);
+      }, 1000);
+    }
+
+    /* ── Employer submit ── */
+    function submitEmployer() {
+      const v = {
+        company:   document.getElementById('e-company').value.trim(),
+        sector:    document.getElementById('e-sector').value,
+        province:  document.getElementById('e-province').value,
+        firstName: document.getElementById('e-firstname').value.trim(),
+        lastName:  document.getElementById('e-lastname').value.trim(),
+        email:     document.getElementById('e-email').value.trim(),
+        password:  document.getElementById('e-password').value,
+        confirm:   document.getElementById('e-confirm').value,
+        terms:     document.getElementById('e-terms').checked,
+      };
+
+      if (!v.company)                        return showError('Please enter your company name.');
+      if (!v.sector)                         return showError('Please select your industry sector.');
+      if (!v.province)                       return showError('Please select your province.');
+      if (!v.firstName || !v.lastName)       return showError('Please enter the contact person\'s full name.');
+      if (!v.email || !isValidEmail(v.email)) return showError('Please enter a valid work email address.');
+      if (v.password.length < 6)            return showError('Password must be at least 6 characters.');
+      if (v.password !== v.confirm)          return showError('Passwords do not match.');
+      if (!v.terms)                          return showError('Please accept the Terms of Service to continue.');
+
+      const btn = document.getElementById('employerSubmitBtn');
+      btn.textContent = 'Creating account…';
+      btn.classList.add('loading');
+
+      localStorage.setItem('sm_role',    'employer');
+      localStorage.setItem('sm_email',   v.email);
+      localStorage.setItem('sm_name',    `${v.firstName} ${v.lastName}`);
+      localStorage.setItem('sm_company', v.company);
+      localStorage.setItem('sm_auth',    'true');
+
+      setTimeout(() => {
+        showSuccess();
+        setTimeout(() => { window.location.href = 'browse.html'; }, 1400);
+      }, 1000);
+    }
+  </script>
+
+</body>
+</html>

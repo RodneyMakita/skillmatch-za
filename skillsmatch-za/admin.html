@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — SkillsMatch ZA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { margin:0; background:var(--paper); min-height:100vh; }
+
+    /* Shell */
+    .shell { display:grid; grid-template-columns:220px 1fr; min-height:100vh; }
+
+    /* Sidebar */
+    .sidebar { background:var(--ink); display:flex; flex-direction:column; padding:26px 14px 22px; position:sticky; top:0; height:100vh; overflow-y:auto; }
+    .sb-logo { font-family:var(--font-display); font-weight:800; font-size:17px; color:var(--white); text-decoration:none; letter-spacing:-.4px; padding:0 8px; margin-bottom:4px; display:block; }
+    .sb-logo span { color:var(--teal-glow); }
+    .sb-badge { font-size:10px; text-transform:uppercase; letter-spacing:.1em; padding:3px 10px; border-radius:99px; background:rgba(217,95,59,.2); color:#f0826a; margin:0 8px 22px; width:fit-content; }
+    .sb-sect { font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:rgba(255,255,255,.22); padding:0 8px; margin:14px 0 5px; }
+    .sb-link { display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; font-size:13px; color:rgba(255,255,255,.45); text-decoration:none; cursor:pointer; transition:background .15s,color .15s; margin-bottom:1px; border:none; background:transparent; width:100%; text-align:left; font-family:var(--font-body); }
+    .sb-link svg { flex-shrink:0; opacity:.55; }
+    .sb-link:hover { background:rgba(255,255,255,.07); color:rgba(255,255,255,.8); }
+    .sb-link.active { background:rgba(217,95,59,.22); color:#f0826a; font-weight:500; }
+    .sb-link.active svg { opacity:1; }
+    .sb-spacer { flex:1; }
+    .sb-user { display:flex; align-items:center; gap:9px; padding:10px 8px; border-top:1px solid rgba(255,255,255,.07); margin-top:10px; }
+    .sb-av { width:32px; height:32px; border-radius:50%; background:rgba(217,95,59,.25); color:#f0826a; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:var(--font-display); flex-shrink:0; }
+    .sb-uname { font-size:12px; font-weight:500; color:rgba(255,255,255,.75); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sb-uemail { font-size:11px; color:rgba(255,255,255,.25); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sb-logout { background:none; border:none; cursor:pointer; color:rgba(255,255,255,.22); padding:4px; transition:color .15s; }
+    .sb-logout:hover { color:rgba(255,255,255,.6); }
+
+    /* Main */
+    .main { background:var(--paper); overflow-y:auto; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; padding:18px 34px; background:var(--paper); border-bottom:1px solid rgba(14,17,23,.07); position:sticky; top:0; z-index:10; }
+    .topbar-title { font-family:var(--font-display); font-size:16px; font-weight:700; letter-spacing:-.4px; }
+    .topbar-right { display:flex; align-items:center; gap:10px; }
+    .content { padding:28px 34px; }
+
+    /* Views */
+    .view { display:none; animation:vIn .3s ease; }
+    .view.active { display:block; }
+    @keyframes vIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Page head */
+    .ph { margin-bottom:24px; }
+    .ph h1 { font-size:clamp(20px,2.4vw,28px); letter-spacing:-1px; margin-bottom:3px; }
+    .ph p  { font-size:14px; color:var(--ink-soft); }
+
+    /* Stats */
+    .stats { display:grid; gap:12px; margin-bottom:24px; }
+    .s4 { grid-template-columns:repeat(4,1fr); }
+    .s3 { grid-template-columns:repeat(3,1fr); }
+    .s2 { grid-template-columns:repeat(2,1fr); }
+
+    .sc { background:var(--white); border:1px solid rgba(14,17,23,.08); border-radius:12px; padding:16px 18px; }
+    .sc-lbl { font-size:11px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:7px; }
+    .sc-val { font-family:var(--font-display); font-size:26px; font-weight:800; letter-spacing:-1.5px; color:var(--ink); line-height:1; }
+    .sc-sub { font-size:12px; color:var(--ink-muted); margin-top:4px; }
+    .sc-up  { font-size:12px; font-weight:500; color:var(--teal); margin-top:4px; }
+    .sc-dn  { font-size:12px; font-weight:500; color:var(--coral); margin-top:4px; }
+
+    /* Two-col */
+    .two { display:grid; grid-template-columns:1fr 300px; gap:18px; align-items:start; }
+
+    /* Panel */
+    .panel { background:var(--white); border:1px solid rgba(14,17,23,.08); border-radius:14px; overflow:hidden; }
+    .ph2 { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid rgba(14,17,23,.06); }
+    .ph2-title { font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:-.3px; }
+    .ph2-act { font-size:12px; color:var(--coral); font-weight:500; cursor:pointer; background:none; border:none; font-family:var(--font-body); }
+    .ph2-act:hover { text-decoration:underline; }
+    .pb { padding:16px 20px; }
+
+    /* Table */
+    .tbl { width:100%; border-collapse:collapse; font-size:13px; }
+    .tbl th { text-align:left; padding:10px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); font-weight:500; background:var(--paper); border-bottom:1px solid rgba(14,17,23,.07); }
+    .tbl td { padding:11px 16px; border-bottom:1px solid rgba(14,17,23,.05); vertical-align:middle; }
+    .tbl tr:last-child td { border-bottom:none; }
+    .tbl tr:hover td { background:var(--paper); cursor:pointer; }
+    .td-name  { font-weight:500; }
+    .td-muted { color:var(--ink-muted); }
+
+    /* Status pills */
+    .spl { font-size:11px; padding:3px 9px; border-radius:99px; font-weight:500; white-space:nowrap; }
+    .sp-placed    { background:var(--success-lt); color:var(--success); }
+    .sp-matched   { background:var(--teal-lt);    color:var(--teal); }
+    .sp-searching { background:var(--gold-lt);    color:var(--warning); }
+    .sp-inactive  { background:var(--paper-2);    color:var(--ink-muted); }
+
+    /* Bar chart */
+    .bar-chart { display:flex; align-items:flex-end; gap:8px; height:120px; padding:0 2px; }
+    .bc { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; }
+    .bc-body { width:100%; border-radius:5px 5px 0 0; background:var(--teal-lt); border:1px solid rgba(13,122,95,.2); min-height:4px; transition:background .2s; cursor:pointer; }
+    .bc-body:hover { background:var(--teal); }
+    .bc-label { font-size:10px; color:var(--ink-muted); }
+    .bc-val   { font-size:11px; font-weight:600; color:var(--ink-soft); }
+
+    /* Province bars */
+    .pb-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid rgba(14,17,23,.05); }
+    .pb-row:last-child { border-bottom:none; }
+    .pb-name { font-size:13px; font-weight:500; min-width:120px; }
+    .pb-track { flex:1; height:6px; background:var(--paper-2); border-radius:99px; overflow:hidden; }
+    .pb-fill  { height:100%; background:var(--teal); border-radius:99px; transition:width 1s cubic-bezier(.4,0,.2,1); }
+    .pb-num   { font-size:12px; color:var(--ink-muted); min-width:30px; text-align:right; }
+    .pb-rate  { font-size:12px; font-weight:600; color:var(--teal); min-width:36px; text-align:right; }
+
+    /* Status breakdown */
+    .sb-row { display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(14,17,23,.05); }
+    .sb-row:last-child { border-bottom:none; }
+    .sb-bar-track { width:90px; height:5px; background:var(--paper-2); border-radius:99px; overflow:hidden; margin-right:8px; display:inline-block; vertical-align:middle; }
+    .sb-bar-fill  { height:100%; border-radius:99px; }
+
+    /* KPI accent card */
+    .kpi-card { background:var(--teal-lt); border:1px solid rgba(13,122,95,.2); border-radius:12px; padding:16px 18px; }
+    .kpi-label { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--teal); font-weight:600; margin-bottom:5px; }
+    .kpi-val { font-family:var(--font-display); font-size:32px; font-weight:800; color:var(--teal); letter-spacing:-1.5px; line-height:1; }
+    .kpi-sub { font-size:13px; color:var(--ink-soft); margin-top:4px; }
+
+    /* Alert strip */
+    .alert-strip { background:var(--coral-lt); border:1px solid rgba(217,95,59,.2); border-radius:10px; padding:12px 16px; font-size:13px; color:var(--coral); display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+
+    /* Search bar */
+    .tbl-search { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid rgba(14,17,23,.06); }
+    .tbl-search input { flex:1; padding:8px 12px; font-size:13px; border:1px solid rgba(14,17,23,.12); border-radius:8px; outline:none; background:var(--paper); font-family:var(--font-body); color:var(--ink); }
+    .tbl-search input:focus { border-color:var(--teal); }
+    .tbl-search select { padding:8px 12px; font-size:13px; border:1px solid rgba(14,17,23,.12); border-radius:8px; background:var(--white); color:var(--ink); outline:none; cursor:pointer; font-family:var(--font-body); }
+
+    /* Learner detail modal */
+    .overlay { display:none; position:fixed; inset:0; background:rgba(14,17,23,.55); z-index:200; align-items:center; justify-content:center; padding:20px; }
+    .overlay.open { display:flex; }
+    .modal { background:var(--white); border-radius:18px; max-width:500px; width:100%; max-height:88vh; overflow-y:auto; animation:mIn .25s ease; }
+    @keyframes mIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
+    .mh { display:flex; align-items:flex-start; justify-content:space-between; padding:22px 22px 0; }
+    .mc { background:var(--paper-2); border:none; cursor:pointer; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); transition:background .15s; }
+    .mc:hover { background:var(--paper-3); }
+    .mb { padding:14px 22px 22px; }
+    .m-title { font-family:var(--font-display); font-size:20px; font-weight:800; letter-spacing:-.5px; }
+    .m-sub   { font-size:14px; color:var(--ink-soft); margin-top:2px; }
+    .m-sect  { margin-top:16px; }
+    .m-sect-label { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-muted); margin-bottom:8px; }
+    .m-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .m-field { background:var(--paper); border-radius:8px; padding:10px 12px; }
+    .m-field-label { font-size:11px; color:var(--ink-muted); margin-bottom:3px; }
+    .m-field-val { font-size:14px; font-weight:500; }
+    .mf { padding:14px 22px; border-top:1px solid rgba(14,17,23,.07); display:flex; gap:10px; }
+
+    /* Responsive */
+    @media(max-width:1024px){ .shell{grid-template-columns:1fr} .sidebar{display:none} .two{grid-template-columns:1fr} .s4{grid-template-columns:repeat(2,1fr)} }
+    @media(max-width:600px)  { .content{padding:16px} .topbar{padding:14px 16px} .s4,.s3{grid-template-columns:repeat(2,1fr)} }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <a href="index.html" class="sb-logo">Skills<span>Match</span> ZA</a>
+    <div class="sb-badge">SETA Admin</div>
+
+    <div class="sb-sect">Reports</div>
+    <button class="sb-link active" onclick="show('overview',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </button>
+    <button class="sb-link" onclick="show('learners',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Learner registry
+    </button>
+    <button class="sb-link" onclick="show('placements',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Placement report
+    </button>
+    <button class="sb-link" onclick="show('province',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      By province
+    </button>
+    <button class="sb-link" onclick="show('employers',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      Employers
+    </button>
+
+    <div class="sb-sect" style="margin-top:10px">Settings</div>
+    <button class="sb-link" onclick="show('settings',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Platform settings
+    </button>
+
+    <div class="sb-spacer"></div>
+
+    <div class="sb-user">
+      <div class="sb-av" id="sbAv">ND</div>
+      <div style="flex:1;min-width:0">
+        <div class="sb-uname" id="sbName">Naledi Dlamini</div>
+        <div class="sb-uemail" id="sbEmail">n.dlamini@mictseta.org.za</div>
+      </div>
+      <button class="sb-logout" onclick="logout()" title="Log out">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <span class="topbar-title" id="topTitle">Platform overview</span>
+      <div class="topbar-right">
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export CSV</button>
+        <a href="dashboard.html" class="btn btn-primary btn-sm">Dashboard</a>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══ OVERVIEW ══ -->
+      <div class="view active" id="view-overview">
+        <div class="ph">
+          <h1>Platform overview</h1>
+          <p>MICT SETA National Skills Competition — SkillsMatch ZA platform statistics.</p>
+        </div>
+
+        <div class="alert-strip">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          11 learnerships closing within 7 days — review and ensure all eligible learners have applied.
+        </div>
+
+        <div class="stats s4" style="margin-bottom:24px">
+          <div class="sc"><div class="sc-lbl">Total learners</div><div class="sc-val">2 418</div><div class="sc-up">↑ 143 this month</div></div>
+          <div class="sc"><div class="sc-lbl">Opportunities listed</div><div class="sc-val">384</div><div class="sc-up">↑ 21 this week</div></div>
+          <div class="sc"><div class="sc-lbl">AI matches made</div><div class="sc-val">6 204</div><div class="sc-sub">Cross-platform total</div></div>
+          <div class="sc"><div class="sc-lbl">Placements confirmed</div><div class="sc-val" style="color:var(--teal)">312</div><div class="sc-up">↑ 12.9% rate</div></div>
+        </div>
+
+        <div class="two">
+          <!-- Bar chart -->
+          <div class="panel">
+            <div class="ph2"><span class="ph2-title">Monthly placements — 2025</span><span style="font-size:12px;color:var(--ink-muted)">Jan – Jun</span></div>
+            <div class="pb" style="padding-bottom:20px">
+              <div class="bar-chart" id="barChart"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <!-- KPI -->
+            <div class="kpi-card">
+              <div class="kpi-label">AI match accuracy</div>
+              <div class="kpi-val">94%</div>
+              <div class="kpi-sub">Platform match accuracy this quarter</div>
+            </div>
+
+            <!-- Status breakdown -->
+            <div class="panel">
+              <div class="ph2"><span class="ph2-title">Learner status</span></div>
+              <div class="pb">
+                <div class="sb-row">
+                  <span class="spl sp-placed">Placed</span>
+                  <div style="display:flex;align-items:center;gap:6px"><div class="sb-bar-track"><div class="sb-bar-fill" style="width:40%;background:var(--teal)"></div></div><strong style="font-size:13px">312</strong></div>
+                </div>
+                <div class="sb-row">
+                  <span class="spl sp-matched">Matched</span>
+                  <div style="display:flex;align-items:center;gap:6px"><div class="sb-bar-track"><div class="sb-bar-fill" style="width:74%;background:rgba(13,122,95,.35)"></div></div><strong style="font-size:13px">580</strong></div>
+                </div>
+                <div class="sb-row">
+                  <span class="spl sp-searching">Searching</span>
+                  <div style="display:flex;align-items:center;gap:6px"><div class="sb-bar-track"><div class="sb-bar-fill" style="width:100%;background:var(--gold-lt);border:1px solid rgba(200,168,75,.4)"></div></div><strong style="font-size:13px">1 526</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ LEARNER REGISTRY ══ -->
+      <div class="view" id="view-learners">
+        <div class="ph"><h1>Learner registry</h1><p>2 418 registered learners across all 9 provinces.</p></div>
+
+        <div class="stats s4" style="margin-bottom:20px">
+          <div class="sc"><div class="sc-lbl">Registered</div><div class="sc-val">2 418</div></div>
+          <div class="sc"><div class="sc-lbl">Placed</div><div class="sc-val" style="color:var(--teal)">312</div></div>
+          <div class="sc"><div class="sc-lbl">Actively matched</div><div class="sc-val">580</div></div>
+          <div class="sc"><div class="sc-lbl">Avg match score</div><div class="sc-val">74%</div></div>
+        </div>
+
+        <div class="panel">
+          <div class="tbl-search">
+            <input type="text" id="learnerSearch" placeholder="Search learner name, qualification or province…" oninput="filterLearners()"/>
+            <select onchange="filterLearners()" id="statusFilter">
+              <option value="">All statuses</option>
+              <option value="Placed">Placed</option>
+              <option value="Matched">Matched</option>
+              <option value="Searching">Searching</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="tbl" id="learnerTable">
+              <thead><tr><th>Name</th><th>Qualification</th><th>Institution</th><th>Province</th><th>Match score</th><th>Status</th></tr></thead>
+              <tbody id="learnerTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PLACEMENT REPORT ══ -->
+      <div class="view" id="view-placements">
+        <div class="ph"><h1>Placement report</h1><p>Formal placement outcomes for SETA reporting and compliance — Q1 2025.</p></div>
+
+        <div class="stats s3" style="margin-bottom:20px">
+          <div class="sc"><div class="sc-lbl">Total placements Q1</div><div class="sc-val" style="color:var(--teal)">312</div><div class="sc-sub">Target: 400</div></div>
+          <div class="sc"><div class="sc-lbl">Placement rate</div><div class="sc-val">12.9%</div><div class="sc-up">↑ 2.1% vs last quarter</div></div>
+          <div class="sc"><div class="sc-lbl">Avg. days to placement</div><div class="sc-val">34</div><div class="sc-sub">From registration date</div></div>
+        </div>
+
+        <div class="panel">
+          <div class="ph2"><span class="ph2-title">Outcomes by institution</span><button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export</button></div>
+          <div style="overflow-x:auto">
+            <table class="tbl">
+              <thead><tr><th>Institution</th><th>Registered</th><th>Matched</th><th>Placed</th><th>Placement rate</th><th>Target</th></tr></thead>
+              <tbody>
+                <tr onclick="openLearnerModal('Orbit TVET')"><td class="td-name">Orbit TVET College</td><td>648</td><td class="td-muted">520</td><td><strong>84</strong></td><td><span class="spl sp-placed">13%</span></td><td class="td-muted">100</td></tr>
+                <tr onclick="openLearnerModal('Vuselela TVET')"><td class="td-name">Vuselela TVET</td><td>412</td><td class="td-muted">330</td><td><strong>61</strong></td><td><span class="spl sp-placed">15%</span></td><td class="td-muted">60</td></tr>
+                <tr onclick="openLearnerModal('Taletso TVET')"><td class="td-name">Taletso TVET</td><td>389</td><td class="td-muted">290</td><td><strong>48</strong></td><td><span class="spl sp-matched">12%</span></td><td class="td-muted">60</td></tr>
+                <tr onclick="openLearnerModal('NWU')"><td class="td-name">North-West University</td><td>284</td><td class="td-muted">240</td><td><strong>52</strong></td><td><span class="spl sp-placed">18%</span></td><td class="td-muted">40</td></tr>
+                <tr onclick="openLearnerModal('Other')"><td class="td-name">Other / SETA Programmes</td><td>685</td><td class="td-muted">510</td><td><strong>67</strong></td><td><span class="spl sp-matched">10%</span></td><td class="td-muted">140</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ BY PROVINCE ══ -->
+      <div class="view" id="view-province">
+        <div class="ph"><h1>By province</h1><p>Learner distribution and placement performance across South Africa.</p></div>
+
+        <div class="stats s4" style="margin-bottom:20px">
+          <div class="sc"><div class="sc-lbl">Best performing</div><div class="sc-val" style="font-size:18px">Gauteng</div><div class="sc-up">16% placement rate</div></div>
+          <div class="sc"><div class="sc-lbl">Highest learners</div><div class="sc-val" style="font-size:18px">Gauteng</div><div class="sc-sub">612 registered</div></div>
+          <div class="sc"><div class="sc-lbl">Needs attention</div><div class="sc-val" style="font-size:18px;color:var(--coral)">N. Cape</div><div class="sc-dn">7% rate</div></div>
+          <div class="sc"><div class="sc-lbl">Target provinces</div><div class="sc-val">9</div><div class="sc-sub">All covered</div></div>
+        </div>
+
+        <div class="panel">
+          <div class="ph2"><span class="ph2-title">Province breakdown</span><button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export</button></div>
+          <div class="pb" id="provBars"></div>
+        </div>
+      </div>
+
+      <!-- ══ EMPLOYERS ══ -->
+      <div class="view" id="view-employers">
+        <div class="ph"><h1>Registered employers</h1><p>Companies and organisations posting opportunities on SkillsMatch ZA.</p></div>
+
+        <div class="stats s3" style="margin-bottom:20px">
+          <div class="sc"><div class="sc-lbl">Total employers</div><div class="sc-val">87</div><div class="sc-up">↑ 6 this month</div></div>
+          <div class="sc"><div class="sc-lbl">Active listings</div><div class="sc-val">384</div><div class="sc-sub">Across all sectors</div></div>
+          <div class="sc"><div class="sc-lbl">SETA-funded listings</div><div class="sc-val">142</div><div class="sc-sub">37% of all listings</div></div>
+        </div>
+
+        <div class="panel">
+          <div class="ph2"><span class="ph2-title">Employer directory</span><button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export</button></div>
+          <div style="overflow-x:auto">
+            <table class="tbl">
+              <thead><tr><th>Company</th><th>Sector</th><th>Province</th><th>Active listings</th><th>Applicants placed</th></tr></thead>
+              <tbody>
+                <tr><td class="td-name">Telkom SA</td><td class="td-muted">ICT &amp; Technology</td><td class="td-muted">North West</td><td><strong>4</strong></td><td><strong style="color:var(--teal)">23</strong></td></tr>
+                <tr><td class="td-name">Standard Bank</td><td class="td-muted">Finance &amp; Banking</td><td class="td-muted">Gauteng</td><td><strong>6</strong></td><td><strong style="color:var(--teal)">41</strong></td></tr>
+                <tr><td class="td-name">Vodacom</td><td class="td-muted">ICT &amp; Technology</td><td class="td-muted">Remote / National</td><td><strong>5</strong></td><td><strong style="color:var(--teal)">18</strong></td></tr>
+                <tr><td class="td-name">Absa Group</td><td class="td-muted">Finance &amp; Banking</td><td class="td-muted">Gauteng</td><td><strong>3</strong></td><td><strong style="color:var(--teal)">15</strong></td></tr>
+                <tr><td class="td-name">DigitalHub</td><td class="td-muted">ICT &amp; Technology</td><td class="td-muted">Remote</td><td><strong>2</strong></td><td><strong style="color:var(--teal)">7</strong></td></tr>
+                <tr><td class="td-name">Shoprite Group</td><td class="td-muted">Retail &amp; Commerce</td><td class="td-muted">Multiple provinces</td><td><strong>8</strong></td><td><strong style="color:var(--teal)">34</strong></td></tr>
+                <tr><td class="td-name">MTN SA</td><td class="td-muted">ICT &amp; Technology</td><td class="td-muted">KwaZulu-Natal</td><td><strong>3</strong></td><td><strong style="color:var(--teal)">11</strong></td></tr>
+                <tr><td class="td-name">Dimension Data</td><td class="td-muted">ICT &amp; Technology</td><td class="td-muted">Western Cape</td><td><strong>2</strong></td><td><strong style="color:var(--teal)">9</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SETTINGS ══ -->
+      <div class="view" id="view-settings">
+        <div class="ph"><h1>Platform settings</h1><p>Configure platform behaviour and data compliance settings.</p></div>
+        <div class="panel" style="max-width:560px">
+          <div class="ph2"><span class="ph2-title">General settings</span><button class="ph2-act">Save changes</button></div>
+          <div class="pb" style="display:flex;flex-direction:column;gap:16px">
+            <div class="form-group"><label class="form-label">Organisation name</label><input type="text" value="MICT SETA — North West Region"/></div>
+            <div class="form-group"><label class="form-label">Admin email</label><input type="email" value="n.dlamini@mictseta.org.za"/></div>
+            <div class="form-group"><label class="form-label">Province scope</label><select><option>North West</option><option>Multiple provinces</option><option>National</option></select></div>
+            <div class="form-group"><label class="form-label">Quarterly placement target</label><input type="number" value="400"/></div>
+            <div style="background:var(--paper);border:1px solid rgba(14,17,23,.08);border-radius:10px;padding:14px 16px">
+              <div style="font-size:12px;font-weight:500;margin-bottom:10px">POPIA compliance</div>
+              <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--ink-soft)">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--teal)"> Anonymise exported learner data</label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--teal)"> Require consent before sharing with employers</label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" style="accent-color:var(--teal)"> Enable data retention auto-delete (2 years)</label>
+              </div>
+            </div>
+            <button class="btn btn-primary">Save settings</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- LEARNER DETAIL MODAL -->
+<div class="overlay" id="overlay" onclick="maybeClose(event)">
+  <div class="modal">
+    <div class="mh">
+      <div><div class="m-title" id="mName">Thabo Mokoena</div><div class="m-sub" id="mSub">N6 IT — Orbit TVET College</div></div>
+      <button class="mc" onclick="closeModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="mb">
+      <div class="m-grid" id="mGrid"></div>
+      <div class="m-sect"><div class="m-sect-label">Skills profile</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px" id="mSkills"></div></div>
+      <div class="m-sect"><div class="m-sect-label">AI match insight</div><div style="background:var(--teal-lt);border:1px solid rgba(13,122,95,.2);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--ink-soft);line-height:1.55" id="mAi"></div></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-primary btn-sm" id="mStatusBtn" onclick="cycleStatus()">Mark as placed</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* Auth & user */
+  const role  = localStorage.getItem('sm_role')  || 'admin';
+  const name  = localStorage.getItem('sm_name')  || 'Naledi Dlamini';
+  const email = localStorage.getItem('sm_email') || 'n.dlamini@mictseta.org.za';
+  function ini(n){ return n.split(' ').filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+  document.getElementById('sbAv').textContent    = ini(name);
+  document.getElementById('sbName').textContent  = name;
+  document.getElementById('sbEmail').textContent = email;
+
+  /* View switch */
+  const TITLES = { overview:'Platform overview', learners:'Learner registry', placements:'Placement report', province:'By province', employers:'Employers', settings:'Platform settings' };
+  function show(id, btn){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+id).classList.add('active');
+    document.querySelectorAll('.sb-link').forEach(b=>b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    document.getElementById('topTitle').textContent = TITLES[id]||id;
+    window.scrollTo({top:0,behavior:'smooth'});
+    if(id==='overview') buildChart();
+    if(id==='province') buildProvBars();
+    if(id==='learners') renderLearners(LEARNERS);
+  }
+
+  /* Bar chart */
+  const MONTHS = [{l:'Jan',v:38},{l:'Feb',v:44},{l:'Mar',v:52},{l:'Apr',v:61},{l:'May',v:68},{l:'Jun',v:49}];
+  function buildChart(){
+    const el = document.getElementById('barChart');
+    if(!el||el.innerHTML) return;
+    const max = Math.max(...MONTHS.map(d=>d.v));
+    MONTHS.forEach(d=>{
+      const pct = Math.round((d.v/max)*100);
+      el.innerHTML+=`<div class="bc"><div class="bc-val">${d.v}</div><div class="bc-body" style="height:${pct}%"></div><div class="bc-label">${d.l}</div></div>`;
+    });
+  }
+  buildChart();
+
+  /* Province bars */
+  const PROVS = [
+    {name:'Gauteng',        learners:612, placed:98, rate:16},
+    {name:'Western Cape',   learners:430, placed:55, rate:13},
+    {name:'North West',     learners:418, placed:54, rate:13},
+    {name:'KwaZulu-Natal',  learners:384, placed:45, rate:12},
+    {name:'Limpopo',        learners:298, placed:32, rate:11},
+    {name:'Eastern Cape',   learners:276, placed:28, rate:10},
+    {name:'Free State',     learners:241, placed:22, rate:9},
+    {name:'Mpumalanga',     learners:198, placed:18, rate:9},
+    {name:'Northern Cape',  learners:161, placed:11, rate:7},
+  ];
+  function buildProvBars(){
+    const el = document.getElementById('provBars');
+    if(!el||el.innerHTML) return;
+    const max = Math.max(...PROVS.map(p=>p.learners));
+    PROVS.forEach(p=>{
+      const pct = Math.round((p.learners/max)*100);
+      el.innerHTML+=`
+        <div class="pb-row">
+          <div class="pb-name">${p.name}</div>
+          <div class="pb-track"><div class="pb-fill" data-w="${pct}%" style="width:0%"></div></div>
+          <div class="pb-num">${p.learners.toLocaleString()}</div>
+          <div class="pb-rate">${p.rate}%</div>
+        </div>`;
+    });
+    setTimeout(()=>{ document.querySelectorAll('.pb-fill').forEach(b=>b.style.width=b.getAttribute('data-w')); }, 100);
+  }
+
+  /* Learner data */
+  const LEARNERS = [
+    {name:'Thabo Mokoena',  qual:'N6 IT',          inst:'Orbit TVET',    prov:'North West',    score:87, status:'Matched',   skills:['Python','HTML/CSS','Networking','MS Office'],     ai:'Strong match on IT skills. Shortlisted for IT Support Learnership at Telkom SA.'},
+    {name:'Naledi Zuma',    qual:'NCV IT',          inst:'Vuselela TVET', prov:'North West',    score:82, status:'Placed',    skills:['Networking','Windows OS','Customer Service'],     ai:'Successfully placed at Standard Bank ICT Support. Active since March 2025.'},
+    {name:'Lebo Motsepe',   qual:'N5 IT',           inst:'Orbit TVET',    prov:'North West',    score:74, status:'Searching', skills:['Technical Support','MS Office'],                  ai:'3 open matches. Encourage application to MTN Help Desk Internship before closing.'},
+    {name:'Sipho Khumalo',  qual:'Diploma CS',      inst:'NWU',           prov:'North West',    score:71, status:'Searching', skills:['Python','Java','SQL'],                            ai:'Good match with cloud and software roles. Needs a portfolio project.'},
+    {name:'Ayanda Dube',    qual:'N4 IT',           inst:'Orbit TVET',    prov:'North West',    score:58, status:'Inactive',  skills:['MS Office','Customer Service'],                   ai:'Profile incomplete. Skills profile needs updating to generate meaningful matches.'},
+    {name:'Puleng Sithole', qual:'N6 Finance',      inst:'Taletso TVET',  prov:'North West',    score:79, status:'Placed',    skills:['Accounting','MS Excel','Customer Service'],       ai:'Placed at Nedbank Finance Learnership. Excellent outcome for the programme.'},
+    {name:'Thandeka Nkosi', qual:'Bachelor BCom',   inst:'NWU',           prov:'Gauteng',       score:83, status:'Matched',   skills:['Data Analysis','Excel','PowerPoint','SQL'],       ai:'Strong match with Absa Data Analyst Graduate role. Pending interview outcome.'},
+    {name:'Kagiso Molapo',  qual:'N6 Engineering',  inst:'Taletso TVET',  prov:'North West',    score:66, status:'Searching', skills:['AutoCAD','Technical Drawing'],                    ai:'Engineering skills not well matched to current ICT listings. Refer to Dimension Data.'},
+    {name:'Refilwe Tau',    qual:'NCV IT',          inst:'Vuselela TVET', prov:'KwaZulu-Natal', score:77, status:'Matched',   skills:['Networking','Linux','Technical Support'],         ai:'Good fit for Vodacom internship. Applied and under review.'},
+    {name:'Zandile Dlamini',qual:'Higher Cert IT',  inst:'DUT',           prov:'KwaZulu-Natal', score:88, status:'Placed',    skills:['Python','JavaScript','HTML','React'],             ai:'Placed at DigitalHub as Junior Developer. Excellent ICT match score.'},
+  ];
+
+  let filteredLearners = [...LEARNERS];
+
+  function renderLearners(data){
+    const tbody = document.getElementById('learnerTbody');
+    if(!tbody) return;
+    tbody.innerHTML = data.map(l=>`
+      <tr onclick="openLearnerDetail(${JSON.stringify(l).split('"').join("'")})" style="cursor:pointer">
+        <td class="td-name">${l.name}</td>
+        <td class="td-muted">${l.qual}</td>
+        <td class="td-muted">${l.inst}</td>
+        <td class="td-muted">${l.prov}</td>
+        <td><strong style="color:${l.score>=80?'var(--teal)':l.score>=65?'var(--gold)':'var(--ink-muted)'}">${l.score}%</strong></td>
+        <td><span class="spl sp-${l.status.toLowerCase()}">${l.status}</span></td>
+      </tr>`).join('');
+  }
+
+  function filterLearners(){
+    const q   = document.getElementById('learnerSearch').value.toLowerCase();
+    const st  = document.getElementById('statusFilter').value;
+    filteredLearners = LEARNERS.filter(l=>{
+      const qOk = !q || l.name.toLowerCase().includes(q) || l.qual.toLowerCase().includes(q) || l.prov.toLowerCase().includes(q) || l.inst.toLowerCase().includes(q);
+      const sOk = !st || l.status === st;
+      return qOk && sOk;
+    });
+    renderLearners(filteredLearners);
+  }
+
+  /* Learner modal */
+  let currentLearner = null;
+  function openLearnerDetail(l){
+    currentLearner = l;
+    document.getElementById('mName').textContent    = l.name;
+    document.getElementById('mSub').textContent     = `${l.qual} — ${l.inst}`;
+    document.getElementById('mAi').innerHTML        = `<strong>AI insight:</strong> ${l.ai}`;
+    document.getElementById('mGrid').innerHTML = `
+      <div class="m-field"><div class="m-field-label">Province</div><div class="m-field-val">${l.prov}</div></div>
+      <div class="m-field"><div class="m-field-label">Match score</div><div class="m-field-val" style="color:var(--teal)">${l.score}%</div></div>
+      <div class="m-field"><div class="m-field-label">Status</div><div class="m-field-val"><span class="spl sp-${l.status.toLowerCase()}">${l.status}</span></div></div>
+      <div class="m-field"><div class="m-field-label">Institution</div><div class="m-field-val">${l.inst}</div></div>`;
+    document.getElementById('mSkills').innerHTML = l.skills.map(s=>`<span style="font-size:12px;padding:4px 12px;border-radius:99px;background:var(--teal-lt);color:var(--teal);font-weight:500">${s}</span>`).join('');
+    document.getElementById('overlay').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+
+  function openLearnerModal(inst){
+    const l = LEARNERS.find(x=>x.inst.includes(inst.split(' ')[0]));
+    if(l) openLearnerDetail(l);
+  }
+
+  function cycleStatus(){
+    if(!currentLearner) return;
+    const btn = document.getElementById('mStatusBtn');
+    btn.textContent = '✓ Status updated';
+    btn.disabled = true;
+    btn.style.background = 'var(--success)';
+    btn.style.borderColor = 'var(--success)';
+    setTimeout(closeModal, 1200);
+  }
+
+  function closeModal(){ document.getElementById('overlay').classList.remove('open'); document.body.style.overflow=''; }
+  function maybeClose(e){ if(e.target===document.getElementById('overlay')) closeModal(); }
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+  /* CSV export */
+  function exportCSV(){
+    const view = document.querySelector('.view.active');
+    const tbl  = view?.querySelector('.tbl');
+    if(!tbl){ alert('No table to export on this view.'); return; }
+    const rows = [];
+    tbl.querySelectorAll('tr').forEach(tr=>{
+      rows.push([...tr.querySelectorAll('th,td')].map(c=>c.textContent.trim()).join(','));
+    });
+    const blob = new Blob([rows.join('\n')],{type:'text/csv'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href=url; a.download='skillsmatch_admin_export.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function logout(){
+    ['sm_auth','sm_role','sm_email','sm_name','sm_skills'].forEach(k=>localStorage.removeItem(k));
+    window.location.href='login.html';
+  }
+</script>
+</body>
+</html>

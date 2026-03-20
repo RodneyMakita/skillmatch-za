@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Browse Opportunities — SkillsMatch ZA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { margin:0; background:var(--paper); }
+
+    .nav { display:flex; align-items:center; justify-content:space-between; padding:16px 40px; background:var(--paper); border-bottom:1px solid rgba(14,17,23,.08); position:sticky; top:0; z-index:50; }
+    .nav-logo { font-family:var(--font-display); font-weight:800; font-size:18px; color:var(--ink); text-decoration:none; letter-spacing:-.4px; }
+    .nav-logo span { color:var(--teal); }
+    .nav-right { display:flex; align-items:center; gap:10px; }
+    .nav-avatar { width:32px; height:32px; border-radius:50%; background:var(--teal-lt); color:var(--teal); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:var(--font-display); }
+
+    /* Hero */
+    .browse-hero { background:var(--ink); padding:48px 40px 40px; position:relative; overflow:hidden; }
+    .browse-hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 80% at 100% 50%, rgba(13,122,95,.3) 0%, transparent 65%); }
+    .browse-hero h1 { font-size:clamp(28px,4vw,44px); color:var(--white); letter-spacing:-1.5px; margin-bottom:6px; position:relative; z-index:1; }
+    .browse-hero h1 span { color:var(--teal-glow); }
+    .browse-hero p { font-size:15px; color:rgba(255,255,255,.5); position:relative; z-index:1; margin-bottom:28px; }
+
+    .search-bar { display:flex; gap:10px; position:relative; z-index:1; max-width:680px; }
+    .search-wrap { flex:1; position:relative; }
+    .search-wrap input { width:100%; padding:13px 16px 13px 42px; font-size:15px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15); border-radius:10px; color:var(--white); outline:none; transition:background .2s,border-color .2s; }
+    .search-wrap input::placeholder { color:rgba(255,255,255,.4); }
+    .search-wrap input:focus { background:rgba(255,255,255,.15); border-color:rgba(255,255,255,.3); }
+    .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,.4); pointer-events:none; }
+    .search-bar .btn { padding:13px 24px; font-size:14px; }
+
+    .result-count { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); border-radius:99px; padding:5px 14px; font-size:13px; color:rgba(255,255,255,.6); margin-top:16px; position:relative; z-index:1; }
+    .result-count strong { color:var(--white); }
+
+    /* Layout */
+    .browse-layout { display:grid; grid-template-columns:240px 1fr; min-height:calc(100vh - 220px); }
+
+    /* Sidebar */
+    .filters-sidebar { padding:24px 20px; border-right:1px solid rgba(14,17,23,.08); background:var(--white); }
+    .filter-group { margin-bottom:24px; }
+    .filter-group-title { font-family:var(--font-display); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); margin-bottom:10px; }
+    .filter-options { display:flex; flex-direction:column; gap:2px; }
+    .filter-opt { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:13px; color:var(--ink-soft); user-select:none; transition:background .15s; }
+    .filter-opt:hover { background:var(--paper); }
+    .filter-opt.active { background:var(--teal-lt); color:var(--teal); font-weight:500; }
+    .filter-check { width:16px; height:16px; border-radius:4px; border:1.5px solid rgba(14,17,23,.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; }
+    .filter-opt.active .filter-check { background:var(--teal); border-color:var(--teal); }
+    .check-tick { opacity:0; transition:opacity .1s; }
+    .filter-opt.active .check-tick { opacity:1; }
+    .filter-count { margin-left:auto; font-size:11px; color:var(--ink-muted); background:var(--paper-2); padding:2px 7px; border-radius:99px; }
+    .filter-opt.active .filter-count { background:rgba(13,122,95,.15); color:var(--teal); }
+    .filter-sep { height:1px; background:rgba(14,17,23,.06); margin:8px 0 12px; }
+    .clear-btn { font-size:12px; color:var(--coral); background:none; border:none; cursor:pointer; padding:0; font-family:var(--font-body); }
+    .clear-btn:hover { text-decoration:underline; }
+
+    /* Results */
+    .results-area { padding:22px 26px; }
+    .results-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+    .results-label { font-size:14px; color:var(--ink-soft); }
+    .results-label strong { color:var(--ink); }
+    .sort-sel { padding:8px 12px; font-size:13px; border:1px solid rgba(14,17,23,.12); border-radius:8px; background:var(--white); color:var(--ink); cursor:pointer; outline:none; font-family:var(--font-body); }
+
+    .active-filters { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+    .af-pill { display:inline-flex; align-items:center; gap:5px; font-size:12px; padding:4px 10px; border-radius:99px; background:var(--teal-lt); color:var(--teal); border:1px solid rgba(13,122,95,.2); }
+    .af-rm { background:none; border:none; cursor:pointer; color:var(--teal); font-size:15px; line-height:1; padding:0; opacity:.6; }
+    .af-rm:hover { opacity:1; }
+
+    /* Cards */
+    .opp-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:12px; }
+
+    .opp-card { background:var(--white); border:1px solid rgba(14,17,23,.09); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:10px; cursor:pointer; transition:box-shadow .2s,border-color .2s,transform .2s; animation:cardIn .35s ease both; }
+    @keyframes cardIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .opp-card:hover { box-shadow:0 6px 24px rgba(14,17,23,.08); border-color:rgba(13,122,95,.25); transform:translateY(-2px); }
+
+    .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+    .type-icon { width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+    .ti-J { background:var(--teal-lt); }
+    .ti-L { background:var(--gold-lt); }
+    .ti-I { background:var(--coral-lt); }
+    .ti-P { background:#f0eeff; }
+    .save-btn { background:none; border:none; cursor:pointer; color:var(--ink-muted); padding:4px; transition:color .15s; flex-shrink:0; }
+    .save-btn:hover,.save-btn.saved { color:var(--teal); }
+
+    .card-title { font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:-.3px; }
+    .card-company { font-size:12px; color:var(--ink-soft); margin-top:2px; }
+    .card-loc { font-size:12px; color:var(--ink-muted); display:flex; align-items:center; gap:4px; margin-top:2px; }
+
+    .card-tags { display:flex; flex-wrap:wrap; gap:4px; }
+    .ctag { font-size:11px; padding:3px 9px; border-radius:99px; }
+    .ct-type { background:var(--paper-2); color:var(--ink-soft); }
+    .ct-funded { background:var(--teal-lt); color:var(--teal); }
+    .ct-remote { background:#f0eeff; color:#534AB7; }
+    .ct-urgent { background:var(--coral-lt); color:var(--coral); }
+
+    .card-foot { display:flex; align-items:center; justify-content:space-between; padding-top:8px; border-top:1px solid rgba(14,17,23,.06); margin-top:auto; }
+    .closing { font-size:12px; color:var(--ink-muted); }
+    .closing.urgent { color:var(--coral); font-weight:500; }
+    .match-score { font-family:var(--font-display); font-size:15px; font-weight:800; display:flex; align-items:center; gap:4px; }
+    .ms-label { font-size:10px; color:var(--ink-muted); font-family:var(--font-body); font-weight:400; }
+
+    .post-cta { background:var(--ink); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:8px; cursor:pointer; transition:opacity .2s; }
+    .post-cta:hover { opacity:.9; }
+    .post-cta h3 { font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--white); letter-spacing:-.3px; margin:0; }
+    .post-cta p  { font-size:13px; color:rgba(255,255,255,.45); margin:0; }
+
+    .empty-state { grid-column:1/-1; text-align:center; padding:60px 20px; }
+    .empty-state h3 { font-size:18px; color:var(--ink-soft); margin-bottom:6px; }
+    .empty-state p  { font-size:14px; color:var(--ink-muted); }
+
+    /* Modal */
+    .overlay { display:none; position:fixed; inset:0; background:rgba(14,17,23,.55); z-index:200; align-items:center; justify-content:center; padding:20px; }
+    .overlay.open { display:flex; }
+    .modal { background:var(--white); border-radius:18px; max-width:540px; width:100%; max-height:88vh; overflow-y:auto; animation:mIn .25s ease; }
+    @keyframes mIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
+    .modal-head { display:flex; align-items:flex-start; justify-content:space-between; padding:22px 22px 0; }
+    .modal-close { background:var(--paper-2); border:none; cursor:pointer; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); flex-shrink:0; transition:background .15s; }
+    .modal-close:hover { background:var(--paper-3); }
+    .modal-body { padding:14px 22px 22px; }
+    .modal-title { font-family:var(--font-display); font-size:20px; font-weight:800; letter-spacing:-.5px; }
+    .modal-co { font-size:14px; color:var(--ink-soft); margin-top:2px; }
+    .modal-meta { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .m-meta-item { font-size:13px; color:var(--ink-soft); display:flex; align-items:center; gap:5px; }
+    .msect { margin-top:18px; }
+    .msect-label { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-muted); margin-bottom:8px; }
+    .modal-desc { font-size:14px; color:var(--ink-soft); line-height:1.65; }
+    .ai-box { background:var(--teal-lt); border:1px solid rgba(13,122,95,.2); border-radius:10px; padding:12px 14px; font-size:13px; color:var(--ink-soft); line-height:1.55; }
+    .modal-foot { padding:14px 22px; border-top:1px solid rgba(14,17,23,.07); display:flex; gap:10px; }
+
+    @media(max-width:860px){ .browse-layout{grid-template-columns:1fr} .filters-sidebar{display:none} }
+    @media(max-width:600px){ .nav{padding:14px 16px} .browse-hero{padding:32px 16px 28px} .results-area{padding:14px} .opp-grid{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="nav-logo">Skills<span>Match</span> ZA</a>
+  <div class="nav-right">
+    <a href="dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>
+    <div class="nav-avatar" id="navAvatar">TM</div>
+  </div>
+</nav>
+
+<div class="browse-hero">
+  <h1>Find your <span>opportunity</span></h1>
+  <p>Browse jobs, learnerships, internships and projects across South Africa.</p>
+  <div class="search-bar">
+    <div class="search-wrap">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search title, skill, or company…" oninput="doFilter()"/>
+    </div>
+    <button class="btn btn-primary" onclick="doFilter()">Search</button>
+  </div>
+  <div class="result-count">Showing <strong id="heroCount">12</strong> opportunities across South Africa</div>
+</div>
+
+<div class="browse-layout">
+
+  <!-- FILTERS -->
+  <aside class="filters-sidebar">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <span style="font-family:var(--font-display);font-size:14px;font-weight:700">Filters</span>
+      <button class="clear-btn" onclick="clearAll()">Clear all</button>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Opportunity type</div>
+      <div class="filter-options" id="fg-type">
+        <div class="filter-opt active" data-v="all"          onclick="pick(this,'type')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>All types</div>
+        <div class="filter-opt"        data-v="Job"          onclick="pick(this,'type')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Job<span class="filter-count">5</span></div>
+        <div class="filter-opt"        data-v="Learnership"  onclick="pick(this,'type')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Learnership<span class="filter-count">4</span></div>
+        <div class="filter-opt"        data-v="Internship"   onclick="pick(this,'type')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Internship<span class="filter-count">2</span></div>
+        <div class="filter-opt"        data-v="Project"      onclick="pick(this,'type')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Project<span class="filter-count">1</span></div>
+      </div>
+    </div>
+
+    <div class="filter-sep"></div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Province</div>
+      <div class="filter-options" id="fg-province">
+        <div class="filter-opt active" data-v="all"            onclick="pick(this,'province')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>All provinces</div>
+        <div class="filter-opt"        data-v="North West"     onclick="pick(this,'province')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>North West<span class="filter-count">3</span></div>
+        <div class="filter-opt"        data-v="Gauteng"        onclick="pick(this,'province')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Gauteng<span class="filter-count">4</span></div>
+        <div class="filter-opt"        data-v="KwaZulu-Natal"  onclick="pick(this,'province')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>KwaZulu-Natal<span class="filter-count">2</span></div>
+        <div class="filter-opt"        data-v="Remote"         onclick="pick(this,'province')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Remote<span class="filter-count">3</span></div>
+      </div>
+    </div>
+
+    <div class="filter-sep"></div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Sector</div>
+      <div class="filter-options" id="fg-sector">
+        <div class="filter-opt active" data-v="all"     onclick="pick(this,'sector')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>All sectors</div>
+        <div class="filter-opt"        data-v="ICT"     onclick="pick(this,'sector')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>ICT &amp; Technology</div>
+        <div class="filter-opt"        data-v="Finance" onclick="pick(this,'sector')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Finance &amp; Banking</div>
+        <div class="filter-opt"        data-v="Retail"  onclick="pick(this,'sector')"><div class="filter-check"><svg class="check-tick" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Retail &amp; Commerce</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RESULTS -->
+  <div class="results-area">
+    <div class="results-toolbar">
+      <div class="results-label">Showing <strong id="resultLabel">12 opportunities</strong></div>
+      <select class="sort-sel" onchange="doFilter()">
+        <option value="match">Best match first</option>
+        <option value="newest">Newest first</option>
+        <option value="closing">Closing soonest</option>
+      </select>
+    </div>
+    <div class="active-filters" id="activePills"></div>
+    <div class="opp-grid" id="grid"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="maybeClose(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="mTitle">Title</div>
+        <div class="modal-co" id="mCo">Company</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-meta" id="mMeta"></div>
+      <div class="msect"><div class="msect-label">About this opportunity</div><div class="modal-desc" id="mDesc"></div></div>
+      <div class="msect"><div class="msect-label">Skills required</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px" id="mSkills"></div></div>
+      <div class="msect" id="mAiSect"><div class="msect-label">AI match insight</div><div class="ai-box" id="mAi"></div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" id="mApply" onclick="applyModal()">Apply now</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const role = localStorage.getItem('sm_role') || 'learner';
+  const name = localStorage.getItem('sm_name') || 'Thabo Mokoena';
+  function ini(n){ return n.split(' ').filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+  document.getElementById('navAvatar').textContent = ini(name);
+
+  const OPPS = [
+    {id:1, title:'IT Support Learnership',      company:'Telkom SA',          loc:'Mahikeng, North West',     type:'Learnership', sector:'ICT',     match:92, funded:true,  remote:false, urgent:false, closing:'15 May 2025', stipend:'R3 500/month',    desc:'A 12-month MICT SETA-funded learnership covering IT support, networking fundamentals and helpdesk operations. Successful candidates receive an NQF Level 4 qualification.',   skills:['Technical Support','Networking','Windows OS','Communication'], ai:'Strong match on networking skills. A CCNA entry-level cert could push your score above 95%.'},
+    {id:2, title:'Junior Web Developer',        company:'DigitalHub',          loc:'Remote',                   type:'Job',         sector:'ICT',     match:76, funded:false, remote:true,  urgent:false, closing:'20 May 2025', stipend:'R12 000/month',   desc:'Build and maintain web applications for a growing SA tech company. You will work on front-end development using HTML, CSS, and JavaScript with a supportive remote team.',       skills:['HTML/CSS','JavaScript','React','Git'],                         ai:'Good HTML/CSS match. Add a public GitHub portfolio to improve your score by an estimated +8%.'},
+    {id:3, title:'ICT Technical Support',       company:'Standard Bank',        loc:'Johannesburg, Gauteng',    type:'Job',         sector:'ICT',     match:84, funded:false, remote:false, urgent:true,  closing:'10 May 2025', stipend:'R18 000/month',   desc:'Provide first and second-line technical support to internal staff at one of SA\'s largest banks. Resolve hardware, software, and network issues in a fast-paced environment.',   skills:['Technical Support','Windows Server','Active Directory'],       ai:'Excellent fit on support skills. Mentioning relocation availability would strengthen your application.'},
+    {id:4, title:'Help Desk Internship',        company:'MTN SA',              loc:'Bloemfontein, Free State', type:'Internship',  sector:'ICT',     match:71, funded:false, remote:false, urgent:false, closing:'28 May 2025', stipend:'R4 000/month',    desc:'A 6-month internship supporting MTN\'s internal IT helpdesk. Ideal for recent TVET graduates looking for first-time work experience in a corporate ICT environment.',           skills:['Customer Service','MS Office','Technical Support'],           ai:'Solid match on IT basics. A short Microsoft certification would significantly improve your fit.'},
+    {id:5, title:'Data Analyst Graduate',       company:'Absa Group',          loc:'Sandton, Gauteng',         type:'Job',         sector:'Finance', match:65, funded:false, remote:false, urgent:false, closing:'1 Jun 2025',  stipend:'R20 000/month',   desc:'Join Absa\'s analytics team to build dashboards and reports using SQL and Power BI. Open to recent graduates in IT, Statistics, or Mathematics.',                               skills:['SQL','Excel','Power BI','Data Analysis'],                     ai:'Partial match. Adding SQL and Power BI to your profile would significantly boost this match.'},
+    {id:6, title:'Software Dev Internship',     company:'Vodacom',             loc:'Remote',                   type:'Internship',  sector:'ICT',     match:79, funded:false, remote:true,  urgent:false, closing:'25 May 2025', stipend:'R6 000/month',    desc:'A 6-month remote internship on Vodacom\'s software engineering team. Contribute to internal tools and mobile applications using Python and JavaScript.',                        skills:['Python','JavaScript','APIs','Problem Solving'],               ai:'Good Python match. One deployed project on GitHub would make your application stand out.'},
+    {id:7, title:'Network Engineer Learnership',company:'Dimension Data',      loc:'Cape Town, Western Cape',  type:'Learnership', sector:'ICT',     match:68, funded:true,  remote:false, urgent:false, closing:'30 May 2025', stipend:'R4 500/month',    desc:'An MICT SETA-accredited 18-month learnership focused on network engineering. Trainees work toward CCNA certification with on-the-job training.',                              skills:['Networking','Cisco','TCP/IP','CCNA'],                         ai:'Main gap is CCNA knowledge. A free Cisco NetAcad course before applying would help significantly.'},
+    {id:8, title:'Retail Systems Support',      company:'Shoprite Group',      loc:'Multiple provinces',       type:'Job',         sector:'Retail',  match:58, funded:false, remote:false, urgent:false, closing:'5 Jun 2025',  stipend:'R11 000/month',   desc:'Support Shoprite\'s in-store POS and inventory management systems across retail locations. This role involves travel between stores within your assigned region.',               skills:['POS Systems','Hardware Support','MS Office'],                 ai:'Lower match — your IT background is relevant but this role focuses on retail-specific systems.'},
+    {id:9, title:'SEDA Tech Startup Fund',      company:'SEDA',               loc:'National',                 type:'Project',     sector:'Finance', match:63, funded:true,  remote:false, urgent:false, closing:'15 Jun 2025', stipend:'Up to R50 000',   desc:'SEDA offers technology startup funding for youth entrepreneurs (18–35) with an ICT business idea. Applications open to TVET and university graduates.',                         skills:['Business Plan','ICT Skills','Entrepreneurship'],             ai:'Qualification aligns well. Strengthen your application with a one-page business concept document.'},
+    {id:10,title:'Cloud Support Engineer',      company:'Amazon Web Services', loc:'Remote',                   type:'Job',         sector:'ICT',     match:72, funded:false, remote:true,  urgent:false, closing:'1 Jun 2025',  stipend:'R28 000/month',   desc:'Provide technical support to AWS customers across Africa. This entry-level cloud role requires basic Linux knowledge and a passion for solving complex technical problems.',      skills:['Linux','Cloud Basics','Python','Networking'],                ai:'Good Python and networking match. The free AWS Cloud Practitioner cert would strongly boost this score.'},
+    {id:11,title:'Finance Learnership',         company:'Nedbank',             loc:'Durban, KwaZulu-Natal',    type:'Learnership', sector:'Finance', match:48, funded:true,  remote:false, urgent:true,  closing:'8 May 2025',  stipend:'R3 200/month',    desc:'A FASSET-accredited financial services learnership covering bookkeeping, customer service, and banking fundamentals. NQF Level 4 certificate awarded on completion.',          skills:['Accounting Basics','Customer Service','MS Excel'],           ai:'Lower match — this role is finance-focused. Your ICT skills are a bonus but not the primary requirement.'},
+    {id:12,title:'Cybersecurity Graduate',      company:'Accenture SA',        loc:'Johannesburg, Gauteng',    type:'Job',         sector:'ICT',     match:77, funded:false, remote:false, urgent:false, closing:'10 Jun 2025', stipend:'R22 000/month',   desc:'Join Accenture\'s cybersecurity practice helping clients manage digital risk. This graduate role involves security assessments, monitoring, and incident response support.',     skills:['Networking','Linux','Security Fundamentals'],                ai:'Solid networking match. A CompTIA Security+ cert would significantly increase your score for this role.'},
+  ];
+
+  const state = { type:'all', province:'all', sector:'all' };
+  let currentOpp = null;
+
+  function doFilter(){
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const sortV = document.querySelector('.sort-sel').value;
+
+    let res = OPPS.filter(o=>{
+      const tOk = state.type     === 'all' || o.type === state.type;
+      const pOk = state.province === 'all' || o.loc.includes(state.province) || (state.province==='Remote' && o.remote);
+      const sOk = state.sector   === 'all' || o.sector.includes(state.sector);
+      const qOk = !q || o.title.toLowerCase().includes(q) || o.company.toLowerCase().includes(q) || o.skills.some(s=>s.toLowerCase().includes(q));
+      return tOk && pOk && sOk && qOk;
+    });
+
+    if(sortV==='match')   res.sort((a,b)=>b.match-a.match);
+    if(sortV==='closing') res.sort((a,b)=>new Date('1 '+a.closing)-new Date('1 '+b.closing));
+
+    renderGrid(res);
+    renderPills();
+    document.getElementById('heroCount').textContent = res.length;
+    document.getElementById('resultLabel').innerHTML = `<strong>${res.length} opportunit${res.length===1?'y':'ies'}</strong>`;
+  }
+
+  function pick(el, group){
+    document.querySelectorAll(`#fg-${group} .filter-opt`).forEach(e=>e.classList.remove('active'));
+    el.classList.add('active');
+    state[group] = el.getAttribute('data-v');
+    doFilter();
+  }
+
+  function clearAll(){
+    state.type='all'; state.province='all'; state.sector='all';
+    document.querySelectorAll('.filter-opt').forEach(e=>e.classList.remove('active'));
+    document.querySelectorAll('.filter-opt[data-v="all"]').forEach(e=>e.classList.add('active'));
+    document.getElementById('searchInput').value='';
+    doFilter();
+  }
+
+  function renderPills(){
+    const wrap = document.getElementById('activePills');
+    wrap.innerHTML = '';
+    Object.entries(state).forEach(([k,v])=>{
+      if(v!=='all') wrap.innerHTML += `<span class="af-pill">${v}<button class="af-rm" onclick="removePill('${k}')">×</button></span>`;
+    });
+  }
+
+  function removePill(k){
+    state[k]='all';
+    document.querySelectorAll(`#fg-${k} .filter-opt`).forEach(e=>e.classList.remove('active'));
+    document.querySelector(`#fg-${k} .filter-opt[data-v="all"]`).classList.add('active');
+    doFilter();
+  }
+
+  const ICONS = {Job:'💼',Learnership:'🎓',Internship:'📋',Project:'🚀'};
+  const TCLS  = {Job:'ti-J',Learnership:'ti-L',Internship:'ti-I',Project:'ti-P'};
+
+  function renderGrid(data){
+    const grid = document.getElementById('grid');
+    const isEmp = role==='employer';
+    grid.innerHTML='';
+
+    if(isEmp){
+      grid.innerHTML+=`<div class="post-cta" onclick="window.location.href='dashboard.html'">
+        <h3>+ Post a new opportunity</h3>
+        <p>Reach 2 400+ qualified learners with AI-powered matching.</p>
+        <button class="btn btn-primary btn-sm" style="width:fit-content;margin-top:4px">Go to dashboard →</button>
+      </div>`;
+    }
+
+    if(!data.length){
+      grid.innerHTML+=`<div class="empty-state"><h3>No results found</h3><p>Try adjusting your filters or search term.</p></div>`;
+      return;
+    }
+
+    data.forEach((o,i)=>{
+      const mc = o.match>=80?'var(--teal)':o.match>=65?'var(--gold)':'var(--ink-muted)';
+      grid.innerHTML+=`
+        <div class="opp-card" style="animation-delay:${i*.04}s" onclick="openModal(${o.id})">
+          <div class="card-top">
+            <div class="type-icon ${TCLS[o.type]||'ti-J'}">${ICONS[o.type]||'💼'}</div>
+            <button class="save-btn" id="sv${o.id}" onclick="toggleSave(event,${o.id})" title="Save">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </div>
+          <div>
+            <div class="card-title">${o.title}</div>
+            <div class="card-company">${o.company}</div>
+            <div class="card-loc">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              ${o.loc}
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="ctag ct-type">${o.type}</span>
+            ${o.funded?'<span class="ctag ct-funded">SETA funded</span>':''}
+            ${o.remote?'<span class="ctag ct-remote">Remote</span>':''}
+            ${o.urgent?'<span class="ctag ct-urgent">Closing soon</span>':''}
+          </div>
+          <div class="card-foot">
+            <div class="closing${o.urgent?' urgent':''}">Closes ${o.closing}</div>
+            ${!isEmp
+              ? `<div class="match-score" style="color:${mc}">${o.match}%<span class="ms-label">match</span></div>`
+              : `<div style="font-size:12px;color:var(--ink-muted)">${o.stipend}</div>`
+            }
+          </div>
+        </div>`;
+    });
+  }
+
+  function openModal(id){
+    const o = OPPS.find(x=>x.id===id);
+    if(!o) return;
+    currentOpp = o;
+    const isEmp = role==='employer';
+    const mc = o.match>=80?'var(--teal)':o.match>=65?'var(--gold)':'var(--ink-muted)';
+
+    document.getElementById('mTitle').textContent = o.title;
+    document.getElementById('mCo').textContent    = `${o.company} — ${o.loc}`;
+    document.getElementById('mDesc').textContent  = o.desc;
+    document.getElementById('mAi').innerHTML      = `<strong>AI insight:</strong> ${o.ai}`;
+    document.getElementById('mAiSect').style.display = isEmp?'none':'block';
+    document.getElementById('mApply').textContent    = isEmp?'View applicants':'Apply now';
+    document.getElementById('mApply').disabled       = false;
+    document.getElementById('mApply').removeAttribute('style');
+
+    document.getElementById('mMeta').innerHTML = `
+      <span class="m-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>${o.type}</span>
+      <span class="m-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${o.loc}</span>
+      <span class="m-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>${o.stipend}</span>
+      ${!isEmp?`<span class="m-meta-item" style="color:${mc};font-weight:600">${o.match}% AI match</span>`:''}`;
+
+    document.getElementById('mSkills').innerHTML = o.skills.map(s=>`<span style="font-size:12px;padding:4px 12px;border-radius:99px;background:var(--teal-lt);color:var(--teal);font-weight:500">${s}</span>`).join('');
+
+    document.getElementById('overlay').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+
+  function applyModal(){
+    if(role==='employer'){ window.location.href='dashboard.html'; return; }
+    const btn = document.getElementById('mApply');
+    btn.textContent='✓ Applied!';
+    btn.disabled=true;
+    btn.style.background='var(--success)';
+    btn.style.borderColor='var(--success)';
+    setTimeout(closeModal, 1400);
+  }
+
+  function closeModal(){ document.getElementById('overlay').classList.remove('open'); document.body.style.overflow=''; }
+  function maybeClose(e){ if(e.target===document.getElementById('overlay')) closeModal(); }
+
+  function toggleSave(e, id){
+    e.stopPropagation();
+    const btn = document.getElementById('sv'+id);
+    btn.classList.toggle('saved');
+    btn.querySelector('svg').setAttribute('fill', btn.classList.contains('saved')?'currentColor':'none');
+  }
+
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+  doFilter();
+</script>
+</body>
+</html>
