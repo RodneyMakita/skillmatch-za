@@ -131,7 +131,7 @@
         </div>
       </div>
 
-      <a href="#" class="forgot-link">Forgot your password?</a>
+      <a href="#" class="forgot-link" onclick="doForgotPassword(event)">Forgot your password?</a>
 
       <button class="btn btn-primary btn-submit" id="loginBtn" type="button" onclick="doLogin()">
         Log in
@@ -219,6 +219,34 @@
 
     /* Enter key triggers login */
     document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+    /* ── Forgot password ── */
+    async function doForgotPassword(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showError('Enter your email address above first, then click Forgot password.');
+        return;
+      }
+      const btn = e.target;
+      btn.textContent = 'Sending reset link…';
+      btn.style.pointerEvents = 'none';
+
+      // Supabase sends a magic reset link to the email
+      const { error } = await db.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/login.html'
+      });
+
+      btn.style.pointerEvents = '';
+      if (error) {
+        btn.textContent = 'Forgot your password?';
+        showError(error.message || 'Could not send reset email. Try again.');
+      } else {
+        hideError();
+        btn.textContent = '✓ Reset link sent — check your email';
+        btn.style.color = 'var(--teal)';
+      }
+    }
   </script>
 </body>
 </html>

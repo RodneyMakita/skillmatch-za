@@ -389,6 +389,8 @@
           ${o.is_funded ? '<span class="ctag ct-funded">SETA funded</span>' : ''}
           ${o.is_remote ? '<span class="ctag ct-remote">Remote</span>' : ''}
           ${o.is_urgent ? '<span class="ctag ct-urgent">Closing soon</span>' : ''}
+          ${o.apply_url ? '<span class="ctag" style="background:#e8f4fd;color:#1a6fa8;font-size:10px">🔗 External</span>' : ''}
+          ${o.source && !['external','employer'].includes(o.source||'') ? `<span class="ctag" style="background:#f0eeff;color:#534AB7;font-size:10px;text-transform:capitalize">${esc(o.source)}</span>` : ''}
         </div>
         <div class="card-foot">
           <div class="closing${o.is_urgent?' urgent':''}">Closes ${formatDate(o.closing_date)}</div>
@@ -426,7 +428,7 @@
     document.getElementById('mCo').textContent    = `${o.company} — ${o.location}`;
     document.getElementById('mDesc').textContent  = o.description || 'No description provided.';
     document.getElementById('mAiSect').style.display = isEmp ? 'none' : 'block';
-    document.getElementById('mApply').textContent    = isEmp ? 'View applicants' : 'Apply now';
+    document.getElementById('mApply').textContent    = isEmp ? 'View applicants' : (o.apply_url ? '🔗 Apply on site' : 'Apply now');
     document.getElementById('mApply').disabled       = false;
     document.getElementById('mApply').removeAttribute('style');
 
@@ -447,15 +449,21 @@
     /* Load or compute AI insight */
     if (!isEmp) {
       const aiEl = document.getElementById('mAi');
-      if (learnerMatches[o.id]) {
-        aiEl.innerHTML = `<strong>AI insight:</strong> ${esc(learnerMatches[o.id].insight)}`;
+      const cached = learnerMatches[o.id];
+      if (cached && cached.insight && cached.insight !== 'AI scoring unavailable — score based on keyword overlap.') {
+        aiEl.innerHTML = `<span style="color:var(--teal);font-weight:600">AI insight:</span> ${esc(cached.insight)}`;
       } else {
         aiEl.innerHTML = `<span class="ai-loading">Calculating your match score…</span>`;
-        const result = await quickScore(o.id);
-        learnerMatches[o.id] = { score: result.score, insight: result.insight };
-        aiEl.innerHTML = `<strong>AI insight:</strong> ${esc(result.insight)}`;
-        /* Update card score if visible */
-        applyFilters();
+        try {
+          const result = await quickScore(o.id);
+          learnerMatches[o.id] = { score: result.score, insight: result.insight };
+          aiEl.innerHTML = result.insight && result.insight !== 'AI scoring unavailable — score based on keyword overlap.'
+            ? `<span style="color:var(--teal);font-weight:600">AI insight:</span> ${esc(result.insight)}`
+            : `<span style="color:var(--ink-muted)">Skills match based on keyword overlap. Add more skills to get AI insights.</span>`;
+          applyFilters();
+        } catch(e) {
+          aiEl.innerHTML = `<span style="color:var(--ink-muted)">AI insight unavailable — check your connection.</span>`;
+        }
       }
     }
   }
@@ -463,7 +471,22 @@
   async function applyModal() {
     if (role === 'employer') { window.location.href = 'dashboard.html'; return; }
     const score = learnerMatches[currentOpp?.id]?.score || 0;
-    const res   = await applyToOpportunity(currentOpp.id, score);
+
+    /* External JSearch job — open in new tab */
+    if (currentOpp?.apply_url) {
+      window.open(currentOpp.apply_url, '_blank', 'noopener,noreferrer');
+      await applyToOpportunity(currentOpp.id, score).catch(()=>{});
+      const btn = document.getElementById('mApply');
+      btn.textContent = '✓ Opened!';
+      btn.disabled = true;
+      btn.style.background = 'var(--teal)';
+      showToast('✓ Application page opened in new tab — good luck!');
+      setTimeout(closeModal, 1400);
+      return;
+    }
+
+    /* Internal opportunity — save to DB */
+    const res = await applyToOpportunity(currentOpp.id, score);
     if (res.success || res.alreadyApplied) {
       const btn = document.getElementById('mApply');
       btn.textContent = '✓ Applied!';

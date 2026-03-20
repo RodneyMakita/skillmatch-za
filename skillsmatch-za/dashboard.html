@@ -188,7 +188,6 @@
       <button class="sb-link" onclick="showView('l-matches',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>My matches</button>
       <button class="sb-link" onclick="showView('l-apps',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Applications</button>
       <button class="sb-link" onclick="showView('l-profile',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>My profile</button>
-      <button class="sb-link" onclick="showView('l-account',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Account settings</button>
     </div>
 
     <div id="nav-employer" style="display:none">
@@ -196,7 +195,6 @@
       <button class="sb-link" onclick="showView('e-listings',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>My listings</button>
       <button class="sb-link" onclick="showView('e-applicants',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Applicants</button>
       <button class="sb-link" onclick="showView('e-post',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Post opportunity</button>
-      <button class="sb-link" onclick="showView('e-account',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Account settings</button>
     </div>
 
     <div id="nav-admin" style="display:none">
@@ -454,105 +452,8 @@
         <div class="panel"><div class="panel-head"><span class="panel-title">Province breakdown</span><button class="btn btn-ghost btn-sm" onclick="exportProvince()">Export</button></div><div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Province</th><th>Learners</th><th>Placements</th><th>Rate</th><th>Distribution</th></tr></thead><tbody id="provinceTbody"></tbody></table></div></div>
       </div>
 
-
-      <!-- L: Account Settings -->
-      <div class="view" id="view-l-account">
-        <div class="page-head"><h1>Account settings</h1><p>Update your personal details and password.</p></div>
-        <div style="display:flex;flex-direction:column;gap:18px;max-width:560px">
-          <div class="panel">
-            <div class="panel-head"><span class="panel-title">Personal details</span><button class="panel-action" onclick="saveLearnerAccount()">Save changes</button></div>
-            <div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                <div class="form-group"><label class="form-label">First name</label><input type="text" id="acFirst"/></div>
-                <div class="form-group"><label class="form-label">Last name</label><input type="text" id="acLast"/></div>
-              </div>
-              <div class="form-group"><label class="form-label">Email</label><input type="email" id="acEmail" readonly style="opacity:.6"/></div>
-              <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="acPhone" placeholder="0712 345 678"/></div>
-              <div class="form-group"><label class="form-label">Province</label>
-                <select id="acProv"><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>North West</option><option>Northern Cape</option><option>Western Cape</option></select>
-              </div>
-              <button class="btn btn-primary" onclick="saveLearnerAccount()">Save details</button>
-            </div>
-          </div>
-          <div class="panel">
-            <div class="panel-head"><span class="panel-title">Change password</span></div>
-            <div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
-              <div class="form-group"><label class="form-label">New password</label><input type="password" id="acNewPw" placeholder="At least 6 characters"/></div>
-              <div class="form-group"><label class="form-label">Confirm new password</label><input type="password" id="acConfirmPw" placeholder="Repeat password"/></div>
-              <button class="btn btn-primary" onclick="changeLearnerPassword()">Update password</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- E: Account Settings -->
-      <div class="view" id="view-e-account">
-        <div class="page-head"><h1>Account settings</h1><p>Update your company and contact details.</p></div>
-        <div style="display:flex;flex-direction:column;gap:18px;max-width:560px">
-          <div class="panel">
-            <div class="panel-head"><span class="panel-title">Company details</span><button class="panel-action" onclick="saveEmployerAccount()">Save changes</button></div>
-            <div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
-              <div class="form-group"><label class="form-label">Company name</label><input type="text" id="eacCompany"/></div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                <div class="form-group"><label class="form-label">Contact first name</label><input type="text" id="eacFirst"/></div>
-                <div class="form-group"><label class="form-label">Contact last name</label><input type="text" id="eacLast"/></div>
-              </div>
-              <div class="form-group"><label class="form-label">Email</label><input type="email" id="eacEmail" readonly style="opacity:.6"/></div>
-              <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="eacPhone" placeholder="0712 345 678"/></div>
-              <div class="form-group"><label class="form-label">Province</label>
-                <select id="eacProv"><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>North West</option><option>Northern Cape</option><option>Western Cape</option></select>
-              </div>
-              <button class="btn btn-primary" onclick="saveEmployerAccount()">Save details</button>
-            </div>
-          </div>
-          <div class="panel">
-            <div class="panel-head"><span class="panel-title">Change password</span></div>
-            <div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
-              <div class="form-group"><label class="form-label">New password</label><input type="password" id="eacNewPw" placeholder="At least 6 characters"/></div>
-              <div class="form-group"><label class="form-label">Confirm new password</label><input type="password" id="eacConfirmPw" placeholder="Repeat password"/></div>
-              <button class="btn btn-primary" onclick="changeEmployerPassword()">Update password</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div><!-- /content -->
   </main>
-
-  <!-- Edit Opportunity Modal -->
-  <div id="editOppModal" style="display:none;position:fixed;inset:0;background:rgba(14,17,23,.5);z-index:200;align-items:center;justify-content:center;padding:20px">
-    <div style="background:var(--white);border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:28px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-        <h2 style="font-size:18px;letter-spacing:-.5px">Edit opportunity</h2>
-        <button onclick="closeEditOpp()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--ink-muted)">✕</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <input type="hidden" id="editOppId"/>
-        <div class="form-group"><label class="form-label required">Job title</label><input type="text" id="editTitle"/></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="form-group"><label class="form-label">Type</label><select id="editType"><option>Learnership</option><option>Job</option><option>Internship</option><option>Project</option></select></div>
-          <div class="form-group"><label class="form-label">Sector</label><select id="editSector"><option>ICT</option><option>Finance</option><option>Retail</option><option>Engineering</option><option>Health</option><option>Other</option></select></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="form-group"><label class="form-label">Province</label><select id="editProv"><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>North West</option><option>Northern Cape</option><option>Western Cape</option><option>Remote</option></select></div>
-          <div class="form-group"><label class="form-label">Location</label><input type="text" id="editLoc"/></div>
-        </div>
-        <div class="form-group"><label class="form-label">Required skills (comma or newline separated)</label><textarea id="editDesc" rows="4"></textarea></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="form-group"><label class="form-label">Closing date</label><input type="date" id="editClose"/></div>
-          <div class="form-group"><label class="form-label">Stipend / salary</label><input type="text" id="editStipend"/></div>
-        </div>
-        <div style="display:flex;gap:16px">
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="editFunded" style="accent-color:var(--teal)"> SETA funded</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="editRemote" style="accent-color:var(--teal)"> Remote</label>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:6px">
-          <button class="btn btn-primary" onclick="saveEditOpp()">Save changes</button>
-          <button class="btn btn-ghost" onclick="closeEditOpp()">Cancel</button>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Toast -->
@@ -627,8 +528,6 @@ function showView(id, btn) {
   if (id === 'a-learners'   && !document.getElementById('learnersTableBody').dataset.loaded) loadAdminLearners();
   if (id === 'a-report'     && !document.getElementById('institutionTbody').dataset.loaded) loadReport();
   if (id === 'a-province'   && !document.getElementById('provinceTbody').dataset.loaded)    loadProvince();
-  if (id === 'l-account'    && !document.getElementById('acFirst').value)                    loadLearnerAccount();
-  if (id === 'e-account'    && !document.getElementById('eacFirst').value)                   loadEmployerAccount();
 }
 
 /* ══════════════════════════════════════
@@ -682,68 +581,121 @@ async function bootLearner(fullName) {
       <div class="scard"><div class="scard-label">Profile strength</div><div class="scard-val" style="color:var(--teal);font-size:18px">${s.strength >= 70 ? 'Strong' : s.strength >= 40 ? 'Fair' : 'Weak'}</div><div class="scard-up">↑ Add more skills</div></div>`;
   }
 
-  /* Load top 3 matches for home */
-  const matchRes = await getMyMatches();
+  /* Load top 3 matches — always run pipeline to fetch JSearch jobs + AI scores */
   const homeCards = document.getElementById('homeMatchCards');
-  homeCards.innerHTML = '';
+  /* Show animated progress message while pipeline runs */
+  homeCards.innerHTML = `
+    <div style="padding:20px 18px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--teal);animation:pulse 1s infinite"></div>
+        <span style="font-size:13px;color:var(--ink-soft)" id="matchProgress">Searching LinkedIn, Indeed, Careers24…</span>
+      </div>
+      ${skeletonCards(3)}
+    </div>`;
 
-  if (matchRes.success && matchRes.data.length) {
-    matchRes.data.slice(0, 3).forEach(m => {
-      const opp = m.opportunities;
-      if (!opp) return;
-      homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, opp, m.id));
-    });
-  } else {
-    /* No matches yet — run AI pipeline if match.js is loaded */
-    if (typeof runMatchingPipeline !== 'function') {
-      homeCards.innerHTML = emptyState('Complete your profile', 'Add skills to your profile to get AI-powered matches.');
-      return;
+  const _progressMsgs = [
+    'Searching LinkedIn, Indeed, Careers24…',
+    'Fetching real job listings…',
+    'Running AI match scoring…',
+    'Calculating skill gaps…',
+    'Ranking your best matches…'
+  ];
+  let _pIdx = 0;
+  const _pTimer = setInterval(() => {
+    const el = document.getElementById('matchProgress');
+    if (el) el.textContent = _progressMsgs[++_pIdx % _progressMsgs.length];
+  }, 2000);
+
+  async function _loadHomeMatches() {
+    /* Try full pipeline first (JSearch + AI scoring) */
+    if (typeof runMatchingPipeline === 'function') {
+      try {
+        const pipeline = await runMatchingPipeline({ fetchExternal: true });
+        clearInterval(_pTimer);
+        homeCards.innerHTML = '';
+        pipeline.slice(0, 3).forEach(m => {
+          if (!m.opportunity) return;
+          homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, m.opportunity, null));
+        });
+        if (!pipeline.length) homeCards.innerHTML = emptyState('No matches yet', 'Add skills to your profile to get AI-powered matches.');
+        return;
+      } catch(err) {
+        console.warn('Pipeline failed, falling back to cached matches:', err.message);
+      }
     }
-    homeCards.innerHTML = `<div style="padding:16px;text-align:center;font-size:13px;color:var(--ink-muted)">Running AI matching… this takes a moment.</div>`;
-    const pipeline = await runMatchingPipeline();
+    /* Fallback: cached matches from DB */
+    const matchRes = await getMyMatches();
     homeCards.innerHTML = '';
-    pipeline.slice(0, 3).forEach(m => {
-      if (!m.opportunity) return;
-      homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, m.opportunity, null));
-    });
-    if (!pipeline.length) homeCards.innerHTML = emptyState('No matches yet', 'Complete your skills profile to get AI-powered matches.');
+    if (matchRes.success && matchRes.data.length) {
+      matchRes.data.slice(0, 3).forEach(m => {
+        const opp = m.opportunities;
+        if (!opp) return;
+        homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, opp, m.id));
+      });
+    } else {
+      homeCards.innerHTML = emptyState('Add skills to your profile', "We'll match you to real jobs, learnerships and internships.");
+    }
   }
+  _loadHomeMatches();
 }
 
 async function loadAllMatches() {
   const container = document.getElementById('allMatchCards');
   container.dataset.loaded = '1';
-  container.innerHTML = skeletonCards(4);
+  container.innerHTML = `
+    <div style="padding:16px 18px;display:flex;align-items:center;gap:10px">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--teal);animation:pulse 1s infinite;flex-shrink:0"></div>
+      <span style="font-size:13px;color:var(--ink-soft)" id="matchesProgress">Fetching jobs from LinkedIn, Indeed, Careers24…</span>
+    </div>
+    ${skeletonCards(4)}`;
 
-  const matchRes = await getMyMatches();
-  container.innerHTML = '';
+  /* Cycle progress messages */
+  const _msgs = ['Fetching jobs from LinkedIn, Indeed, Careers24…','Running AI match scoring…','Ranking your best matches…'];
+  let _i = 0;
+  const _t = setInterval(() => {
+    const el = document.getElementById('matchesProgress');
+    if (el) el.textContent = _msgs[++_i % _msgs.length];
+  }, 2000);
 
-  if (!matchRes.success || !matchRes.data.length) {
-    /* Try running the pipeline if match.js is loaded */
+  try {
+    /* Always run full pipeline — gets fresh JSearch jobs + AI scores */
+    let results = [];
     if (typeof runMatchingPipeline === 'function') {
-      container.innerHTML = `<div style="padding:20px;text-align:center;font-size:13px;color:var(--ink-muted)">Running AI matching… this takes a moment.</div>`;
-      const pipeline = await runMatchingPipeline();
-      container.innerHTML = '';
-      if (pipeline.length) {
-        document.getElementById('matchSubtitle').textContent = `${pipeline.length} opportunities matched to your skills — sorted by AI score.`;
-        pipeline.forEach(m => {
-          if (!m.opportunity) return;
-          container.appendChild(buildMatchCard(m.score, m.ai_insight, m.opportunity, null));
-        });
-        return;
-      }
+      results = await runMatchingPipeline({ fetchExternal: true });
     }
-    container.innerHTML = emptyState('No matches found', 'Update your profile and skills to generate matches.');
-    document.getElementById('matchSubtitle').textContent = 'No matches yet — complete your profile.';
-    return;
-  }
 
-  document.getElementById('matchSubtitle').textContent = `${matchRes.data.length} opportunities matched to your skills — sorted by AI score.`;
-  matchRes.data.forEach(m => {
-    const opp = m.opportunities;
-    if (!opp) return;
-    container.appendChild(buildMatchCard(m.score, m.ai_insight, opp, m.id));
-  });
+    clearInterval(_t);
+    container.innerHTML = '';
+
+    if (results.length) {
+      document.getElementById('matchSubtitle').textContent =
+        `${results.length} opportunit${results.length===1?'y':'ies'} matched to your skills — sorted by AI score.`;
+      results.forEach(m => {
+        if (!m.opportunity) return;
+        container.appendChild(buildMatchCard(m.score, m.ai_insight, m.opportunity, null));
+      });
+      return;
+    }
+
+    /* Fallback: cached matches from DB */
+    const matchRes = await getMyMatches();
+    if (matchRes.success && matchRes.data.length) {
+      document.getElementById('matchSubtitle').textContent =
+        `${matchRes.data.length} cached matches — refresh to get latest jobs.`;
+      matchRes.data.forEach(m => {
+        const opp = m.opportunities;
+        if (!opp) return;
+        container.appendChild(buildMatchCard(m.score, m.ai_insight, opp, m.id));
+      });
+    } else {
+      container.innerHTML = emptyState('No matches yet', 'Add skills to your profile to get AI-powered job matches.');
+      document.getElementById('matchSubtitle').textContent = 'Complete your profile to see matches.';
+    }
+  } catch(err) {
+    clearInterval(_t);
+    console.error('loadAllMatches error:', err);
+    container.innerHTML = emptyState('Could not load matches', 'Check your connection and try refreshing the page.');
+  }
 }
 
 async function loadApplications() {
@@ -935,10 +887,6 @@ async function postOpportunity() {
   const title = document.getElementById('postTitle').value.trim();
   if (!title) { showToast('Please enter a job title.'); return; }
 
-  // Parse skills from textarea: split by comma/newline, clean up
-  const rawSkills = document.getElementById('postDesc').value;
-  const skillsReq = rawSkills.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
-
   const opp = {
     title,
     company:      localStorage.getItem('sm_name') || 'Company',
@@ -946,8 +894,7 @@ async function postOpportunity() {
     sector:       document.getElementById('postSector').value,
     province:     document.getElementById('postProv').value,
     location:     document.getElementById('postLoc').value || document.getElementById('postProv').value,
-    description:  rawSkills,
-    skills_req:   skillsReq,
+    description:  document.getElementById('postDesc').value,
     closing_date: document.getElementById('postClose').value || null,
     stipend:      document.getElementById('postStipend').value,
     is_funded:    document.getElementById('postFunded').checked,
@@ -1020,10 +967,10 @@ async function loadAdminLearners() {
 function renderAdminLearnerTable(data) {
   const tbody = document.getElementById('learnersTableBody');
   document.getElementById('learnersSubtitle').textContent = `${data.length} learners in registry`;
-  if (!data.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted)">No learners found — check RLS policies allow admin SELECT on learners and users.</td></tr>`; return; }
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted)">No learners found</td></tr>`; return; }
   tbody.innerHTML = data.map(l => {
     const u = l.users || {};
-    const n = `${u.first_name||''} ${u.last_name||''}`.trim() || l.users?.email || 'Unknown';
+    const n = `${u.first_name||''} ${u.last_name||''}`.trim() || 'Unknown';
     const mc = (l.avg_match_score||0) >= 80 ? 'var(--teal)' : (l.avg_match_score||0) >= 65 ? 'var(--gold)' : 'var(--ink-muted)';
     const pillMap = { placed:'sp-placed', matched:'sp-matched', searching:'sp-searching', inactive:'sp-inactive' };
     return `<tr>
@@ -1124,43 +1071,70 @@ async function exportProvince() {
 
 /* ── Build match card DOM element ── */
 function buildMatchCard(score, aiInsight, opp, matchId) {
-  const mc   = score >= 80 ? 'score-high' : 'score-mid';
-  const barC = score >= 80 ? '' : ' mid';
+  const mc    = score >= 80 ? 'score-high' : 'score-mid';
+  const barC  = score >= 80 ? '' : ' mid';
   const ICONS = {Job:'💼',Learnership:'🎓',Internship:'📋',Project:'🚀'};
-  const div  = document.createElement('div');
+  const isExternal = !!(opp.apply_url);
+  const srcBadge   = opp.source && opp.source !== 'external'
+    ? `<span class="mc-tag" style="background:#f0eeff;color:#534AB7;text-transform:capitalize">${esc(opp.source)}</span>` : '';
+
+  /* AI insight — show a placeholder while we wait if not yet scored */
+  const insightHtml = aiInsight && aiInsight !== 'AI scoring unavailable — score based on keyword overlap.'
+    ? `<div class="mc-tip"><span style="color:var(--teal);font-weight:600">AI insight:</span> ${esc(aiInsight)}</div>`
+    : `<div class="mc-tip" style="color:var(--ink-muted);font-style:italic">Scoring this match…</div>`;
+
+  const div = document.createElement('div');
   div.className = 'match-card';
   div.innerHTML = `
     <div class="mc-header">
-      <div><div class="mc-title">${esc(opp.title||'')}</div><div class="mc-company">${esc(opp.company||'')} &mdash; ${esc(opp.location||'')}</div></div>
+      <div>
+        <div class="mc-title">${esc(opp.title||'')}</div>
+        <div class="mc-company">${esc(opp.company||'')} &mdash; ${esc(opp.location||'')}</div>
+      </div>
       <div class="mc-score ${mc}">${score}%</div>
     </div>
     <div class="mc-bar-bg"><div class="mc-bar${barC}" style="width:0%" data-w="${score}"></div></div>
     <div class="mc-tags">
-      <span class="mc-tag">${ICONS[opp.type]||''} ${esc(opp.type||'')}</span>
-      ${opp.is_funded ? '<span class="mc-tag funded">SETA funded</span>' : ''}
-      ${opp.is_remote ? '<span class="mc-tag">Remote</span>' : ''}
-      ${opp.is_urgent ? `<span class="mc-tag" style="background:var(--coral-lt);color:var(--coral)">Closing soon</span>` : ''}
+      <span class="mc-tag">${ICONS[opp.type]||'💼'} ${esc(opp.type||'Job')}</span>
+      ${opp.is_funded  ? '<span class="mc-tag funded">SETA funded</span>' : ''}
+      ${opp.is_remote  ? '<span class="mc-tag">Remote</span>' : ''}
+      ${opp.is_urgent  ? '<span class="mc-tag" style="background:var(--coral-lt);color:var(--coral)">Closing soon</span>' : ''}
+      ${opp.stipend    ? `<span class="mc-tag" style="background:var(--gold-lt);color:var(--gold)">${esc(opp.stipend)}</span>` : ''}
+      ${srcBadge}
     </div>
-    <div class="mc-tip"><strong>AI insight:</strong> ${esc(aiInsight||'No insight available.')}</div>
+    ${insightHtml}
     <div class="mc-apply">
-      <button class="btn btn-primary btn-sm">Apply now</button>
+      <button class="btn btn-primary btn-sm apply-btn">${isExternal ? '🔗 Apply on site' : 'Apply now'}</button>
       <button class="btn btn-ghost btn-sm" onclick="if(this.classList.toggle('saved')) this.textContent='Saved ✓'">Save</button>
     </div>`;
 
-  /* Animate bar */
+  /* Animate score bar */
   setTimeout(() => {
     const bar = div.querySelector('.mc-bar');
     if (bar) bar.style.width = bar.getAttribute('data-w') + '%';
-  }, 100);
+  }, 120);
 
-  /* Apply button */
-  div.querySelector('.btn-primary').addEventListener('click', async () => {
+  /* Apply button — external jobs open in new tab, internal save to DB */
+  div.querySelector('.apply-btn').addEventListener('click', async () => {
+    if (isExternal && opp.apply_url) {
+      /* JSearch / external job — open application in new tab */
+      window.open(opp.apply_url, '_blank', 'noopener,noreferrer');
+      /* Still log the click as an application in our DB */
+      await applyToOpportunity(opp.id, score).catch(()=>{});
+      div.querySelector('.mc-apply').innerHTML =
+        `<span class="applied-badge">✓ Opened</span>
+         <span style="font-size:12px;color:var(--ink-muted);align-self:center;margin-left:6px">Good luck!</span>`;
+      return;
+    }
+    /* Internal opportunity — save application to DB */
     const res = await applyToOpportunity(opp.id, score);
     if (res.success || res.alreadyApplied) {
       div.querySelector('.mc-apply').innerHTML =
         `<span class="applied-badge">✓ Applied</span>
          <span style="font-size:12px;color:var(--ink-muted);align-self:center;margin-left:6px">We'll notify you of updates.</span>`;
       showToast('✓ Application submitted!');
+    } else {
+      showToast('✗ Error — try again');
     }
   });
 
@@ -1195,157 +1169,6 @@ function showToast(msg){
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-/* ── Archive opportunity ── */
-async function archiveOpp(oppId, btn) {
-  if (!confirm('Archive this listing? It will no longer appear to learners.')) return;
-  const res = await deleteOpportunity(oppId);
-  if (res.success) {
-    btn.closest('.opp-row').style.opacity = '0.4';
-    btn.textContent = 'Archived';
-    btn.disabled = true;
-    showToast('✓ Listing archived');
-    // Reset lazy-load so list refreshes on next visit
-    document.getElementById('allListings').dataset.loaded = '';
-  } else showToast('✗ Error archiving');
-}
-
-/* ── Edit opportunity modal ── */
-let _editOppCache = {};
-async function openEditOpp(oppId) {
-  const res = await getOpportunityById(oppId);
-  if (!res.success) { showToast('✗ Could not load listing'); return; }
-  const o = res.data;
-  _editOppCache = o;
-  document.getElementById('editOppId').value    = o.id;
-  document.getElementById('editTitle').value    = o.title || '';
-  document.getElementById('editType').value     = o.type  || 'Job';
-  document.getElementById('editSector').value   = o.sector || 'ICT';
-  document.getElementById('editProv').value     = o.province || '';
-  document.getElementById('editLoc').value      = o.location || '';
-  document.getElementById('editDesc').value     = (o.skills_req || []).join(', ') || o.description || '';
-  document.getElementById('editClose').value    = o.closing_date ? o.closing_date.split('T')[0] : '';
-  document.getElementById('editStipend').value  = o.stipend || '';
-  document.getElementById('editFunded').checked = o.is_funded || false;
-  document.getElementById('editRemote').checked = o.is_remote || false;
-  document.getElementById('editOppModal').style.display = 'flex';
-}
-
-function closeEditOpp() {
-  document.getElementById('editOppModal').style.display = 'none';
-}
-
-async function saveEditOpp() {
-  const oppId = document.getElementById('editOppId').value;
-  const rawSkills = document.getElementById('editDesc').value;
-  const skillsReq = rawSkills.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
-  const updates = {
-    title:        document.getElementById('editTitle').value.trim(),
-    type:         document.getElementById('editType').value,
-    sector:       document.getElementById('editSector').value,
-    province:     document.getElementById('editProv').value,
-    location:     document.getElementById('editLoc').value,
-    description:  rawSkills,
-    skills_req:   skillsReq,
-    closing_date: document.getElementById('editClose').value || null,
-    stipend:      document.getElementById('editStipend').value,
-    is_funded:    document.getElementById('editFunded').checked,
-    is_remote:    document.getElementById('editRemote').checked,
-  };
-  if (!updates.title) { showToast('Please enter a job title'); return; }
-  const res = await updateOpportunity(oppId, updates);
-  if (res.success) {
-    closeEditOpp();
-    showToast('✓ Listing updated!');
-    document.getElementById('allListings').dataset.loaded = '';
-    document.getElementById('empListings').innerHTML = '';
-    bootEmployer();
-  } else showToast('✗ Save failed — try again');
-}
-
-// Close modal on backdrop click
-document.getElementById('editOppModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('editOppModal')) closeEditOpp();
-});
-
-/* ── Learner account settings ── */
-async function loadLearnerAccount() {
-  const res = await getLearnerProfile();
-  if (!res.success) return;
-  const l = res.data;
-  const u = l.users || {};
-  document.getElementById('acFirst').value = u.first_name || '';
-  document.getElementById('acLast').value  = u.last_name  || '';
-  document.getElementById('acEmail').value = u.email      || localStorage.getItem('sm_email') || '';
-  document.getElementById('acPhone').value = u.phone      || '';
-  document.getElementById('acProv').value  = u.province   || '';
-}
-
-async function saveLearnerAccount() {
-  const updates = {
-    first_name: document.getElementById('acFirst').value.trim(),
-    last_name:  document.getElementById('acLast').value.trim(),
-    phone:      document.getElementById('acPhone').value.trim(),
-    province:   document.getElementById('acProv').value,
-  };
-  const res = await updateUserDetails(updates);
-  if (res.success) {
-    document.getElementById('sbName').textContent = `${updates.first_name} ${updates.last_name}`.trim();
-    showToast('✓ Account details saved!');
-  } else showToast('✗ Save failed — try again');
-}
-
-async function changeLearnerPassword() {
-  const pw  = document.getElementById('acNewPw').value;
-  const pw2 = document.getElementById('acConfirmPw').value;
-  if (pw.length < 6)   { showToast('Password must be at least 6 characters'); return; }
-  if (pw !== pw2)      { showToast('Passwords do not match'); return; }
-  const { error } = await db.auth.updateUser({ password: pw });
-  if (error) showToast('✗ ' + error.message);
-  else { showToast('✓ Password updated!'); document.getElementById('acNewPw').value = ''; document.getElementById('acConfirmPw').value = ''; }
-}
-
-/* ── Employer account settings ── */
-async function loadEmployerAccount() {
-  const res = await getEmployerProfile();
-  if (!res.success) return;
-  const e = res.data;
-  const u = e.users || {};
-  document.getElementById('eacCompany').value = e.company_name || '';
-  document.getElementById('eacFirst').value   = u.first_name   || '';
-  document.getElementById('eacLast').value    = u.last_name    || '';
-  document.getElementById('eacEmail').value   = u.email        || localStorage.getItem('sm_email') || '';
-  document.getElementById('eacPhone').value   = u.phone        || '';
-  document.getElementById('eacProv').value    = u.province     || '';
-}
-
-async function saveEmployerAccount() {
-  const companyName = document.getElementById('eacCompany').value.trim();
-  const firstName   = document.getElementById('eacFirst').value.trim();
-  const lastName    = document.getElementById('eacLast').value.trim();
-  const res = await updateEmployerProfile({
-    company_name: companyName,
-    first_name:   firstName,
-    last_name:    lastName,
-    phone:        document.getElementById('eacPhone').value.trim(),
-    province:     document.getElementById('eacProv').value,
-  });
-  if (res.success) {
-    document.getElementById('sbName').textContent = `${firstName} ${lastName}`.trim();
-    localStorage.setItem('sm_name', `${firstName} ${lastName}`.trim());
-    showToast('✓ Account details saved!');
-  } else showToast('✗ Save failed — try again');
-}
-
-async function changeEmployerPassword() {
-  const pw  = document.getElementById('eacNewPw').value;
-  const pw2 = document.getElementById('eacConfirmPw').value;
-  if (pw.length < 6) { showToast('Password must be at least 6 characters'); return; }
-  if (pw !== pw2)    { showToast('Passwords do not match'); return; }
-  const { error } = await db.auth.updateUser({ password: pw });
-  if (error) showToast('✗ ' + error.message);
-  else { showToast('✓ Password updated!'); document.getElementById('eacNewPw').value = ''; document.getElementById('eacConfirmPw').value = ''; }
 }
 </script>
 </body>

@@ -747,6 +747,8 @@
 
   </div><!-- /page-wrap -->
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/api.js"></script>
   <script>
     /* ── Province → Cities + Universities data ── */
     const PROVINCE_DATA = {
@@ -1108,7 +1110,7 @@
     }
 
     /* ── Learner submit ── */
-    function submitLearner() {
+    async function submitLearner() {
       // Collect qualifications
       const qualEntries = collectQualifications();
       const certEntries = collectCertificates();
@@ -1146,22 +1148,46 @@
       const btn = document.getElementById('learnerSubmitBtn');
       btn.textContent = 'Creating account…';
       btn.classList.add('loading');
+      btn.disabled = true;
 
-      /* Save to localStorage — swap for real API call when backend is ready */
-      localStorage.setItem('sm_role',   'learner');
-      localStorage.setItem('sm_email',  v.email);
-      localStorage.setItem('sm_name',   `${v.firstName} ${v.lastName}`);
-      localStorage.setItem('sm_skills', JSON.stringify([...skills]));
-      localStorage.setItem('sm_auth',   'true');
+      const res = await registerUser({
+        role:            'learner',
+        email:           v.email,
+        password:        v.password,
+        firstName:       v.firstName,
+        lastName:        v.lastName,
+        province:        v.province,
+        phone:           document.getElementById('l-phone')?.value?.trim() || '',
+        institutionType: v.instType,
+        institutionName: v.institution,
+        qualification:   v.qual,
+        studyField:      primaryQual.sector || '',
+        skills:          [...skills],
+        qualifications:  qualEntries,
+        certificates:    certEntries,
+        linkedin_url:    v.linkedin,
+        github_url:      v.github,
+        cv_url:          v.cvLink,
+        city:            v.city,
+      });
 
-      setTimeout(() => {
-        showSuccess();
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1400);
-      }, 1000);
+      btn.classList.remove('loading');
+      btn.disabled = false;
+
+      if (!res.success) {
+        btn.textContent = 'Create my account';
+        const msg = (res.error || '').toLowerCase().includes('already')
+          ? 'An account with this email already exists. Try logging in instead.'
+          : (res.error || 'Registration failed — please try again.');
+        return showError(msg);
+      }
+
+      showSuccess();
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1400);
     }
 
     /* ── Employer submit ── */
-    function submitEmployer() {
+    async function submitEmployer() {
       const v = {
         company:   document.getElementById('e-company').value.trim(),
         sector:    document.getElementById('e-sector').value,
@@ -1186,17 +1212,31 @@
       const btn = document.getElementById('employerSubmitBtn');
       btn.textContent = 'Creating account…';
       btn.classList.add('loading');
+      btn.disabled = true;
 
-      localStorage.setItem('sm_role',    'employer');
-      localStorage.setItem('sm_email',   v.email);
-      localStorage.setItem('sm_name',    `${v.firstName} ${v.lastName}`);
-      localStorage.setItem('sm_company', v.company);
-      localStorage.setItem('sm_auth',    'true');
+      const res = await registerUser({
+        role:        'employer',
+        email:       v.email,
+        password:    v.password,
+        firstName:   v.firstName,
+        lastName:    v.lastName,
+        province:    v.province,
+        companyName: v.company,
+      });
 
-      setTimeout(() => {
-        showSuccess();
-        setTimeout(() => { window.location.href = 'browse.html'; }, 1400);
-      }, 1000);
+      btn.classList.remove('loading');
+      btn.disabled = false;
+
+      if (!res.success) {
+        btn.textContent = 'Create employer account';
+        const msg = (res.error || '').toLowerCase().includes('already')
+          ? 'An account with this email already exists. Try logging in instead.'
+          : (res.error || 'Registration failed — please try again.');
+        return showError(msg);
+      }
+
+      showSuccess();
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1400);
     }
   </script>
 

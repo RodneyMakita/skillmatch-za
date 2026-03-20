@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"/>
+<title>Edge Function Debug</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:monospace;background:#0e1117;color:#9fe1cb;padding:24px;max-width:860px;margin:0 auto}
+  h2{color:#2dd4a0;margin-bottom:4px;font-size:20px}
+  .sub{color:#7a8090;font-size:13px;margin-bottom:20px}
+  pre{background:#1a1f2e;padding:16px;border-radius:8px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;font-size:12px;margin-bottom:16px;min-height:60px;max-height:400px;overflow-y:auto;line-height:1.6}
+  .btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  button{background:#0d7a5f;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-family:monospace;transition:opacity .15s}
+  button:hover{opacity:.8}
+  button.danger{background:#8b2e1a}
+  button.neutral{background:#2a2f3e}
+  .cfg{background:#1a1f2e;border-radius:10px;padding:16px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+  .cfg-row{display:grid;grid-template-columns:160px 1fr;gap:8px;align-items:center}
+  .cfg-row label{font-size:12px;color:#7a8090}
+  .cfg-row input{background:#0e1117;border:1px solid #2a2f3e;color:#9fe1cb;padding:7px 10px;border-radius:6px;font-family:monospace;font-size:12px;outline:none}
+  .cfg-row input:focus{border-color:#0d7a5f}
+  .section-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#4a5060;margin-bottom:8px;margin-top:4px}
+  .ok{color:#2dd4a0} .fail{color:#f0826a} .warn{color:#f9cb42} .info{color:#9fe1cb}
+  .ts{color:rgba(255,255,255,.25)}
+  .status-bar{display:flex;gap:16px;background:#1a1f2e;border-radius:8px;padding:12px 16px;margin-bottom:16px;flex-wrap:wrap}
+  .sb-item{font-size:12px}
+  .sb-label{color:#4a5060;margin-right:4px}
+  .sb-val{color:#9fe1cb}
+  .sb-val.ok{color:#2dd4a0} .sb-val.fail{color:#f0826a} .sb-val.warn{color:#f9cb42}
+</style>
+</head>
+<body>
+
+<h2>🔧 SkillsMatch ZA — Edge Function Debug</h2>
+<p class="sub">Test every layer of your stack individually to pinpoint exactly what's working.</p>
+
+<!-- Status bar -->
+<div class="status-bar" id="statusBar">
+  <div class="sb-item"><span class="sb-label">Supabase URL:</span><span class="sb-val" id="sb-url">checking…</span></div>
+  <div class="sb-item"><span class="sb-label">Logged in:</span><span class="sb-val" id="sb-auth">checking…</span></div>
+  <div class="sb-item"><span class="sb-label">Role:</span><span class="sb-val" id="sb-role">—</span></div>
+  <div class="sb-item"><span class="sb-label">Token:</span><span class="sb-val" id="sb-token">—</span></div>
+  <div class="sb-item"><span class="sb-label">Learner ID:</span><span class="sb-val" id="sb-lid">—</span></div>
+</div>
+
+<!-- Config -->
+<div class="cfg">
+  <div class="section-label">Configuration</div>
+  <div class="cfg-row">
+    <label>Groq API key</label>
+    <input id="groq-key" type="password" placeholder="gsk_… (from console.groq.com)"/>
+  </div>
+  <div class="cfg-row">
+    <label>Test email</label>
+    <input id="test-email" type="email" placeholder="your@email.com"/>
+  </div>
+  <div class="cfg-row">
+    <label>Test password</label>
+    <input id="test-pw" type="password" placeholder="your password"/>
+  </div>
+</div>
+
+<!-- Test buttons -->
+<div class="section-label">Run tests</div>
+<div class="btn-row">
+  <button onclick="testGroqDirect()">1. Groq direct (no Edge Fn)</button>
+  <button onclick="testEdgePing()">2. Edge Function ping</button>
+  <button onclick="testEdgeAI()">3. AI via Edge Function</button>
+  <button onclick="testJSearch()">4. JSearch jobs</button>
+  <button onclick="testFullScore()">5. Full match score</button>
+  <button onclick="testLogin()">6. Login + session</button>
+  <button class="neutral" onclick="runAll()">▶ Run all</button>
+  <button class="danger" onclick="clearLog()">Clear</button>
+</div>
+
+<pre id="out">Ready. Click any button above.\n</pre>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/api.js"></script>
+<script>
+/* ── helpers ── */
+function log(type, msg) {
+  const pre = document.getElementById('out');
+  const ts  = new Date().toLocaleTimeString('en-ZA',{hour12:false});
+  const ico = {ok:'✓',fail:'✗',warn:'⚠',info:'•'}[type]||'•';
+  pre.innerHTML += `<span class="ts">[${ts}]</span> <span class="${type}">${ico} ${msg}</span>\n`;
+  pre.scrollTop = pre.scrollHeight;
+}
+function clearLog(){ document.getElementById('out').innerHTML = 'Log cleared.\n'; }
+function sep(title){ log('info', `─── ${title} ───`); }
+
+function getToken(){ return localStorage.getItem('sm_access_token') || ''; }
+function getUrl()  { return (typeof SUPABASE_URL!=='undefined' ? SUPABASE_URL : '').trim(); }
+function proxyUrl(){ return getUrl() + '/functions/v1/claude-proxy'; }
+function groqKey() { return document.getElementById('groq-key').value.trim(); }
+
+/* ── status bar ── */
+function refreshStatus(){
+  const url   = getUrl();
+  const uid   = localStorage.getItem('sm_uid') || '';
+  const role  = localStorage.getItem('sm_role') || '';
+  const token = getToken();
+  const lid   = localStorage.getItem('sm_learner_id') || '';
+
+  document.getElementById('sb-url').textContent   = url ? url.replace('https://','').split('.')[0]+'…' : '✗ not set';
+  document.getElementById('sb-url').className      = 'sb-val ' + (url?'ok':'fail');
+  document.getElementById('sb-auth').textContent  = uid ? '✓ yes' : '✗ no';
+  document.getElementById('sb-auth').className     = 'sb-val ' + (uid?'ok':'fail');
+  document.getElementById('sb-role').textContent  = role || '—';
+  document.getElementById('sb-token').textContent = token ? '✓ stored' : '✗ missing';
+  document.getElementById('sb-token').className    = 'sb-val ' + (token?'ok':'warn');
+  document.getElementById('sb-lid').textContent   = lid ? lid.slice(0,8)+'…' : '—';
+  document.getElementById('sb-lid').className      = 'sb-val ' + (lid?'ok':'warn');
+}
+
+window.onload = () => {
+  document.getElementById('test-email').value = localStorage.getItem('sm_email') || localStorage.getItem('test_email') || '';
+  const k = localStorage.getItem('dbg_groq_key') || '';
+  if (k) document.getElementById('groq-key').value = k;
+  refreshStatus();
+};
+
+document.getElementById('groq-key').addEventListener('input', e => {
+  if (e.target.value.length > 10) localStorage.setItem('dbg_groq_key', e.target.value);
+});
+
+/* ════════════════════════════════
+   TEST 1: Groq direct (no proxy)
+   ════════════════════════════════ */
+async function testGroqDirect(){
+  sep('Groq Direct API Test');
+  const key = groqKey();
+  if (!key){ log('warn','Enter your Groq key in the config above (get free key at console.groq.com)'); return false; }
+
+  log('info','Calling Groq API directly (bypasses Edge Function)…');
+  try {
+    const t0 = Date.now();
+    const r  = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+      body: JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        messages:[{role:'system',content:'Reply only with valid JSON.'},
+                  {role:'user',  content:'Return exactly: {"score":92,"insight":"test successful"}'}],
+        max_tokens:60, temperature:0
+      })
+    });
+    const data = await r.json();
+    const ms   = Date.now()-t0;
+
+    log(r.ok?'ok':'fail', `Groq HTTP ${r.status} — ${ms}ms`);
+
+    if (!r.ok){
+      log('fail','Error: '+JSON.stringify(data.error||data));
+      if (r.status===401) log('warn','Invalid API key — get one free at console.groq.com → API Keys');
+      if (r.status===429) log('warn','Rate limited — wait a moment and retry');
+      return false;
+    }
+
+    const text = data.choices?.[0]?.message?.content || '';
+    log('ok','Raw response: '+text);
+    try {
+      const parsed = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0]||text);
+      log('ok',`✓ Groq working! score=${parsed.score} insight="${parsed.insight}" latency=${ms}ms`);
+    } catch(e){
+      log('warn','Response received but not JSON — model responded: '+text.slice(0,100));
+    }
+    return true;
+  } catch(e){ log('fail','Network error: '+e.message); return false; }
+}
+
+/* ════════════════════════════════
+   TEST 2: Edge Function ping
+   ════════════════════════════════ */
+async function testEdgePing(){
+  sep('Edge Function Ping');
+  const url = proxyUrl();
+  log('info','Pinging: '+url);
+
+  if (!getUrl()){ log('fail','SUPABASE_URL not set in api.js'); return false; }
+
+  try {
+    // OPTIONS request — doesn't need auth
+    const r = await fetch(url,{method:'OPTIONS'});
+    log(r.status===204||r.status===200?'ok':'warn',`OPTIONS → HTTP ${r.status}`);
+
+    // POST with no auth — should get 401
+    const r2 = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    if (r2.status===401){
+      log('ok','✓ Edge Function deployed — auth guard working (401 without token)');
+      return true;
+    }
+    if (r2.status===404){
+      log('fail','404 — Function not deployed yet');
+      log('warn','Fix: supabase functions deploy claude-proxy --no-verify-jwt');
+      return false;
+    }
+    log('ok',`Edge Function responding — HTTP ${r2.status}`);
+    return true;
+  } catch(e){
+    log('fail','Cannot reach function: '+e.message);
+    log('warn','Is the function deployed? Run: supabase functions deploy claude-proxy --no-verify-jwt');
+    return false;
+  }
+}
+
+/* ════════════════════════════════
+   TEST 3: AI via Edge Function
+   ════════════════════════════════ */
+async function testEdgeAI(){
+  sep('AI Scoring via Edge Function (Groq)');
+  const token = getToken();
+  if (!token){ log('warn','Not logged in — run Test 6 (Login) first'); return false; }
+
+  log('info','Sending scoring prompt through Edge Function → Groq…');
+  try {
+    const t0 = Date.now();
+    const r  = await fetch(proxyUrl(),{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body: JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        max_tokens:150,
+        system:'You are a job matching AI for South Africa. Always reply with only valid JSON.',
+        messages:[{role:'user',content:
+          'Score this match.\nLearner: Python, Networking, HTML/CSS, N6 IT certificate, North West.\n'+
+          'Job: IT Support Learnership at Telkom, requires Windows, Networking, Helpdesk.\n'+
+          'Reply ONLY with: {"score":<0-100>,"insight":"<max 15 words>","skill_gaps":["gap1","gap2"]}'
+        }]
+      })
+    });
+
+    const ms   = Date.now()-t0;
+    const text = await r.text();
+    log(r.ok?'ok':'fail',`HTTP ${r.status} — ${ms}ms`);
+
+    if (!r.ok){
+      try {
+        const err = JSON.parse(text);
+        if (err.error?.includes('GROQ_API_KEY')){
+          log('fail','GROQ_API_KEY not set on server');
+          log('warn','Fix: supabase secrets set GROQ_API_KEY=gsk_yourkey');
+        } else {
+          log('fail','Error: '+JSON.stringify(err));
+        }
+      } catch(e){ log('fail','Raw error: '+text.slice(0,200)); }
+      return false;
+    }
+
+    const data    = JSON.parse(text);
+    const aiText  = data.content?.[0]?.text || '';
+    log('info','AI raw response: '+aiText);
+
+    const jmatch = aiText.match(/\{[\s\S]*\}/);
+    if (jmatch){
+      const parsed = JSON.parse(jmatch[0]);
+      log('ok',`✓ AI scoring working! score=${parsed.score} | insight="${parsed.insight}" | gaps=[${(parsed.skill_gaps||[]).join(', ')}] | ${ms}ms`);
+    } else {
+      log('warn','AI responded but not valid JSON — response: '+aiText.slice(0,120));
+    }
+    return true;
+  } catch(e){ log('fail','Error: '+e.message); return false; }
+}
+
+/* ════════════════════════════════
+   TEST 4: JSearch jobs
+   ════════════════════════════════ */
+async function testJSearch(){
+  sep('JSearch (LinkedIn + Indeed + Glassdoor)');
+  const token = getToken();
+  if (!token){ log('warn','Not logged in — run Test 6 first'); return false; }
+
+  log('info','Fetching real jobs from JSearch via Edge Function…');
+  try {
+    const t0 = Date.now();
+    const r  = await fetch(proxyUrl(),{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`,'X-Action':'jsearch'},
+      body: JSON.stringify({ query:'IT support learnership South Africa', pages:1 })
+    });
+    const ms   = Date.now()-t0;
+    const data = await r.json();
+
+    log(r.ok?'ok':'fail',`HTTP ${r.status} — ${ms}ms`);
+
+    if (!r.ok){
+      if (data.error?.includes('JSEARCH_KEY')){
+        log('fail','JSEARCH_KEY not set on server');
+        log('warn','Fix: supabase secrets set JSEARCH_KEY=yourkey (free at rapidapi.com → jsearch)');
+      } else {
+        log('fail','Error: '+JSON.stringify(data.error||data));
+      }
+      return false;
+    }
+
+    const jobs = data.data || [];
+    if (!jobs.length){ log('warn','0 jobs returned — check your RapidAPI subscription is active'); return false; }
+
+    log('ok',`✓ JSearch working! ${jobs.length} real jobs fetched in ${ms}ms`);
+    jobs.slice(0,3).forEach((j,i) => log('info',`  ${i+1}. "${j.job_title}" @ ${j.employer_name} (${j.job_city||'?'})`));
+    return true;
+  } catch(e){ log('fail','Error: '+e.message); return false; }
+}
+
+/* ════════════════════════════════
+   TEST 5: Full match score from DB
+   ════════════════════════════════ */
+async function testFullScore(){
+  sep('Full Match Score (DB opportunity → Groq AI)');
+  const token = getToken();
+  if (!token){ log('warn','Not logged in — run Test 6 first'); return false; }
+
+  try {
+    const { data:opps } = await db.from('opportunities').select('id,title,skills_req,location').eq('is_active',true).limit(1);
+    if (!opps?.length){ log('fail','No opportunities in DB — run schema.sql seed first'); return false; }
+
+    const opp = opps[0];
+    const lid  = localStorage.getItem('sm_learner_id');
+    const skills = JSON.parse(localStorage.getItem('sm_skills')||'[]');
+
+    log('info',`Scoring learner against: "${opp.title}"`);
+    log('info',`Learner skills: [${skills.join(', ')||'none set'}]`);
+    log('info',`Required skills: [${(opp.skills_req||[]).join(', ')||'not specified'}]`);
+
+    const t0 = Date.now();
+    const r  = await fetch(proxyUrl(),{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body: JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        max_tokens:200,
+        system:'You are a career advisor for SkillsMatch ZA. Reply only with valid JSON.',
+        messages:[{role:'user',content:
+          `Score this match 0–100.\nLEARNER: skills=[${skills.join(',')||'python,networking'}], province=North West\n`+
+          `JOB: "${opp.title}" at ${opp.location}, requires=[${(opp.skills_req||[]).join(',')||'IT skills'}]\n`+
+          `Reply ONLY: {"score":<int>,"insight":"<15 words max>","skill_gaps":["gap1"],"recommendation":"<10 words>"}`
+        }]
+      })
+    });
+    const ms   = Date.now()-t0;
+    const data = await r.json();
+    const text = data.content?.[0]?.text || '';
+    const jm   = text.match(/\{[\s\S]*\}/);
+
+    if (jm){
+      const p = JSON.parse(jm[0]);
+      log('ok',`✓ Score: ${p.score}% | insight: "${p.insight}" | ${ms}ms`);
+      log('info',`  Gaps: [${(p.skill_gaps||[]).join(', ')}]`);
+      log('info',`  Recommendation: ${p.recommendation||'—'}`);
+    } else {
+      log('warn','AI responded but not JSON: '+text.slice(0,120));
+    }
+    return true;
+  } catch(e){ log('fail','Error: '+e.message); return false; }
+}
+
+/* ════════════════════════════════
+   TEST 6: Login + session check
+   ════════════════════════════════ */
+async function testLogin(){
+  sep('Login + Session');
+  const email = document.getElementById('test-email').value.trim() || localStorage.getItem('sm_email') || '';
+  const pw    = document.getElementById('test-pw').value || localStorage.getItem('test_pw') || '';
+
+  if (!email||!pw){ log('warn','Enter email + password in config above'); return false; }
+
+  log('info',`Logging in as ${email}…`);
+  try {
+    const res = await loginUser({email, password:pw});
+    if (!res.success) throw new Error(res.error);
+
+    log('ok',`✓ Login OK — role: ${res.profile.role} | uid: ${res.profile.id}`);
+    log('ok',`  Name: ${localStorage.getItem('sm_name')} | learner_id: ${localStorage.getItem('sm_learner_id')||'resolving…'}`);
+
+    const {data:{session}} = await db.auth.getSession();
+    log(session?'ok':'warn', `Session: ${session?'✓ active':'⚠ null (stored token used as fallback)'}`);
+
+    localStorage.setItem('test_email', email);
+    if (pw) localStorage.setItem('test_pw', pw);
+    refreshStatus();
+    return true;
+  } catch(e){
+    const hint = e.message?.toLowerCase().includes('invalid') ? ' — wrong email/password' :
+                 e.message?.toLowerCase().includes('confirm') ? ' — disable email confirmation in Supabase Auth settings' : '';
+    log('fail','Login failed: '+e.message+hint);
+    return false;
+  }
+}
+
+/* ════════════════════════════════
+   RUN ALL
+   ════════════════════════════════ */
+async function runAll(){
+  document.getElementById('out').innerHTML = '';
+  log('info','═══ Running all debug tests ═══\n');
+
+  const r1 = await testGroqDirect();
+  const r2 = await testEdgePing();
+  const r3 = await testLogin();
+  const r4 = await testEdgeAI();
+  const r5 = await testJSearch();
+  const r6 = await testFullScore();
+
+  const passed = [r1,r2,r3,r4,r5,r6].filter(Boolean).length;
+  log('info',`\n═══ Done — ${passed}/6 tests passed ═══`);
+
+  if (passed===6) log('ok','🎉 Everything working! Your stack is fully operational.');
+  else            log('warn',`${6-passed} test(s) failed — check the hints above.`);
+
+  refreshStatus();
+}
+
+refreshStatus();
+</script>
+</body></html>

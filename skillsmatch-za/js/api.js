@@ -86,6 +86,9 @@ async function registerUser({ email, password, role, firstName, lastName, provin
     localStorage.setItem('sm_email', email);
     localStorage.setItem('sm_name',  fullName);
     localStorage.setItem('sm_uid',   userRow.id);
+    if (authData.session?.access_token) {
+      localStorage.setItem('sm_access_token', authData.session.access_token);
+    }
 
     /* Step 4: Wait briefly for the DB trigger to create learner/employer row, then upsert details */
     await new Promise(r => setTimeout(r, 800));
@@ -206,6 +209,10 @@ async function loginUser({ email, password }) {
     localStorage.setItem('sm_email', profile.email || email);
     localStorage.setItem('sm_name',  fullName || email);
     localStorage.setItem('sm_uid',   profile.id);
+    // Store access token so the Edge Function proxy can verify auth
+    if (authData.session?.access_token) {
+      localStorage.setItem('sm_access_token', authData.session.access_token);
+    }
 
     /* Resolve role-specific ID */
     await _resolveRoleId(profile.id, profile.role);
@@ -299,8 +306,11 @@ async function _resolveRoleId(userId, role) {
       .eq('user_id', userId)
       .single();
     if (data) {
-      localStorage.setItem('sm_learner_id', data.id);
-      localStorage.setItem('sm_skills', JSON.stringify(data.skills || []));
+      localStorage.setItem('sm_learner_id',  data.id);
+      localStorage.setItem('sm_skills',      JSON.stringify(data.skills || []));
+      localStorage.setItem('sm_qual',        data.qualification    || '');
+      localStorage.setItem('sm_field',       data.study_field      || '');
+      localStorage.setItem('sm_institution', data.institution_name || '');
     }
   }
 
@@ -333,7 +343,7 @@ async function getSession() {
 async function logoutUser() {
   await db.auth.signOut();
   ['sm_auth','sm_role','sm_email','sm_name','sm_uid',
-   'sm_learner_id','sm_employer_id','sm_skills','sm_saved'].forEach(k => localStorage.removeItem(k));
+   'sm_learner_id','sm_employer_id','sm_skills','sm_saved','sm_access_token'].forEach(k => localStorage.removeItem(k));
   window.location.href = 'login.html';
 }
 
@@ -474,9 +484,10 @@ async function getMyMatches() {
     const { data, error } = await db
       .from('matches')
       .select(`id, score, ai_insight, is_saved,
-               opportunities(id, title, company, location, type, sector,
+               skill_gaps, skill_matches, recommendation,
+               opportunities(id, title, company, location, province, type, sector,
                               stipend, is_funded, is_remote, is_urgent,
-                              closing_date, skills_req)`)
+                              closing_date, skills_req, apply_url, source)`)
       .eq('learner_id', learnerId)
       .order('score', { ascending: false });
 
@@ -504,7 +515,15 @@ async function saveMatches(learnerId, matchRows) {
     const { error } = await db
       .from('matches')
       .upsert(
-        matchRows.map(m => ({ learner_id: learnerId, opp_id: m.opp_id, score: m.score, ai_insight: m.ai_insight })),
+        matchRows.map(m => ({
+          learner_id:     learnerId,
+          opp_id:         m.opp_id,
+          score:          m.score,
+          ai_insight:     m.ai_insight,
+          skill_gaps:     m.skill_gaps    || [],
+          skill_matches:  m.skill_matches || [],
+          recommendation: m.recommendation || '',
+        })),
         { onConflict: 'learner_id,opp_id' }
       );
     if (error) throw error;
@@ -608,21 +627,41 @@ async function updateApplicationStatus(appId, status) {
 
 async function getAllLearners({ search, status } = {}) {
   try {
+    // Step 1: fetch learners (admin RLS allows this via is_admin())
     let q = db
       .from('learners')
-      .select('id, qualification, institution_name, skills, avg_match_score, status, users(first_name, last_name, province, email)');
-
+      .select('id, user_id, qualification, institution_name, skills, avg_match_score, status');
     if (status) q = q.eq('status', status);
+    const { data: learners, error: lErr } = await q.order('avg_match_score', { ascending: false });
+    if (lErr) throw lErr;
+    if (!learners?.length) return { success: true, data: [] };
 
-    const { data, error } = await q.order('avg_match_score', { ascending: false });
-    if (error) throw error;
+    // Step 2: fetch corresponding users rows separately.
+    // Doing a join inside .select() re-evaluates the users RLS policy
+    // in a context where is_admin() may not yet have the JWT claim,
+    // causing the join to silently return null. Two queries avoids this.
+    const userIds = [...new Set(learners.map(l => l.user_id).filter(Boolean))];
+    const { data: users } = await db
+      .from('users')
+      .select('id, first_name, last_name, province, email')
+      .in('id', userIds);
 
-    let result = data;
+    // Build a lookup map
+    const userMap = {};
+    (users || []).forEach(u => { userMap[u.id] = u; });
+
+    // Merge
+    let result = learners.map(l => ({
+      ...l,
+      users: userMap[l.user_id] || null
+    }));
+
     if (search) {
       const s = search.toLowerCase();
-      result = data.filter(l => {
-        const n = `${l.users?.first_name||''} ${l.users?.last_name||''}`.toLowerCase();
-        return n.includes(s) || (l.qualification||'').toLowerCase().includes(s) || (l.users?.province||'').toLowerCase().includes(s);
+      result = result.filter(l => {
+        const u = l.users || {};
+        const n = `${u.first_name||''} ${u.last_name||''}`.toLowerCase();
+        return n.includes(s) || (l.qualification||'').toLowerCase().includes(s) || (u.province||'').toLowerCase().includes(s);
       });
     }
     return { success: true, data: result };

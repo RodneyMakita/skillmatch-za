@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkillsMatch ZA — System Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --ink:#0e1117;--ink-soft:#3a3f4b;--ink-muted:#7a8090;
+      --paper:#f5f2eb;--paper2:#ede9df;--white:#ffffff;
+      --teal:#0d7a5f;--teal-lt:#e0f3ee;--teal-glow:#2dd4a0;
+      --gold:#c8a84b;--gold-lt:#fdf6e3;
+      --coral:#d95f3b;--coral-lt:#fdf0ed;
+      --green:#1a7f5a;--green-lt:#e6f5ef;
+      --font-d:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;
+    }
+    body{font-family:var(--font-b);background:var(--paper);color:var(--ink);padding:32px 24px;max-width:900px;margin:0 auto}
+
+    h1{font-family:var(--font-d);font-size:26px;font-weight:800;letter-spacing:-1px;margin-bottom:4px}
+    .subtitle{font-size:14px;color:var(--ink-muted);margin-bottom:28px}
+
+    .section{margin-bottom:20px}
+    .section-title{font-family:var(--font-d);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:10px}
+
+    .test-card{background:var(--white);border:1px solid rgba(14,17,23,.09);border-radius:12px;overflow:hidden;margin-bottom:10px}
+    .test-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(14,17,23,.05)}
+    .test-row:last-child{border-bottom:none}
+
+    .status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:background .3s}
+    .dot-idle   {background:#d3d1c7}
+    .dot-loading{background:var(--gold);animation:pulse 1s infinite}
+    .dot-ok     {background:var(--teal)}
+    .dot-warn   {background:var(--gold)}
+    .dot-fail   {background:var(--coral)}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+    .test-name{font-size:14px;font-weight:500;min-width:200px}
+    .test-result{font-size:13px;color:var(--ink-muted);flex:1;word-break:break-all;font-family:monospace}
+    .test-result.ok  {color:var(--green)}
+    .test-result.warn{color:var(--gold)}
+    .test-result.fail{color:var(--coral)}
+
+    .run-btn{
+      font-family:var(--font-b);font-size:13px;font-weight:500;
+      padding:7px 18px;border-radius:8px;border:none;cursor:pointer;
+      background:var(--teal);color:var(--white);transition:opacity .15s;
+    }
+    .run-btn:hover{opacity:.85}
+    .run-btn:disabled{opacity:.4;cursor:not-allowed}
+
+    .config-box{
+      background:var(--white);border:1px solid rgba(14,17,23,.09);
+      border-radius:12px;padding:18px;margin-bottom:20px;
+      display:flex;flex-direction:column;gap:12px
+    }
+    .config-row{display:grid;grid-template-columns:180px 1fr auto;gap:10px;align-items:center}
+    .config-row label{font-size:13px;font-weight:500}
+    .config-row input{
+      padding:8px 12px;font-size:13px;border:1px solid rgba(14,17,23,.15);
+      border-radius:8px;outline:none;font-family:var(--font-b);color:var(--ink);background:var(--paper)
+    }
+    .config-row input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,122,95,.1)}
+    .save-cfg{
+      font-size:12px;padding:7px 14px;border-radius:7px;border:none;cursor:pointer;
+      background:var(--teal-lt);color:var(--teal);font-family:var(--font-b);font-weight:500
+    }
+    .save-cfg:hover{background:var(--teal);color:var(--white)}
+
+    .log-box{
+      background:var(--ink);color:#9fe1cb;font-family:monospace;font-size:12px;
+      border-radius:10px;padding:16px;margin-top:16px;max-height:260px;overflow-y:auto;
+      white-space:pre-wrap;word-break:break-all;line-height:1.6
+    }
+    .log-box .ts{color:rgba(255,255,255,.3)}
+    .log-box .ok  {color:var(--teal-glow)}
+    .log-box .warn{color:#f9cb42}
+    .log-box .fail{color:#f0826a}
+    .log-box .info{color:#9fe1cb}
+
+    .overall{
+      display:flex;align-items:center;gap:12px;
+      background:var(--white);border:1px solid rgba(14,17,23,.09);border-radius:12px;
+      padding:16px 18px;margin-bottom:24px
+    }
+    .overall-icon{font-size:28px}
+    .overall-text h2{font-family:var(--font-d);font-size:18px;font-weight:800;letter-spacing:-.5px}
+    .overall-text p{font-size:13px;color:var(--ink-muted);margin-top:2px}
+
+    .btn-run-all{
+      font-family:var(--font-b);font-size:14px;font-weight:500;padding:11px 28px;
+      border-radius:9px;border:none;cursor:pointer;background:var(--teal);color:var(--white);
+      transition:opacity .15s;margin-bottom:24px
+    }
+    .btn-run-all:hover{opacity:.85}
+    .btn-run-all:disabled{opacity:.4;cursor:not-allowed}
+
+    .tag{font-size:11px;padding:2px 8px;border-radius:99px;font-weight:500;margin-left:6px}
+    .tag-free{background:var(--green-lt);color:var(--green)}
+    .tag-required{background:var(--coral-lt);color:var(--coral)}
+    .tag-optional{background:var(--gold-lt);color:#7a6020}
+  </style>
+</head>
+<body>
+
+<h1>SkillsMatch ZA — System Test</h1>
+<p class="subtitle">Run all checks to confirm every part of your stack is working before demo day.</p>
+
+<!-- Overall status -->
+<div class="overall" id="overall">
+  <div class="overall-icon" id="overallIcon">🔍</div>
+  <div class="overall-text">
+    <h2 id="overallTitle">Ready to run tests</h2>
+    <p id="overallSub">Click "Run all tests" to check your full stack.</p>
+  </div>
+</div>
+
+<button class="btn-run-all" id="runAllBtn" onclick="runAll()">Run all tests</button>
+
+<!-- Config -->
+<div class="section">
+  <div class="section-title">Configuration</div>
+  <div class="config-box">
+    <div class="config-row">
+      <label>Test email</label>
+      <input type="email" id="cfg-email" placeholder="your-registered@email.com"/>
+      <button class="save-cfg" onclick="saveCfg()">Save</button>
+    </div>
+    <div class="config-row">
+      <label>Test password</label>
+      <input type="password" id="cfg-pw" placeholder="your password"/>
+      <button class="save-cfg" onclick="saveCfg()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tests -->
+<div class="section">
+  <div class="section-title">1. Supabase connection <span class="tag tag-required">required</span></div>
+  <div class="test-card">
+    <div class="test-row" id="tr-conn">
+      <div class="status-dot dot-idle" id="dot-conn"></div>
+      <div class="test-name">Supabase reachable</div>
+      <div class="test-result" id="res-conn">Not tested</div>
+      <button class="run-btn" onclick="testConn()">Run</button>
+    </div>
+    <div class="test-row" id="tr-opps">
+      <div class="status-dot dot-idle" id="dot-opps"></div>
+      <div class="test-name">Opportunities table</div>
+      <div class="test-result" id="res-opps">Not tested</div>
+      <button class="run-btn" onclick="testOpps()">Run</button>
+    </div>
+    <div class="test-row" id="tr-views">
+      <div class="status-dot dot-idle" id="dot-views"></div>
+      <div class="test-name">Admin views (province/institution)</div>
+      <div class="test-result" id="res-views">Not tested</div>
+      <button class="run-btn" onclick="testViews()">Run</button>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">2. Authentication <span class="tag tag-required">required</span></div>
+  <div class="test-card">
+    <div class="test-row">
+      <div class="status-dot dot-idle" id="dot-login"></div>
+      <div class="test-name">Login with test account</div>
+      <div class="test-result" id="res-login">Not tested</div>
+      <button class="run-btn" onclick="testLogin()">Run</button>
+    </div>
+    <div class="test-row">
+      <div class="status-dot dot-idle" id="dot-session"></div>
+      <div class="test-name">Session & profile fetch</div>
+      <div class="test-result" id="res-session">Not tested</div>
+      <button class="run-btn" onclick="testSession()">Run</button>
+    </div>
+    <div class="test-row">
+      <div class="status-dot dot-idle" id="dot-learner"></div>
+      <div class="test-name">Learner ID resolved</div>
+      <div class="test-result" id="res-learner">Not tested</div>
+      <button class="run-btn" onclick="testLearnerId()">Run</button>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">3. Edge Function — Gemini AI <span class="tag tag-free">free</span></div>
+  <div class="test-card">
+    <div class="test-row">
+      <div class="status-dot dot-idle" id="dot-proxy"></div>
+      <div class="test-name">Edge Function reachable</div>
+      <div class="test-result" id="res-proxy">Not tested</div>
+      <button class="run-btn" onclick="testProxy()">Run</button>
+    </div>
+    <div class="test-row">
+      <div class="status-dot dot-idle" id="dot-gemini"></div>
+      <div class="test-name">Gemini AI scoring</div>
+      <div class="test-result" id="res-gemini">Not tested</div>
+      <button class="run-btn" onclick="testGemini()">Run</button>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">4. Job fetching — JSearch <span class="tag tag-optional">optional</span></div>
+  <div class="test-card">
+    <div class="test-row">
+      <div class="status-dot dot-idle" id="dot-jsearch"></div>
+      <div class="test-name">JSearch (LinkedIn/Indeed jobs)</div>
+      <div class="test-result" id="res-jsearch">Not tested</div>
+      <button class="run-btn" onclick="testJSearch()">Run</button>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">5. Full matching pipeline</div>
+  <div class="test-card">
+    <div class="test-row">
+      <div class="status-dot dot-idle" id="dot-match"></div>
+      <div class="test-name">AI match score (single opp)</div>
+      <div class="test-result" id="res-match">Not tested</div>
+      <button class="run-btn" onclick="testMatch()">Run</button>
+    </div>
+    <div class="test-row">
+      <div class="status-dot dot-idle" id="dot-apply"></div>
+      <div class="test-name">Apply to opportunity</div>
+      <div class="test-result" id="res-apply">Not tested</div>
+      <button class="run-btn" onclick="testApply()">Run</button>
+    </div>
+  </div>
+</div>
+
+<!-- Log -->
+<div class="section">
+  <div class="section-title">Console log</div>
+  <div class="log-box" id="logBox">Waiting to run tests…\n</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/api.js"></script>
+<script>
+
+/* ── Config ── */
+const PROXY_URL = typeof SUPABASE_URL !== 'undefined'
+  ? `${SUPABASE_URL}/functions/v1/claude-proxy`
+  : '';
+
+function saveCfg() {
+  const e = document.getElementById('cfg-email').value.trim();
+  const p = document.getElementById('cfg-pw').value;
+  if (e) localStorage.setItem('test_email', e);
+  if (p) localStorage.setItem('test_pw', p);
+  log('info', `Config saved — email: ${e || '(unchanged)'}`);
+}
+
+window.addEventListener('load', () => {
+  const e = localStorage.getItem('test_email') || localStorage.getItem('sm_email') || '';
+  const p = localStorage.getItem('test_pw') || '';
+  document.getElementById('cfg-email').value = e;
+  document.getElementById('cfg-pw').value    = p;
+});
+
+/* ── Logging ── */
+function log(type, msg) {
+  const box = document.getElementById('logBox');
+  const ts  = new Date().toLocaleTimeString('en-ZA', {hour12:false});
+  const pre = type === 'ok' ? '✓' : type === 'fail' ? '✗' : type === 'warn' ? '⚠' : '•';
+  box.innerHTML += `<span class="ts">[${ts}]</span> <span class="${type}">${pre} ${msg}</span>\n`;
+  box.scrollTop = box.scrollHeight;
+}
+
+function setResult(id, status, text) {
+  const dot = document.getElementById(`dot-${id}`);
+  const res = document.getElementById(`res-${id}`);
+  if (!dot || !res) return;
+  dot.className = `status-dot dot-${status}`;
+  res.className = `test-result ${status === 'ok' ? 'ok' : status === 'fail' ? 'fail' : status === 'warn' ? 'warn' : ''}`;
+  res.textContent = text;
+}
+
+function setLoading(id) {
+  const dot = document.getElementById(`dot-${id}`);
+  const res = document.getElementById(`res-${id}`);
+  if (dot) dot.className = 'status-dot dot-loading';
+  if (res) { res.className = 'test-result'; res.textContent = 'Running…'; }
+}
+
+/* ── Individual tests ── */
+
+async function testConn() {
+  setLoading('conn');
+  log('info', 'Testing Supabase connection…');
+  try {
+    const { error } = await db.from('opportunities').select('id').limit(1);
+    if (error) throw error;
+    setResult('conn', 'ok', '✓ Connected to Supabase');
+    log('ok', 'Supabase connection OK');
+    return true;
+  } catch(e) {
+    setResult('conn', 'fail', e.message);
+    log('fail', `Supabase connection failed: ${e.message}`);
+    return false;
+  }
+}
+
+async function testOpps() {
+  setLoading('opps');
+  log('info', 'Checking opportunities table…');
+  try {
+    const { data, error, count } = await db
+      .from('opportunities')
+      .select('id, title, type', { count: 'exact' })
+      .eq('is_active', true)
+      .limit(5);
+    if (error) throw error;
+    const n = count || (data?.length || 0);
+    if (!n) {
+      setResult('opps', 'warn', 'Table exists but 0 rows — run schema.sql seed data');
+      log('warn', 'opportunities table is empty — run schema.sql to seed 12 opportunities');
+      return false;
+    }
+    setResult('opps', 'ok', `✓ ${n} active opportunities found`);
+    log('ok', `opportunities table OK — ${n} rows. Sample: "${data[0]?.title}"`);
+    return true;
+  } catch(e) {
+    setResult('opps', 'fail', e.message.includes('does not exist') ? 'Table missing — run schema.sql' : e.message);
+    log('fail', `opportunities error: ${e.message}`);
+    return false;
+  }
+}
+
+async function testViews() {
+  setLoading('views');
+  log('info', 'Checking admin views…');
+  try {
+    const [provRes, instRes] = await Promise.all([
+      db.from('vw_province_summary').select('*').limit(1),
+      db.from('vw_institution_summary').select('*').limit(1),
+    ]);
+    if (provRes.error) throw new Error(`vw_province_summary: ${provRes.error.message}`);
+    if (instRes.error) throw new Error(`vw_institution_summary: ${instRes.error.message}`);
+    setResult('views', 'ok', '✓ Both admin views accessible');
+    log('ok', 'Admin views OK — vw_province_summary and vw_institution_summary');
+    return true;
+  } catch(e) {
+    setResult('views', 'warn', 'View missing — run schema.sql CREATE VIEW section');
+    log('warn', `Admin views: ${e.message}`);
+    return false;
+  }
+}
+
+async function testLogin() {
+  setLoading('login');
+  const email = localStorage.getItem('test_email') || document.getElementById('cfg-email').value.trim();
+  const pw    = localStorage.getItem('test_pw')    || document.getElementById('cfg-pw').value;
+
+  if (!email || !pw) {
+    setResult('login', 'warn', 'Enter test email + password in config above first');
+    log('warn', 'No test credentials configured — fill in the config fields above');
+    return false;
+  }
+
+  log('info', `Logging in as ${email}…`);
+  try {
+    const res = await loginUser({ email, password: pw });
+    if (!res.success) throw new Error(res.error);
+    setResult('login', 'ok', `✓ Logged in — role: ${res.profile.role}`);
+    log('ok', `Login OK — ${email} | role: ${res.profile.role} | uid: ${res.profile.id}`);
+    return true;
+  } catch(e) {
+    const hint = e.message?.toLowerCase().includes('invalid')
+      ? ' (wrong credentials or email not confirmed)'
+      : e.message?.toLowerCase().includes('confirm')
+      ? ' → disable email confirmation in Supabase Auth settings'
+      : '';
+    setResult('login', 'fail', e.message + hint);
+    log('fail', `Login failed: ${e.message}${hint}`);
+    return false;
+  }
+}
+
+async function testSession() {
+  setLoading('session');
+  log('info', 'Checking session + profile…');
+  try {
+    const uid   = localStorage.getItem('sm_uid');
+    const role  = localStorage.getItem('sm_role');
+    const name  = localStorage.getItem('sm_name');
+    const token = localStorage.getItem('sm_access_token');
+
+    if (!uid || uid === 'null') throw new Error('sm_uid missing — run Login test first');
+    if (!token) log('warn', 'sm_access_token missing — Edge Function calls may fail');
+
+    const { data: { session } } = await db.auth.getSession();
+    const sessionStatus = session ? '✓ Active' : '⚠ Null (using stored token)';
+
+    setResult('session', session ? 'ok' : 'warn',
+      `uid: ${uid.slice(0,8)}… | role: ${role} | session: ${sessionStatus}`);
+    log(session ? 'ok' : 'warn',
+      `Profile: ${name} | role: ${role} | uid: ${uid} | session: ${sessionStatus} | token: ${token ? '✓ stored' : '✗ missing'}`);
+    return !!uid;
+  } catch(e) {
+    setResult('session', 'fail', e.message);
+    log('fail', `Session check: ${e.message}`);
+    return false;
+  }
+}
+
+async function testLearnerId() {
+  setLoading('learner');
+  log('info', 'Checking learner ID…');
+  try {
+    const uid  = localStorage.getItem('sm_uid');
+    const role = localStorage.getItem('sm_role');
+    if (!uid || uid === 'null') throw new Error('Not logged in — run Login test first');
+    if (role !== 'learner') {
+      setResult('learner', 'warn', `Role is "${role}" — learner ID only applies to learner accounts`);
+      log('warn', `Skipping learner ID check — current role is "${role}"`);
+      return true;
+    }
+
+    await ensureProfile();
+    const lid = localStorage.getItem('sm_learner_id');
+    if (!lid || lid === 'null') throw new Error('sm_learner_id still null after ensureProfile — check Supabase trigger');
+
+    const { data, error } = await db.from('learners').select('id, skills, qualification, status').eq('id', lid).single();
+    if (error) throw error;
+
+    setResult('learner', 'ok', `✓ learner_id: ${lid.slice(0,8)}… | skills: ${(data.skills||[]).length} | qual: ${data.qualification||'(none)'}`);
+    log('ok', `Learner row OK — id: ${lid} | skills: [${(data.skills||[]).join(', ')}] | status: ${data.status}`);
+    return true;
+  } catch(e) {
+    setResult('learner', 'fail', e.message);
+    log('fail', `Learner ID: ${e.message}`);
+    if (e.message.includes('trigger')) {
+      log('info', 'FIX: Check that the on_user_created trigger exists in Supabase → Database → Triggers');
+    }
+    return false;
+  }
+}
+
+async function testProxy() {
+  setLoading('proxy');
+  log('info', `Testing Edge Function at ${PROXY_URL}…`);
+  if (!PROXY_URL) {
+    setResult('proxy', 'fail', 'SUPABASE_URL not set in api.js');
+    log('fail', 'SUPABASE_URL is empty in api.js — check line 14');
+    return false;
+  }
+  try {
+    const token = localStorage.getItem('sm_access_token') || '';
+    const res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ model:'test', max_tokens:10, messages:[{role:'user',content:'ping'}] })
+    });
+    if (res.status === 401) {
+      setResult('proxy', 'warn', '401 Unauthorized — log in first then re-run');
+      log('warn', 'Proxy 401 — no valid JWT. Run Login test first, then retry.');
+      return false;
+    }
+    if (res.status === 404) {
+      setResult('proxy', 'fail', '404 — Edge Function not deployed yet');
+      log('fail', 'Edge Function not deployed. Run: supabase functions deploy claude-proxy --no-verify-jwt');
+      return false;
+    }
+    if (res.status === 500) {
+      const body = await res.json().catch(()=>({}));
+      if (body.error?.includes('GEMINI_API_KEY')) {
+        setResult('proxy', 'warn', 'Function deployed but GEMINI_API_KEY not set');
+        log('warn', 'Edge Function reachable but GEMINI_API_KEY missing. Run: supabase secrets set GEMINI_API_KEY=yourkey');
+        return false;
+      }
+    }
+    setResult('proxy', 'ok', `✓ Edge Function responding (status ${res.status})`);
+    log('ok', `Edge Function reachable — HTTP ${res.status}`);
+    return true;
+  } catch(e) {
+    if (e.message.includes('fetch')) {
+      setResult('proxy', 'fail', 'Network error — function may not be deployed');
+      log('fail', `Proxy network error: ${e.message}`);
+    } else {
+      setResult('proxy', 'fail', e.message);
+      log('fail', `Proxy error: ${e.message}`);
+    }
+    return false;
+  }
+}
+
+async function testGemini() {
+  setLoading('gemini');
+  log('info', 'Testing Gemini AI scoring…');
+  if (!PROXY_URL) {
+    setResult('gemini', 'fail', 'SUPABASE_URL not set');
+    return false;
+  }
+  try {
+    const token = localStorage.getItem('sm_access_token') || '';
+    const t0 = Date.now();
+    const res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        model: 'gemini-1.5-flash',
+        max_tokens: 200,
+        system: 'You are a job matching AI. Always respond with only valid JSON.',
+        messages: [{
+          role: 'user',
+          content: `Score this match 0-100. Learner: Python, HTML, Networking. Job: IT Support, requires Windows, Networking, Helpdesk.\nRespond ONLY with: {"score": <number>, "insight": "<10 words max>"}`
+        }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({error:'unknown'}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    const ms   = Date.now() - t0;
+
+    // Try to parse the JSON score from the response
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      setResult('gemini', 'ok', `✓ Score: ${parsed.score} | "${parsed.insight}" | ${ms}ms`);
+      log('ok', `Gemini AI OK — score: ${parsed.score} | insight: "${parsed.insight}" | latency: ${ms}ms`);
+    } else {
+      setResult('gemini', 'warn', `Response received but not JSON: ${text.slice(0,60)}`);
+      log('warn', `Gemini responded but format unexpected: ${text.slice(0,100)}`);
+    }
+    return true;
+  } catch(e) {
+    setResult('gemini', 'fail', e.message);
+    log('fail', `Gemini test failed: ${e.message}`);
+    if (e.message.includes('GEMINI_API_KEY')) {
+      log('info', 'FIX: supabase secrets set GEMINI_API_KEY=your-key-from-aistudio.google.com');
+    }
+    return false;
+  }
+}
+
+async function testJSearch() {
+  setLoading('jsearch');
+  log('info', 'Testing JSearch (LinkedIn/Indeed job fetching)…');
+  if (!PROXY_URL) {
+    setResult('jsearch', 'fail', 'SUPABASE_URL not set');
+    return false;
+  }
+  try {
+    const token = localStorage.getItem('sm_access_token') || '';
+    const t0 = Date.now();
+    const res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'X-Action': 'jsearch'
+      },
+      body: JSON.stringify({ query: 'IT support learnership South Africa', pages: 1 })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({error:'unknown'}));
+      if (err.error?.includes('JSEARCH_KEY')) {
+        setResult('jsearch', 'warn', 'JSEARCH_KEY not set on server (optional)');
+        log('warn', 'JSearch key not configured. This is optional — AI can still score local jobs.');
+        log('info', 'FIX: supabase secrets set JSEARCH_KEY=your-rapidapi-key (free at rapidapi.com → jsearch)');
+        return false;
+      }
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const jobs = data.data || [];
+    const ms   = Date.now() - t0;
+
+    if (!jobs.length) {
+      setResult('jsearch', 'warn', 'Connected but 0 jobs returned — check your RapidAPI subscription');
+      log('warn', 'JSearch connected but returned 0 jobs. Check your RapidAPI free plan quota.');
+      return false;
+    }
+
+    const sample = jobs[0];
+    setResult('jsearch', 'ok', `✓ ${jobs.length} real jobs fetched in ${ms}ms | "${sample.job_title}" @ ${sample.employer_name}`);
+    log('ok', `JSearch OK — ${jobs.length} jobs | Sample: "${sample.job_title}" at ${sample.employer_name} (${sample.job_city || '?'})`);
+    return true;
+  } catch(e) {
+    setResult('jsearch', 'fail', e.message);
+    log('fail', `JSearch error: ${e.message}`);
+    return false;
+  }
+}
+
+async function testMatch() {
+  setLoading('match');
+  log('info', 'Testing end-to-end AI match scoring…');
+  try {
+    const uid = localStorage.getItem('sm_uid');
+    if (!uid || uid === 'null') throw new Error('Not logged in — run Login test first');
+
+    const { data: opps } = await db.from('opportunities').select('id,title,skills_req').eq('is_active',true).limit(1);
+    if (!opps?.length) throw new Error('No opportunities in DB — run schema.sql seed first');
+
+    const opp   = opps[0];
+    const token = localStorage.getItem('sm_access_token') || '';
+    const t0    = Date.now();
+
+    const res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        model: 'gemini-1.5-flash',
+        max_tokens: 300,
+        system: 'You are a career advisor. Always respond with only valid JSON.',
+        messages: [{
+          role: 'user',
+          content: `Score this match.\nLearner: Python, Networking, HTML/CSS, N6 IT, North West.\nJob: "${opp.title}", requires: ${(opp.skills_req||['IT skills']).join(', ')}.\nRespond ONLY: {"score":<0-100>,"insight":"<max 20 words>","skill_gaps":["gap1"]}`
+        }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    const ms   = Date.now() - t0;
+    const jmatch = text.match(/\{[\s\S]*\}/);
+
+    if (jmatch) {
+      const parsed = JSON.parse(jmatch[0]);
+      setResult('match', 'ok', `✓ "${opp.title}" → ${parsed.score}% | ${ms}ms`);
+      log('ok', `Match test OK — "${opp.title}" scored ${parsed.score}% in ${ms}ms | insight: "${parsed.insight}"`);
+    } else {
+      setResult('match', 'warn', `AI responded but not valid JSON: ${text.slice(0,60)}`);
+      log('warn', `Match AI response not JSON: ${text.slice(0,120)}`);
+    }
+    return true;
+  } catch(e) {
+    setResult('match', 'fail', e.message);
+    log('fail', `Match test: ${e.message}`);
+    return false;
+  }
+}
+
+async function testApply() {
+  setLoading('apply');
+  log('info', 'Testing application submission…');
+  try {
+    const learnerId = localStorage.getItem('sm_learner_id');
+    const role      = localStorage.getItem('sm_role');
+
+    if (role !== 'learner') {
+      setResult('apply', 'warn', `Current role is "${role}" — switch to a learner account to test applications`);
+      log('warn', `Apply test skipped — not a learner account (role: ${role})`);
+      return true;
+    }
+    if (!learnerId || learnerId === 'null') throw new Error('No learner ID — run Learner ID test first');
+
+    const { data: opps } = await db.from('opportunities').select('id,title').eq('is_active',true).limit(1);
+    if (!opps?.length) throw new Error('No opportunities to apply to');
+
+    const opp = opps[0];
+    const res = await applyToOpportunity(opp.id, 75);
+
+    if (res.success) {
+      setResult('apply', 'ok', `✓ Applied to "${opp.title}"`);
+      log('ok', `Apply OK — submitted application for "${opp.title}" | learner_id: ${learnerId}`);
+    } else if (res.alreadyApplied) {
+      setResult('apply', 'ok', `✓ Already applied to "${opp.title}" (duplicate handled correctly)`);
+      log('ok', `Apply OK — duplicate handled correctly for "${opp.title}"`);
+    } else {
+      throw new Error(res.error);
+    }
+    return true;
+  } catch(e) {
+    setResult('apply', 'fail', e.message);
+    log('fail', `Apply test: ${e.message}`);
+    return false;
+  }
+}
+
+/* ── Run all ── */
+async function runAll() {
+  const btn = document.getElementById('runAllBtn');
+  btn.disabled = true;
+  btn.textContent = 'Running…';
+  document.getElementById('logBox').innerHTML = '';
+  log('info', '═══ Starting full system test ═══');
+
+  const results = [];
+
+  results.push(await testConn());
+  results.push(await testOpps());
+  results.push(await testViews());
+  results.push(await testLogin());
+  results.push(await testSession());
+  results.push(await testLearnerId());
+  results.push(await testProxy());
+  results.push(await testGemini());
+  results.push(await testJSearch());
+  results.push(await testMatch());
+  results.push(await testApply());
+
+  const passed  = results.filter(Boolean).length;
+  const total   = results.length;
+  const failed  = total - passed;
+
+  log('info', `═══ Done — ${passed}/${total} tests passed ═══`);
+
+  const icon  = document.getElementById('overallIcon');
+  const title = document.getElementById('overallTitle');
+  const sub   = document.getElementById('overallSub');
+
+  if (failed === 0) {
+    icon.textContent  = '✅';
+    title.textContent = 'All systems go!';
+    sub.textContent   = `${passed}/${total} tests passed — your stack is fully operational.`;
+  } else if (failed <= 2) {
+    icon.textContent  = '⚠️';
+    title.textContent = `Almost there — ${failed} issue${failed>1?'s':''} to fix`;
+    sub.textContent   = `${passed}/${total} tests passed. Check the failed tests above for fix instructions.`;
+  } else {
+    icon.textContent  = '❌';
+    title.textContent = `${failed} critical issues found`;
+    sub.textContent   = `${passed}/${total} tests passed. Follow the fix hints in the console log below.`;
+  }
+
+  btn.disabled    = false;
+  btn.textContent = 'Run all tests again';
+}
+
+</script>
+</body>
+</html>

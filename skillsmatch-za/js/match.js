@@ -1,69 +1,511 @@
 /* ============================================================
-   SkillsMatch ZA — match.js
-   AI-powered matching engine.
-   Uses Claude API to score learner skills vs opportunity
-   requirements, then saves results to Supabase via api.js.
+   SkillsMatch ZA — match.js  (v2)
+   AI-powered job fetching + matching engine.
+
+   Two main capabilities:
+   1. fetchExternalJobs()  — uses Claude's web_search tool to find
+      real current job listings from LinkedIn, Indeed, Careers24,
+      PNet, JobMail and other SA job boards, then saves them to
+      the opportunities table so they appear alongside employer posts.
+
+   2. runMatchingPipeline() — scores every opportunity against the
+      learner's full profile (skills, qualifications, NQF level,
+      certificates, city, province) and returns sorted matches with
+      AI-generated insights and skill gap analysis.
 
    Depends on: api.js (must be loaded first)
    ============================================================ */
 
-/* ── Claude API config ───────────────────────────────────── */
-const CLAUDE_MODEL      = 'claude-sonnet-4-20250514';
-const CLAUDE_MAX_TOKENS = 800;
+/* ── Model config ────────────────────────────────────────── */
+const CLAUDE_MODEL           = 'claude-sonnet-4-20250514';
+const CLAUDE_MAX_TOKENS      = 2000;
+const CLAUDE_SEARCH_TOKENS   = 4000;
+const JOB_FETCH_BATCH        = 3;
+const SCORE_BATCH            = 4;
+const EXTERNAL_SOURCE_PREFIX = 'ext_';
 
-/* ── Main: run matching for logged-in learner ────────────── */
+/* ── Proxy config ─────────────────────────────────────────
+   All Claude API calls go through the Supabase Edge Function
+   claude-proxy. The Anthropic API key lives there as a secret
+   — it is never in the browser or in this file.
+   The proxy verifies the user's Supabase JWT before forwarding,
+   so only logged-in users can trigger AI calls.
+   ─────────────────────────────────────────────────────── */
+const CLAUDE_PROXY_URL = `${typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : ''}/functions/v1/claude-proxy`;
+
+/* ── JSearch (LinkedIn + Indeed + Glassdoor) ─────────────────────────────
+   Job fetching goes through the Supabase Edge Function (claude-proxy).
+   The JSEARCH_KEY lives there as a server secret — never in the browser.
+   Set it with: supabase secrets set JSEARCH_KEY=your-rapidapi-key
+   Free plan: 200 calls/month at rapidapi.com → jsearch
+   ─────────────────────────────────────────────────────────────────────── */
 
 /**
- * Run full AI matching pipeline for the current learner.
- * 1. Fetch learner skills from Supabase
- * 2. Fetch all active opportunities
- * 3. Score each one via Claude API
- * 4. Save results back to Supabase matches table
- * 5. Return sorted match objects for rendering
- *
- * @returns {Array} Sorted match results with score + ai_insight
+ * Get headers for the proxy call.
+ * Passes the user's Supabase session JWT so the proxy can
+ * verify the user is authenticated before forwarding.
  */
-async function runMatchingPipeline() {
-  /* 1. Make sure profile IDs are resolved */
+async function claudeHeaders() {
+  // Try live session first, fall back to stored token
+  let jwt = '';
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    jwt = session?.access_token || '';
+  } catch(e) {}
+
+  // Fallback: use token stored at login/register time
+  if (!jwt) jwt = localStorage.getItem('sm_access_token') || '';
+
+  return {
+    'Content-Type':  'application/json',
+    'Authorization': `Bearer ${jwt}`,
+  };
+}
+
+/**
+ * No-op — always returns true.
+ * Key management is handled server-side in the Edge Function.
+ */
+function ensureApiKey() { return true; }
+
+/* ── SA job sources Claude will search ───────────────────── */
+const SA_JOB_SOURCES = [
+  'LinkedIn South Africa jobs',
+  'Indeed South Africa jobs',
+  'Careers24 jobs',
+  'PNet South Africa jobs',
+  'JobMail South Africa',
+  'PNET learnership South Africa',
+  'SETA learnership South Africa',
+];
+
+
+/* ============================================================
+   SECTION 1: EXTERNAL JOB FETCHING
+   Sources: JSearch (LinkedIn/Indeed/Glassdoor) + Adzuna SA +
+            CareerJet SA + Remotive (remote) + Groq web search
+   All calls go through the Supabase Edge Function proxy.
+   ============================================================ */
+
+/**
+ * Master fetch — pulls from all available sources, deduplicates,
+ * validates links, then saves to the opportunities table.
+ */
+async function fetchExternalJobs(learner, { maxJobs = 30, forceRefresh = false } = {}) {
+  const skills   = learner.skills        || [];
+  const field    = learner.study_field   || '';
+  const province = learner.users?.province || 'South Africa';
+  const city     = learner.city          || province;
+  const qual     = learner.qualification || localStorage.getItem('sm_qual') || '';
+
+  if (!skills.length && !field) {
+    console.warn('fetchExternalJobs: no skills or field — skipping');
+    return [];
+  }
+
+  console.log(`fetchExternalJobs: "${field}" | skills: [${skills.slice(0,3).join(',')}] | ${province}`);
+
+  // Run all sources in parallel — each has its own fallback
+  const [jsearchJobs, adzunaJobs, groqJobs] = await Promise.allSettled([
+    fetchFromJSearch(skills, field, qual, province, city),
+    fetchFromAdzuna(skills, field, province),
+    fetchFromGroqSearch(skills, field, qual, province),
+  ]);
+
+  const allJobs = [
+    ...(jsearchJobs.status  === 'fulfilled' ? jsearchJobs.value  : []),
+    ...(adzunaJobs.status   === 'fulfilled' ? adzunaJobs.value   : []),
+    ...(groqJobs.status     === 'fulfilled' ? groqJobs.value     : []),
+  ];
+
+  console.log(`fetchExternalJobs: raw total ${allJobs.length} (JSearch: ${jsearchJobs.value?.length||0}, Adzuna: ${adzunaJobs.value?.length||0}, Groq: ${groqJobs.value?.length||0})`);
+
+  // Deduplicate, validate links, limit
+  const deduped   = deduplicateJobs(allJobs);
+  const validated = deduped.map(j => ({ ...j, apply_url: sanitiseUrl(j.apply_url) }));
+  const limited   = validated.slice(0, maxJobs);
+
+  if (!limited.length) {
+    console.warn('fetchExternalJobs: no jobs from any source');
+    return [];
+  }
+
+  const saved = await saveExternalJobs(limited);
+  console.log(`fetchExternalJobs: saved ${saved.length} jobs`);
+  return saved;
+}
+
+
+/* ── SOURCE 1: JSearch (LinkedIn + Indeed + Glassdoor + ZipRecruiter) ── */
+async function fetchFromJSearch(skills, field, qual, province, city) {
+  const location    = city !== province ? `${city}, ${province}` : province;
+  const headers     = await claudeHeaders();
+  const topSkills   = skills.slice(0, 4).join(' ');
+  const mainSkill   = skills[0] || field || 'IT';
+  const searchField = field || topSkills || 'ICT';
+
+  // Derive experience level from qualification
+  const qualLower = (qual || '').toLowerCase();
+  const expTag    = /degree|btech|honours/.test(qualLower) ? 'graduate'
+                  : /n6|n5|diploma/.test(qualLower)        ? 'entry level'
+                  : 'learnership internship';
+
+  const queries = [
+    `${topSkills || searchField} ${expTag} ${location} South Africa`,
+    `learnership internship ${searchField} South Africa 2025 2026`,
+    `${expTag} ${mainSkill} SETA South Africa`,
+  ];
+
+  const jFetch = (query, pages=1) => fetch(CLAUDE_PROXY_URL, {
+    method: 'POST',
+    headers: { ...headers, 'X-Action': 'jsearch' },
+    body: JSON.stringify({ query, pages })
+  }).then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] }));
+
+  const results = await Promise.all(queries.map((q, i) => jFetch(q, i === 0 ? 2 : 1)));
+  const raw     = results.flatMap(r => r.data || []);
+
+  return raw.map(j => ({
+    title:        j.job_title         || 'Unknown Position',
+    company:      j.employer_name     || 'Unknown Company',
+    location:     `${j.job_city || city}, ${j.job_state || province}`,
+    province:     j.job_state         || province,
+    type:         inferType(j.job_title || ''),
+    sector:       inferSector(j.job_title || '', j.employer_name || ''),
+    description:  (j.job_description || '').slice(0, 600),
+    skills_req:   extractSkillsFromDesc(j.job_description || ''),
+    stipend:      j.job_min_salary
+                    ? `${j.job_min_salary}–${j.job_max_salary||''} ${j.job_salary_currency||'ZAR'}/${j.job_salary_period||'month'}`
+                    : null,
+    closing_date: j.job_offer_expiration_datetime_utc?.slice(0, 10) || null,
+    is_funded:    /seta|funded|stipend/i.test(j.job_description || ''),
+    is_remote:    j.job_is_remote || false,
+    apply_url:    j.job_apply_link || j.job_google_link || null,
+    source:       (j.job_publisher || 'jsearch').toLowerCase().replace(/\s+/g,'-'),
+  }));
+}
+
+
+/* ── SOURCE 2: Adzuna SA (free API — 250 calls/month, no credit card) ──
+   Sign up: https://developer.adzuna.com → register → get app_id + app_key
+   Add to Edge Function: supabase secrets set ADZUNA_APP_ID=xxx ADZUNA_APP_KEY=xxx
+   ─────────────────────────────────────────────────────────────────────── */
+async function fetchFromAdzuna(skills, field, province) {
+  const headers = await claudeHeaders();
+  const query   = encodeURIComponent(`${field || skills.slice(0,3).join(' ')} South Africa`);
+
+  try {
+    const res  = await fetch(CLAUDE_PROXY_URL, {
+      method: 'POST',
+      headers: { ...headers, 'X-Action': 'adzuna' },
+      body: JSON.stringify({ query, province, results_per_page: 20 })
+    });
+
+    if (!res.ok) return [];  // Adzuna keys not set — silently skip
+    const data  = await res.json();
+    const jobs  = data.results || [];
+
+    return jobs.map(j => ({
+      title:       j.title         || 'Unknown Position',
+      company:     j.company?.display_name || 'Unknown Company',
+      location:    j.location?.display_name || province,
+      province:    province,
+      type:        inferType(j.title || ''),
+      sector:      inferSector(j.title || '', j.category?.label || ''),
+      description: (j.description || '').replace(/<[^>]+>/g, '').slice(0, 600),
+      skills_req:  extractSkillsFromDesc(j.description || ''),
+      stipend:     j.salary_min ? `R${Math.round(j.salary_min)}–R${Math.round(j.salary_max||j.salary_min)}/year` : null,
+      closing_date: null,
+      is_funded:   false,
+      is_remote:   /remote/i.test(j.title + j.description),
+      apply_url:   j.redirect_url || null,
+      source:      'adzuna',
+    }));
+  } catch(e) {
+    console.warn('Adzuna fetch failed:', e.message);
+    return [];
+  }
+}
+
+
+/* ── SOURCE 3: Groq web search (AI finds real SA job listings) ──────── */
+async function fetchFromGroqSearch(skills, field, qual, province) {
+  const headers     = await claudeHeaders();
+  const topSkills   = skills.slice(0, 3).join(', ');
+  const qualLower   = (qual || '').toLowerCase();
+  const level       = /degree|btech/.test(qualLower) ? 'graduate'
+                    : /n6|n5|diploma/.test(qualLower)  ? 'entry-level'
+                    : 'learnership';
+
+  try {
+    const res = await fetch(CLAUDE_PROXY_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 2000,
+        system: `You are a South African job board aggregator.
+List ONLY real, currently open job listings you know about.
+NEVER invent jobs. Focus on South Africa.
+Respond with ONLY a valid JSON array — no markdown, no explanation:
+[{"title":"exact title","company":"company","location":"City, Province","province":"Province","type":"Job|Learnership|Internship","sector":"ICT|Finance|Retail|Engineering|Health|Education|Other","description":"2 sentences","skills_req":["skill1","skill2"],"stipend":"amount or null","closing_date":"YYYY-MM-DD or null","is_funded":false,"is_remote":false,"apply_url":"https://... or null","source":"careers24|pnet|indeed|linkedin|other"}]
+Return [] if you cannot confirm real listings.`,
+        messages: [{
+          role: 'user',
+          content: `Find current ${level} job listings in South Africa for someone with these skills: ${topSkills || field}.
+Province: ${province}.
+Focus on: learnerships, internships, graduate programmes, entry-level ICT/tech jobs.
+Real listings only — from careers24.com, pnet.co.za, indeed.co.za, linkedin.com, or jobmail.co.za.
+Return JSON array only.`
+        }]
+      })
+    });
+
+    if (!res.ok) return [];
+    const data    = await res.json();
+    const rawText = data.content?.[0]?.text || '[]';
+    return safeParseJSONArray(rawText);
+  } catch(e) {
+    console.warn('Groq search failed:', e.message);
+    return [];
+  }
+}
+
+
+/* ── Link validation ─────────────────────────────────────────────────── */
+
+/**
+ * Sanitise and validate a job application URL.
+ * Returns null for broken, empty, or obviously wrong links.
+ */
+function sanitiseUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+
+  const u = url.trim();
+  if (!u.startsWith('http')) return null;
+
+  // Block known broken/redirect-only patterns
+  const BROKEN_PATTERNS = [
+    'jooble.org',          // mostly redirect spam
+    'jobrapido.com',       // high broken link rate
+    'trovit.com',
+    'mitula.co.za',
+    'neuvoo.com',
+    'adzuna.co.za/land',   // their landing pages break
+    'jobomas.com',
+    'jobbio.com/apply-now', // generic dead redirects
+  ];
+
+  if (BROKEN_PATTERNS.some(p => u.includes(p))) return null;
+
+  // Must be a real URL with a domain
+  try {
+    const parsed = new URL(u);
+    if (!parsed.hostname || parsed.hostname.length < 4) return null;
+    return u;
+  } catch {
+    return null;
+  }
+}
+
+
+/* ── Shared helpers ──────────────────────────────────────────────────── */
+
+function deduplicateJobs(jobs) {
+  const seen = new Set();
+  return jobs.filter(j => {
+    if (!j.title || !j.company) return false;
+    const key = `${j.title.toLowerCase().trim()}|${j.company.toLowerCase().trim()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function inferType(title) {
+  const t = title.toLowerCase();
+  if (/learnership|learnship/.test(t))    return 'Learnership';
+  if (/intern|internship/.test(t))        return 'Internship';
+  if (/contract|project|freelance/.test(t)) return 'Project';
+  return 'Job';
+}
+
+function inferSector(title, company) {
+  const t = (title + ' ' + company).toLowerCase();
+  if (/tech|software|developer|it |ict|network|cyber|cloud|data/.test(t)) return 'ICT';
+  if (/bank|finance|account|audit|insur/.test(t))  return 'Finance';
+  if (/retail|shop|store|sales/.test(t))           return 'Retail';
+  if (/health|medical|nurs|pharma/.test(t))        return 'Health';
+  if (/engineer|construction|civil|mech/.test(t))  return 'Engineering';
+  if (/teach|educat|school|college/.test(t))       return 'Education';
+  if (/farm|agri/.test(t))                         return 'Agriculture';
+  return 'Other';
+}
+
+function extractSkillsFromDesc(desc) {
+  const KEYWORDS = [
+    'Python','JavaScript','Java','SQL','HTML','CSS','React','Node.js','PHP','C#','C++',
+    'Excel','PowerPoint','Word','SAP','AutoCAD','Networking','Linux','Windows',
+    'Azure','AWS','Git','Docker','Kubernetes','Power BI','Tableau',
+    'Customer Service','Communication','Project Management','Teamwork',
+    'Accounting','Bookkeeping','Financial Reporting','SolidWorks','MATLAB',
+  ];
+  const d = desc.toLowerCase();
+  return KEYWORDS.filter(s => d.includes(s.toLowerCase())).slice(0, 10);
+}
+
+async function saveExternalJobs(jobs) {
+  const saved = [];
+  for (const job of jobs) {
+    try {
+      const opp = {
+        title:        (job.title       || '').slice(0, 200),
+        company:      (job.company     || 'Unknown').slice(0, 200),
+        location:     (job.location    || job.province || 'South Africa').slice(0, 200),
+        province:     (job.province    || '').slice(0, 100),
+        type:         ['Job','Learnership','Internship','Project'].includes(job.type) ? job.type : 'Job',
+        sector:       (job.sector      || 'Other').slice(0, 100),
+        description:  (job.description || '').slice(0, 2000),
+        skills_req:   Array.isArray(job.skills_req) ? job.skills_req.slice(0, 20) : [],
+        stipend:      job.stipend      || null,
+        closing_date: isValidDate(job.closing_date) ? job.closing_date : null,
+        is_funded:    Boolean(job.is_funded),
+        is_remote:    Boolean(job.is_remote),
+        is_active:    true,
+        employer_id:  null,
+        apply_url:    job.apply_url    || null,   // already sanitised
+        source:       (job.source      || 'external').slice(0, 50),
+      };
+
+      const { data, error } = await db
+        .from('opportunities')
+        .upsert(opp, { onConflict: 'title,company', ignoreDuplicates: false })
+        .select('id, title, company, apply_url')
+        .single();
+
+      if (!error && data) saved.push(data);
+    } catch(e) {
+      console.warn('saveExternalJobs error:', e.message);
+    }
+  }
+  return saved;
+}
+
+/* ============================================================
+   SECTION 2: AI MATCHING ENGINE  (enhanced)
+   Full profile matching with skills, qualifications, NQF,
+   certificates, location preference and gap analysis
+   ============================================================ */
+
+/**
+ * Full pipeline:
+ * 1. Load learner profile
+ * 2. Fetch external jobs (LinkedIn, Indeed, etc.)
+ * 3. Load all active opportunities (internal + external)
+ * 4. Score each with enhanced Claude prompt
+ * 5. Save results to matches table
+ * 6. Return sorted results with gap analysis
+ *
+ * @param {Object} opts  - { fetchExternal, progressCallback }
+ * @returns {Array}      - sorted match results
+ */
+async function runMatchingPipeline({ fetchExternal = true, progressCallback = null } = {}) {
+  if (!ensureApiKey()) return [];  // prompt for key if missing
+  const progress = (msg, pct) => {
+    console.log(`[Matching] ${msg}`);
+    if (progressCallback) progressCallback(msg, pct);
+  };
+
+  progress('Loading your profile…', 5);
   await ensureProfile();
 
-  /* 1b. Get learner profile */
   const profileRes = await getLearnerProfile();
   if (!profileRes.success) {
-    console.error('Could not load learner profile:', profileRes.error);
+    console.error('runMatchingPipeline: could not load profile:', profileRes.error);
     return [];
   }
 
-  const learner    = profileRes.data;
-  const learnerId  = learner.id;
-  const skills     = learner.skills || [];
-  const qual       = learner.qualification || '';
-  const field      = learner.study_field   || '';
-  const province   = learner.users?.province || '';
+  const learner   = profileRes.data;
+  const learnerId = learner.id;
+  const skills    = learner.skills          || [];
+  const qual      = learner.qualification   || '';
+  const field     = learner.study_field     || '';
+  const province  = learner.users?.province || '';
+  const city      = learner.city            || province;
+  const quals     = learner.qualifications  || [];
+  const certs     = learner.certificates    || [];
+  const linkedin  = learner.linkedin_url    || '';
+  const github    = learner.github_url      || '';
 
-  if (!skills.length) {
-    console.warn('Learner has no skills — skipping matching.');
+  if (!skills.length && !qual) {
+    console.warn('runMatchingPipeline: no skills/qualification — complete your profile first');
     return [];
   }
 
-  /* 2. Fetch active opportunities */
+  // Step 2: fetch external jobs if requested
+  if (fetchExternal) {
+    progress('Searching LinkedIn, Indeed, Careers24…', 15);
+    try {
+      await fetchExternalJobs(learner, { maxJobs: 25 });
+    } catch (err) {
+      console.warn('External job fetch failed, continuing with local jobs:', err.message);
+    }
+  }
+
+  // Step 3: load all active opportunities
+  progress('Loading all opportunities…', 35);
   const oppsRes = await getOpportunities();
-  if (!oppsRes.success || !oppsRes.data.length) return [];
-
+  if (!oppsRes.success || !oppsRes.data.length) {
+    progress('No opportunities found.', 100);
+    return [];
+  }
   const opportunities = oppsRes.data;
+  progress(`Scoring ${opportunities.length} opportunities with AI…`, 45);
 
-  /* 3. Score each opportunity */
-  const scoredMatches = await scoreOpportunities(learnerId, skills, qual, field, province, opportunities);
+  // Step 4: build full learner context for scoring
+  const learnerContext = buildLearnerContext(
+    skills, qual, field, province, city, quals, certs, linkedin, github
+  );
 
-  /* 4. Save to Supabase */
+  // Check which opportunities are already scored — skip re-scoring them
+  const { data: existingMatches } = await db
+    .from('matches')
+    .select('opp_id, score, ai_insight')
+    .eq('learner_id', learnerId);
+
+  const scoredOppIds = new Set((existingMatches || []).map(m => m.opp_id));
+  const toScore      = opportunities.filter(o => !scoredOppIds.has(o.id));
+  const alreadyDone  = (existingMatches || []).map(m => ({
+    opp_id:     m.opp_id,
+    learner_id: learnerId,
+    score:      m.score,
+    ai_insight: m.ai_insight,
+    skill_gaps: [],
+    skill_matches: [],
+    recommendation: ''
+  }));
+
+  progress(`Scoring ${toScore.length} new opportunities (${alreadyDone.length} already scored)…`, 45);
+
+  // Only score new/unscored opportunities
+  const newlyScored = toScore.length > 0
+    ? await scoreAllOpportunities(learnerId, learnerContext, toScore, progress)
+    : [];
+
+  const scoredMatches = [...alreadyDone, ...newlyScored];
+
+  // Step 5: save to Supabase
+  progress('Saving your matches…', 90);
   await saveMatches(learnerId, scoredMatches);
 
-  /* 5. Update learner avg score */
+  // Update avg score
   const scores = scoredMatches.map(m => m.score);
-  const avg    = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0) / scores.length) : 0;
+  const avg    = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
   await updateLearnerProfile({ avg_match_score: avg });
 
-  /* 6. Return sorted by score */
+  progress('Done!', 100);
+
+  // Step 6: return sorted
   return scoredMatches
     .sort((a, b) => b.score - a.score)
     .map(m => ({
@@ -74,20 +516,78 @@ async function runMatchingPipeline() {
 
 
 /**
- * Score a batch of opportunities for one learner using Claude.
- * Batches to avoid too many sequential API calls.
+ * Build a rich structured context string for the learner
+ * that Claude uses in every scoring prompt.
  */
-async function scoreOpportunities(learnerId, skills, qual, field, province, opportunities) {
-  const results = [];
+function buildLearnerContext(skills, qual, field, province, city, quals, certs, linkedin, github) {
+  // Derive experience level from qualification type
+  let expLevel = 'Entry level / recent graduate';
+  const qualLower = (qual || '').toLowerCase();
+  if (/honours|degree|btech/.test(qualLower))        expLevel = 'Graduate (Degree/BTech)';
+  else if (/diploma|national diploma/.test(qualLower)) expLevel = 'Diploma holder';
+  else if (/n6|n5|n4|nqf/.test(qualLower))            expLevel = 'TVET graduate (N4-N6)';
+  else if (/learnership|certificate/.test(qualLower))  expLevel = 'Learnership / Certificate';
 
-  /* Process in batches of 3 to avoid rate limits */
-  const BATCH = 3;
-  for (let i = 0; i < opportunities.length; i += BATCH) {
-    const batch   = opportunities.slice(i, i + BATCH);
-    const scored  = await Promise.all(
-      batch.map(opp => scoreOne(learnerId, skills, qual, field, province, opp))
+  // Primary qualification
+  let qualSection = `Qualification: ${qual || 'Not specified'}\nField of study: ${field || 'Not specified'}\nExperience level: ${expLevel}`;
+
+  // Additional qualifications
+  if (quals.length > 1) {
+    qualSection += '\nAdditional qualifications:';
+    quals.forEach(q => {
+      if (q.qualification) {
+        qualSection += `\n  - ${q.qualification} at ${q.institution || 'unknown'} (NQF ${q.nqf || '?'}, ${q.status || ''})`;
+      }
+    });
+  } else if (quals.length === 1 && quals[0].nqf) {
+    qualSection += `\nNQF level: ${quals[0].nqf}`;
+  }
+
+  // Online certificates
+  let certSection = '';
+  if (certs.length) {
+    certSection = '\nOnline certificates: ' + certs.map(c => `${c.name} (${c.platform || ''})`).join(', ');
+  }
+
+  // Portfolio signals
+  let portfolioSection = '';
+  if (github)   portfolioSection += '\nHas GitHub portfolio: Yes';
+  if (linkedin) portfolioSection += '\nHas LinkedIn profile: Yes';
+
+  return [
+    `Province: ${province || 'Not specified'}`,
+    `City: ${city || province || 'Not specified'}`,
+    qualSection,
+    certSection,
+    `Skills: ${skills.join(', ') || 'None listed'}`,
+    portfolioSection,
+  ].filter(Boolean).join('\n');
+}
+
+
+/**
+ * Score all opportunities in batches of SCORE_BATCH.
+ */
+async function scoreAllOpportunities(learnerId, learnerContext, opportunities, progress) {
+  const results  = [];
+  const total    = opportunities.length;
+  // Groq free tier: 30 req/min. With batch of 3 and 1.5s delay = ~20 req/min safely.
+  const DELAY_MS = 1500;
+
+  for (let i = 0; i < total; i += SCORE_BATCH) {
+    const batch  = opportunities.slice(i, i + SCORE_BATCH);
+    const scored = await Promise.all(
+      batch.map(opp => scoreOneOpportunity(learnerId, learnerContext, opp))
     );
     results.push(...scored);
+
+    const pct = 45 + Math.round(((i + SCORE_BATCH) / total) * 40);
+    if (progress) progress(`Scored ${Math.min(i + SCORE_BATCH, total)} / ${total}…`, pct);
+
+    // Pause between batches to stay under Groq's 30 req/min free tier limit
+    if (i + SCORE_BATCH < total) {
+      await new Promise(r => setTimeout(r, DELAY_MS));
+    }
   }
 
   return results;
@@ -95,25 +595,38 @@ async function scoreOpportunities(learnerId, skills, qual, field, province, oppo
 
 
 /**
- * Score a single learner–opportunity pair using Claude API.
+ * Score a single learner–opportunity pair.
+ * Enhanced prompt includes gap analysis, certificate relevance,
+ * location fit, and NQF level match.
  */
-async function scoreOne(learnerId, skills, qual, field, province, opp) {
-  const prompt = buildPrompt(skills, qual, field, province, opp);
+async function scoreOneOpportunity(learnerId, learnerContext, opp) {
+  const oppContext = buildOpportunityContext(opp);
+  const prompt     = buildScoringPrompt(learnerContext, oppContext);
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(CLAUDE_PROXY_URL, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await claudeHeaders(),
       body: JSON.stringify({
         model:      CLAUDE_MODEL,
         max_tokens: CLAUDE_MAX_TOKENS,
-        system: `You are an AI career advisor for SkillsMatch ZA, a South African skills-to-opportunity platform.
-Your job is to score how well a learner's profile matches a job opportunity.
+        system: `You are an expert career advisor for SkillsMatch ZA, a South African skills-matching platform.
+Your job: analyse how well a learner's profile matches a job opportunity and return a precise JSON score.
 
-ALWAYS respond with ONLY a valid JSON object in this exact format — no markdown, no explanation, no extra text:
+SCORING CRITERIA (total 100 points):
+- Skills match (40 pts): overlap between learner skills and required skills
+- Qualification match (25 pts): relevance of NQF level, field of study, and certificates
+- Location fit (15 pts): same city = full points, same province = partial, remote = full
+- Profile completeness (10 pts): GitHub, LinkedIn, certificates add credibility signals
+- Experience level fit (10 pts): learnership/entry level matches recent graduate status
+
+ALWAYS respond with ONLY valid JSON, no markdown, no preamble:
 {
   "score": <integer 0-100>,
-  "insight": "<one sentence explaining the match and the single most important skill gap or strength, max 20 words>"
+  "insight": "<one sentence, max 25 words: most important strength OR gap for this specific match>",
+  "skill_gaps": ["missing skill 1", "missing skill 2"],
+  "skill_matches": ["matching skill 1", "matching skill 2"],
+  "recommendation": "<one actionable sentence: what should the learner do to improve their chances>"
 }`,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -121,170 +634,285 @@ ALWAYS respond with ONLY a valid JSON object in this exact format — no markdow
 
     if (!response.ok) throw new Error(`Claude API ${response.status}`);
 
-    const apiData   = await response.json();
-    const rawText   = apiData.content?.[0]?.text || '{}';
-    const parsed    = safeParseJSON(rawText);
+    const apiData = await response.json();
+    const rawText = apiData.content?.[0]?.text || '{}';
+    const parsed  = safeParseJSON(rawText);
 
     return {
-      opp_id:     opp.id,
-      learner_id: learnerId,
-      score:      clamp(parsed.score ?? 50, 0, 100),
-      ai_insight: parsed.insight ?? 'No insight available.'
+      opp_id:          opp.id,
+      learner_id:      learnerId,
+      score:           clamp(parsed.score ?? 50, 0, 100),
+      ai_insight:      parsed.insight      ?? 'No insight available.',
+      skill_gaps:      parsed.skill_gaps   ?? [],
+      skill_matches:   parsed.skill_matches ?? [],
+      recommendation:  parsed.recommendation ?? '',
     };
 
   } catch (err) {
     console.warn(`Scoring failed for "${opp.title}":`, err.message);
-    /* Fallback: simple keyword overlap score */
     return {
-      opp_id:     opp.id,
-      learner_id: learnerId,
-      score:      fallbackScore(skills, opp.skills_req || []),
-      ai_insight: 'AI scoring unavailable — score based on keyword overlap.'
+      opp_id:         opp.id,
+      learner_id:     learnerId,
+      score:          fallbackScore(
+                        learnerContext.split('Skills: ')[1]?.split('\n')[0]?.split(', ') || [],
+                        opp.skills_req || []
+                      ),
+      ai_insight:     'AI scoring unavailable — score based on keyword overlap.',
+      skill_gaps:     [],
+      skill_matches:  [],
+      recommendation: '',
     };
   }
 }
 
 
 /**
- * Build the matching prompt for Claude
+ * Build opportunity context string for the scoring prompt.
  */
-function buildPrompt(skills, qual, field, province, opp) {
+function buildOpportunityContext(opp) {
+  const lines = [
+    `Title: ${opp.title}`,
+    `Company: ${opp.company}`,
+    `Type: ${opp.type}`,
+    `Sector: ${opp.sector || 'Not specified'}`,
+    `Location: ${opp.location}`,
+    `Province: ${opp.province || 'Not specified'}`,
+    `Remote: ${opp.is_remote ? 'Yes' : 'No'}`,
+    `SETA funded: ${opp.is_funded ? 'Yes' : 'No'}`,
+    `Required skills: ${(opp.skills_req || []).join(', ') || 'Not specified'}`,
+    opp.stipend      ? `Stipend/Salary: ${opp.stipend}` : null,
+    opp.description  ? `Description: ${opp.description.slice(0, 300)}` : null,
+    opp.closing_date ? `Closing: ${opp.closing_date}` : null,
+    opp.source       ? `Source: ${opp.source}` : null,
+  ];
+  return lines.filter(Boolean).join('\n');
+}
+
+
+/**
+ * Build the full scoring prompt combining learner + opportunity.
+ */
+function buildScoringPrompt(learnerContext, oppContext) {
   return `LEARNER PROFILE:
-- Qualification: ${qual || 'Not specified'}
-- Field of study: ${field || 'Not specified'}
-- Province: ${province || 'Not specified'}
-- Skills: ${skills.join(', ') || 'None listed'}
+${learnerContext}
 
 OPPORTUNITY:
-- Title: ${opp.title}
-- Company: ${opp.company}
-- Type: ${opp.type}
-- Sector: ${opp.sector}
-- Location: ${opp.location}
-- Required skills: ${(opp.skills_req || []).join(', ') || 'Not specified'}
+${oppContext}
 
-Score this match from 0 to 100. Consider: skill overlap, qualification relevance, location compatibility.
-Respond with ONLY the JSON object.`;
+Analyse this match carefully. Consider:
+1. Do the learner's skills cover the required skills?
+2. Is the learner's qualification level appropriate (NQF, field)?
+3. Is the location compatible?
+4. Do their certificates or portfolio signals add value?
+5. Is the opportunity type (learnership/job) appropriate for a recent graduate?
+
+Return ONLY the JSON object with score, insight, skill_gaps, skill_matches, and recommendation.`;
 }
 
 
-/**
- * Fallback scoring when Claude API is unavailable.
- * Uses simple keyword overlap between learner skills and required skills.
- */
-function fallbackScore(learnerSkills, requiredSkills) {
-  if (!requiredSkills.length) return 50;
-
-  const lowerLearner  = learnerSkills.map(s => s.toLowerCase());
-  const lowerRequired = requiredSkills.map(s => s.toLowerCase());
-
-  const matches = lowerRequired.filter(req =>
-    lowerLearner.some(skill =>
-      skill.includes(req) || req.includes(skill)
-    )
-  ).length;
-
-  return Math.round((matches / lowerRequired.length) * 80) + 10; /* 10–90 range */
-}
-
-
-/* ── Render helpers ──────────────────────────────────────── */
+/* ============================================================
+   SECTION 3: SMART MATCHING SUMMARY
+   After scoring, generate an overall career summary for the learner
+   ============================================================ */
 
 /**
- * Render a match card into a container element.
- * Call this from dashboard.html and matches view.
+ * Generate an AI career summary for the learner based on their
+ * top matches — shown on the dashboard overview panel.
  *
- * @param {Object} match  - { score, ai_insight, opportunity }
- * @param {Element} container - DOM element to append into
- * @param {Function} onApply - callback when Apply is clicked
+ * @param {Array}  topMatches  - top 5 match objects with scores
+ * @param {Object} learner     - learner profile
+ * @returns {string}           - HTML string with career advice
+ */
+async function generateCareerSummary(topMatches, learner) {
+  if (!topMatches.length) return null;
+
+  const skills   = learner.skills || [];
+  const topScore = topMatches[0]?.score || 0;
+  const avgScore = Math.round(topMatches.reduce((a, b) => a + b.score, 0) / topMatches.length);
+
+  // Collect all skill gaps from top matches
+  const allGaps = topMatches
+    .flatMap(m => m.skill_gaps || [])
+    .reduce((acc, g) => {
+      acc[g] = (acc[g] || 0) + 1;
+      return acc;
+    }, {});
+  const topGaps = Object.entries(allGaps)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([skill]) => skill);
+
+  try {
+    const response = await fetch(CLAUDE_PROXY_URL, {
+      method: 'POST',
+      headers: await claudeHeaders(),
+      body: JSON.stringify({
+        model:      CLAUDE_MODEL,
+        max_tokens: 500,
+        system: `You are a friendly SA career advisor. Write concise, encouraging advice for a job seeker.
+Respond with ONLY a JSON object:
+{
+  "headline": "<10 words max: positive summary of their job market position>",
+  "tip": "<25 words max: single most impactful thing they can do to improve matches>",
+  "top_skill_to_add": "<one specific skill or certificate name that appears most in their gaps>"
+}`,
+        messages: [{
+          role: 'user',
+          content: `Learner skills: ${skills.join(', ')}
+Top match score: ${topScore}%
+Average match score: ${avgScore}%
+Most common skill gaps across top ${topMatches.length} matches: ${topGaps.join(', ')}
+
+Write career advice for this learner.`
+        }]
+      })
+    });
+
+    if (!response.ok) throw new Error(`Claude API ${response.status}`);
+    const data   = await response.json();
+    const parsed = safeParseJSON(data.content?.[0]?.text || '{}');
+    return parsed;
+
+  } catch (err) {
+    console.warn('generateCareerSummary error:', err.message);
+    return null;
+  }
+}
+
+
+/* ============================================================
+   SECTION 4: RENDER HELPERS  (enhanced match card)
+   ============================================================ */
+
+/**
+ * Render a match card with skill gap badges, apply/save,
+ * and link to original job posting if external.
  */
 function renderMatchCard(match, container, onApply) {
-  const opp   = match.opportunity;
+  const opp = match.opportunity;
   if (!opp) return;
 
-  const scoreColor = match.score >= 80
-    ? 'var(--teal)'
-    : match.score >= 65
-    ? 'var(--gold)'
-    : 'var(--ink-muted)';
+  const sc = match.score >= 80 ? 'var(--teal)'
+           : match.score >= 65 ? 'var(--gold)'
+           : 'var(--coral)';
 
-  const typeIcons = { Job:'💼', Learnership:'🎓', Internship:'📋', Project:'🚀' };
+  const ICONS = { Job:'💼', Learnership:'🎓', Internship:'📋', Project:'🚀' };
+  const isExternal = opp.source && opp.source !== 'internal';
+
+  // Skill match + gap badges (max 4 each)
+  const matchBadges = (match.skill_matches || []).slice(0, 4)
+    .map(s => `<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:var(--teal-lt);color:var(--teal)">✓ ${escHtml(s)}</span>`)
+    .join('');
+  const gapBadges = (match.skill_gaps || []).slice(0, 3)
+    .map(s => `<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:var(--coral-lt);color:var(--coral)">+ ${escHtml(s)}</span>`)
+    .join('');
 
   const card = document.createElement('div');
   card.className = 'match-card';
   card.innerHTML = `
     <div class="mc-header">
-      <div>
-        <div class="mc-title">${escHtml(opp.title)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="mc-title">${escHtml(opp.title)}
+          ${isExternal ? `<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:var(--gold-lt);color:var(--gold);font-weight:600;margin-left:6px;vertical-align:middle">${escHtml(opp.source?.toUpperCase())}</span>` : ''}
+        </div>
         <div class="mc-company">${escHtml(opp.company)} &mdash; ${escHtml(opp.location)}</div>
       </div>
-      <div class="mc-score" style="color:${scoreColor}">${match.score}%</div>
+      <div class="mc-score" style="color:${sc}">${match.score}%</div>
     </div>
     <div class="mc-bar-bg">
-      <div class="mc-bar${match.score < 80 ? ' mid' : ''}" data-w="${match.score}"></div>
+      <div class="mc-bar${match.score < 80 ? ' mid' : ''}" data-w="${match.score}" style="width:0%"></div>
     </div>
-    <div class="mc-tags">
-      <span class="mc-tag">${typeIcons[opp.type] || ''} ${escHtml(opp.type)}</span>
-      ${opp.is_funded ? '<span class="mc-tag funded">SETA funded</span>' : ''}
-      ${opp.is_remote ? '<span class="mc-tag">Remote</span>' : ''}
-      ${opp.is_urgent ? '<span class="mc-tag" style="background:var(--coral-lt);color:var(--coral)">Closing soon</span>' : ''}
+
+    <div class="mc-tags" style="margin-bottom:8px">
+      <span class="mc-tag">${ICONS[opp.type] || ''} ${escHtml(opp.type)}</span>
+      ${opp.is_funded  ? '<span class="mc-tag funded">SETA funded</span>' : ''}
+      ${opp.is_remote  ? '<span class="mc-tag">🌐 Remote</span>' : ''}
+      ${opp.stipend    ? `<span class="mc-tag">💰 ${escHtml(opp.stipend)}</span>` : ''}
+      ${opp.closing_date ? `<span class="mc-tag" style="color:var(--coral)">⏳ Closes ${formatMatchDate(opp.closing_date)}</span>` : ''}
     </div>
+
+    ${matchBadges || gapBadges ? `
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+      ${matchBadges}${gapBadges}
+    </div>` : ''}
+
     <div class="mc-tip">
       <strong>AI insight:</strong> ${escHtml(match.ai_insight)}
+      ${match.recommendation ? `<br><span style="color:var(--teal);font-weight:500">💡 ${escHtml(match.recommendation)}</span>` : ''}
     </div>
+
     <div class="mc-apply">
-      <button class="btn btn-primary btn-sm apply-btn">Apply now</button>
-      <button class="btn btn-ghost btn-sm">Save</button>
+      ${isExternal && opp.apply_url
+        ? `<a href="${escHtml(opp.apply_url)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Apply on ${escHtml(opp.source)}</a>`
+        : `<button class="btn btn-primary btn-sm apply-btn">Apply now</button>`
+      }
+      <button class="btn btn-ghost btn-sm save-btn">Save</button>
     </div>`;
 
-  /* Animate score bar after insertion */
+  // Animate bar
   setTimeout(() => {
     const bar = card.querySelector('.mc-bar');
     if (bar) bar.style.width = bar.getAttribute('data-w') + '%';
   }, 100);
 
-  /* Apply button handler */
-  card.querySelector('.apply-btn').addEventListener('click', async () => {
-    const result = await applyToOpportunity(opp.id, match.score);
-    if (result.success) {
-      card.querySelector('.mc-apply').innerHTML =
-        `<span class="applied-badge">✓ Applied</span>
-         <span style="font-size:12px;color:var(--ink-muted);align-self:center;margin-left:6px">We'll notify you of updates.</span>`;
-      if (onApply) onApply(opp.id);
-    }
+  // Internal apply button
+  const applyBtn = card.querySelector('.apply-btn');
+  if (applyBtn) {
+    applyBtn.addEventListener('click', async () => {
+      applyBtn.disabled = true;
+      applyBtn.textContent = 'Applying…';
+      const result = await applyToOpportunity(opp.id, match.score);
+      if (result.success || result.alreadyApplied) {
+        card.querySelector('.mc-apply').innerHTML =
+          `<span class="applied-badge">✓ Applied</span>
+           <span style="font-size:12px;color:var(--ink-muted);align-self:center;margin-left:6px">We'll notify you of updates.</span>`;
+        if (onApply) onApply(opp.id);
+      } else {
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Apply now';
+      }
+    });
+  }
+
+  // Save button
+  card.querySelector('.save-btn')?.addEventListener('click', function() {
+    this.textContent = this.textContent === 'Save' ? '✓ Saved' : 'Save';
   });
 
   container.appendChild(card);
 }
 
+
 /**
- * Render all matches into a container.
- * Shows loading skeleton while fetching.
+ * Render all matches with progress indicator.
+ * Fetches external jobs + runs AI pipeline if no cached matches.
  */
 async function renderAllMatches(containerId, limit = null) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  /* Show skeleton */
-  container.innerHTML = `
-    ${[1,2,3].map(() => `
-      <div class="match-card">
-        <div style="height:14px;width:60%;border-radius:4px" class="skeleton"></div>
-        <div style="height:12px;width:40%;border-radius:4px;margin-top:8px" class="skeleton"></div>
-        <div style="height:4px;width:100%;border-radius:4px;margin-top:12px" class="skeleton"></div>
-      </div>`).join('')}`;
+  // Show progress skeleton
+  container.innerHTML = progressSkeleton('Searching LinkedIn, Indeed, Careers24…');
 
-  /* Check for cached matches first */
+  // Check cache
   const matchRes = await getMyMatches();
   let matches = matchRes.data || [];
 
-  /* If no matches cached, run the pipeline */
   if (!matches.length) {
-    const pipeline = await runMatchingPipeline();
+    // Run full pipeline with progress updates
+    updateProgressSkeleton(container, 'Fetching live job listings…', 20);
+
+    const pipeline = await runMatchingPipeline({
+      fetchExternal: true,
+      progressCallback: (msg, pct) => updateProgressSkeleton(container, msg, pct)
+    });
+
     matches = pipeline.map(m => ({
-      score:      m.score,
-      ai_insight: m.ai_insight,
-      is_saved:   false,
+      score:         m.score,
+      ai_insight:    m.ai_insight,
+      skill_gaps:    m.skill_gaps,
+      skill_matches: m.skill_matches,
+      recommendation: m.recommendation,
       opportunities: m.opportunity
     }));
   }
@@ -294,62 +922,110 @@ async function renderAllMatches(containerId, limit = null) {
   if (!matches.length) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">🔍</div>
+        <div style="font-size:36px;margin-bottom:12px">🔍</div>
         <h3>No matches yet</h3>
-        <p>Complete your skills profile to get AI-powered matches.</p>
-        <a href="dashboard.html" class="btn btn-primary btn-sm" style="margin-top:12px">Update profile</a>
+        <p>Complete your skills profile to get AI-powered matches from LinkedIn, Indeed and more.</p>
+        <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="showView('l-profile',null)">Update profile</button>
       </div>`;
     return;
   }
 
   const display = limit ? matches.slice(0, limit) : matches;
   display.forEach(m => {
-    const match = {
-      score:      m.score,
-      ai_insight: m.ai_insight,
-      opportunity: m.opportunities /* Supabase join name */
-    };
-    renderMatchCard(match, container, null);
+    renderMatchCard({
+      score:         m.score,
+      ai_insight:    m.ai_insight,
+      skill_gaps:    m.skill_gaps    || [],
+      skill_matches: m.skill_matches || [],
+      recommendation: m.recommendation || '',
+      opportunity:   m.opportunities
+    }, container, null);
   });
 }
 
 
-/* ── Utility helpers ─────────────────────────────────────── */
+/* ============================================================
+   SECTION 5: UTILITIES
+   ============================================================ */
 
-function clamp(val, min, max) {
-  return Math.min(Math.max(val, min), max);
-}
+function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
 
 function safeParseJSON(str) {
   try {
-    /* Strip potential markdown fences */
     const clean = str.replace(/```json|```/g, '').trim();
     return JSON.parse(clean);
   } catch {
-    /* Try extracting first JSON object */
-    const match = str.match(/\{[\s\S]*\}/);
-    if (match) {
-      try { return JSON.parse(match[0]); } catch { return {}; }
-    }
+    const m = str.match(/\{[\s\S]*\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch { return {}; } }
     return {};
+  }
+}
+
+function safeParseJSONArray(str) {
+  try {
+    const clean = str.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    const m = str.match(/\[[\s\S]*\]/);
+    if (m) { try { const p = JSON.parse(m[0]); return Array.isArray(p) ? p : []; } catch { return []; } }
+    return [];
   }
 }
 
 function escHtml(str) {
   return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function isValidDate(str) {
+  if (!str) return false;
+  const d = new Date(str);
+  return !isNaN(d.getTime()) && d.getFullYear() > 2020;
+}
+
+function formatMatchDate(str) {
+  try { return new Date(str).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  catch { return str; }
+}
+
+function fallbackScore(learnerSkills, requiredSkills) {
+  if (!Array.isArray(requiredSkills) || !requiredSkills.length) return 50;
+  const lLower = (learnerSkills || []).map(s => String(s).toLowerCase());
+  const rLower = requiredSkills.map(s => String(s).toLowerCase());
+  const hits = rLower.filter(r => lLower.some(l => l.includes(r) || r.includes(l))).length;
+  return Math.round((hits / rLower.length) * 75) + 10;
+}
+
+function progressSkeleton(msg) {
+  return `
+    <div style="padding:20px;text-align:center">
+      <div style="font-size:13px;color:var(--ink-muted);margin-bottom:16px" id="progressMsg">${escHtml(msg)}</div>
+      <div style="height:4px;background:var(--paper-2);border-radius:99px;overflow:hidden;max-width:300px;margin:0 auto">
+        <div id="progressBar" style="height:100%;width:5%;background:var(--teal);border-radius:99px;transition:width .4s ease"></div>
+      </div>
+    </div>
+    ${[1,2,3].map(() => `
+      <div class="match-card">
+        <div style="height:14px;width:60%;border-radius:4px;margin-bottom:8px" class="skeleton"></div>
+        <div style="height:12px;width:40%;border-radius:4px;margin-bottom:12px" class="skeleton"></div>
+        <div style="height:4px;width:100%;border-radius:4px" class="skeleton"></div>
+      </div>`).join('')}`;
+}
+
+function updateProgressSkeleton(container, msg, pct) {
+  const msgEl = container.querySelector('#progressMsg');
+  const barEl = container.querySelector('#progressBar');
+  if (msgEl) msgEl.textContent = msg;
+  if (barEl) barEl.style.width = Math.min(pct, 95) + '%';
 }
 
 
-/* ── Quick single-card score (for detail modal) ──────────── */
+/* ============================================================
+   SECTION 6: QUICK SCORE (on-demand, no save)
+   ============================================================ */
 
-/**
- * Score one opportunity on-demand (e.g. when opening a modal)
- * Returns { score, insight } without saving to DB
- */
 async function quickScore(oppId) {
   const profileRes = await getLearnerProfile();
   if (!profileRes.success) return { score: 0, insight: 'Unable to load profile.' };
@@ -358,14 +1034,18 @@ async function quickScore(oppId) {
   const oppRes  = await getOpportunityById(oppId);
   if (!oppRes.success) return { score: 0, insight: 'Unable to load opportunity.' };
 
-  const result = await scoreOne(
-    learner.id,
+  const ctx = buildLearnerContext(
     learner.skills || [],
     learner.qualification || '',
-    learner.study_field   || '',
+    learner.study_field || '',
     learner.users?.province || '',
-    oppRes.data
+    learner.city || '',
+    learner.qualifications || [],
+    learner.certificates || [],
+    learner.linkedin_url || '',
+    learner.github_url || ''
   );
 
-  return { score: result.score, insight: result.ai_insight };
+  const result = await scoreOneOpportunity(learner.id, ctx, oppRes.data);
+  return { score: result.score, insight: result.ai_insight, gaps: result.skill_gaps };
 }
