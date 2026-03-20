@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkillsMatch ZA — Connect Skills to Opportunity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:      #0e1117;
+      --ink-soft: #3a3f4b;
+      --paper:    #f5f2eb;
+      --paper2:   #ede9df;
+      --teal:     #0d7a5f;
+      --teal-lt:  #e0f3ee;
+      --gold:     #c8a84b;
+      --gold-lt:  #fdf6e3;
+      --coral:    #d95f3b;
+      --white:    #ffffff;
+      --radius:   12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 48px;
+      background: var(--paper);
+      border-bottom: 1px solid rgba(14,17,23,.08);
+    }
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 20px;
+      color: var(--ink); text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+
+    .nav-logo span { color: var(--teal); }
+
+    .nav-links { display: flex; align-items: center; gap: 10px; }
+
+    .btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500;
+      padding: 9px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      border: 1.5px solid transparent;
+      transition: all .18s ease;
+      display: inline-block;
+    }
+
+    .btn-ghost {
+      border-color: rgba(14,17,23,.2);
+      color: var(--ink);
+      background: transparent;
+    }
+    .btn-ghost:hover { background: var(--paper2); }
+
+    .btn-primary {
+      background: var(--teal);
+      color: var(--white);
+      border-color: var(--teal);
+    }
+    .btn-primary:hover { background: #0a6750; border-color: #0a6750; }
+
+    .btn-lg {
+      font-size: 16px;
+      padding: 14px 34px;
+      border-radius: 10px;
+    }
+
+    .btn-outline-dark {
+      border-color: var(--ink);
+      color: var(--ink);
+      background: transparent;
+    }
+    .btn-outline-dark:hover { background: var(--ink); color: var(--white); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      padding-top: 72px;
+    }
+
+    .hero-left {
+      padding: 80px 48px 80px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .hero-kicker {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--teal-lt);
+      color: var(--teal);
+      font-size: 12px; font-weight: 500;
+      letter-spacing: .06em; text-transform: uppercase;
+      padding: 6px 14px; border-radius: 20px;
+      margin-bottom: 28px;
+      width: fit-content;
+      opacity: 0; animation: fadeUp .6s .1s ease forwards;
+    }
+
+    .hero-kicker::before {
+      content: ''; width: 7px; height: 7px;
+      background: var(--teal); border-radius: 50%;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(40px, 5vw, 64px);
+      line-height: 1.05;
+      letter-spacing: -2px;
+      color: var(--ink);
+      opacity: 0; animation: fadeUp .6s .2s ease forwards;
+    }
+
+    h1 .accent { color: var(--teal); }
+    h1 .underline-gold {
+      position: relative; display: inline-block;
+    }
+    h1 .underline-gold::after {
+      content: '';
+      position: absolute; left: 0; bottom: -4px;
+      width: 100%; height: 4px;
+      background: var(--gold);
+      border-radius: 2px;
+    }
+
+    .hero-sub {
+      margin-top: 24px;
+      font-size: 18px; font-weight: 300; line-height: 1.65;
+      color: var(--ink-soft); max-width: 480px;
+      opacity: 0; animation: fadeUp .6s .35s ease forwards;
+    }
+
+    .hero-ctas {
+      margin-top: 40px;
+      display: flex; gap: 12px; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp .6s .45s ease forwards;
+    }
+
+    .hero-proof {
+      margin-top: 56px;
+      display: flex; gap: 32px;
+      opacity: 0; animation: fadeUp .6s .55s ease forwards;
+    }
+
+    .proof-item { display: flex; flex-direction: column; gap: 2px; }
+    .proof-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px; font-weight: 700;
+      color: var(--ink); letter-spacing: -1px;
+    }
+    .proof-label { font-size: 13px; color: var(--ink-soft); }
+
+    .proof-divider {
+      width: 1px; background: rgba(14,17,23,.12); align-self: stretch;
+    }
+
+    /* Hero Right — visual panel */
+    .hero-right {
+      background: var(--ink);
+      position: relative;
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      padding: 60px 40px;
+    }
+
+    .hero-right::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 80% 20%, rgba(13,122,95,.35) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 20% 80%, rgba(200,168,75,.2) 0%, transparent 70%);
+    }
+
+    .hero-card-stack {
+      position: relative; width: 100%; max-width: 360px;
+      opacity: 0; animation: fadeUp .7s .5s ease forwards;
+    }
+
+    .hcard {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px;
+      padding: 20px 22px;
+      backdrop-filter: blur(8px);
+      color: var(--white);
+    }
+
+    .hcard + .hcard { margin-top: 12px; }
+
+    .hcard-label {
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: .08em; color: rgba(255,255,255,.45);
+      margin-bottom: 10px;
+    }
+
+    .hcard-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 600; }
+    .hcard-meta { font-size: 13px; color: rgba(255,255,255,.55); margin-top: 4px; }
+
+    .hcard-score {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 14px;
+    }
+
+    .score-bar-bg {
+      flex: 1; height: 5px;
+      background: rgba(255,255,255,.12);
+      border-radius: 3px; margin-right: 10px;
+      overflow: hidden;
+    }
+
+    .score-bar {
+      height: 100%; border-radius: 3px;
+      background: #2dd4a0;
+      animation: growBar 1s 1s ease forwards;
+      width: 0;
+    }
+
+    .score-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px; font-weight: 700; color: #2dd4a0;
+    }
+
+    .hcard-ai-tip {
+      margin-top: 12px;
+      font-size: 12px; color: rgba(255,255,255,.5);
+      line-height: 1.5;
+      border-top: 1px solid rgba(255,255,255,.07);
+      padding-top: 10px;
+    }
+
+    .hcard-ai-tip strong { color: rgba(255,255,255,.75); font-weight: 500; }
+
+    .hcard-badge {
+      display: inline-block;
+      font-size: 10px; font-weight: 500;
+      padding: 3px 9px; border-radius: 20px;
+      background: rgba(13,122,95,.4);
+      color: #2dd4a0;
+      letter-spacing: .04em;
+      margin-top: 8px;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .section { padding: 100px 48px; }
+
+    .section-kicker {
+      font-size: 12px; font-weight: 500; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--teal);
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(30px, 4vw, 48px);
+      font-weight: 800; letter-spacing: -1.5px;
+      line-height: 1.1; color: var(--ink);
+    }
+
+    .section-sub {
+      font-size: 17px; font-weight: 300;
+      color: var(--ink-soft); margin-top: 14px;
+      max-width: 520px; line-height: 1.65;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      margin-top: 60px;
+      border: 1px solid rgba(14,17,23,.1);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .step {
+      padding: 40px 36px;
+      background: var(--white);
+      transition: background .2s;
+      position: relative;
+    }
+
+    .step:hover { background: var(--paper); }
+
+    .step-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 48px; font-weight: 800;
+      color: rgba(14,17,23,.06);
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+
+    .step-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      margin-bottom: 18px;
+    }
+
+    .step-icon.teal { background: var(--teal-lt); }
+    .step-icon.gold { background: var(--gold-lt); }
+    .step-icon.coral { background: #fdf0ed; }
+
+    .step h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px; font-weight: 700;
+      letter-spacing: -.5px; margin-bottom: 10px;
+    }
+
+    .step p {
+      font-size: 15px; line-height: 1.65;
+      color: var(--ink-soft);
+    }
+
+    .step-divider {
+      position: absolute; top: 0; right: 0; bottom: 0;
+      width: 1px; background: rgba(14,17,23,.08);
+    }
+
+    /* ── WHO IT'S FOR ── */
+    .who-section {
+      background: var(--ink);
+      padding: 100px 48px;
+      color: var(--white);
+    }
+
+    .who-section .section-kicker { color: var(--gold); }
+    .who-section h2 { color: var(--white); }
+    .who-section .section-sub { color: rgba(255,255,255,.55); }
+
+    .who-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 60px;
+    }
+
+    .who-card {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 32px 28px;
+      transition: border-color .2s, background .2s;
+    }
+
+    .who-card:hover {
+      border-color: rgba(255,255,255,.2);
+      background: rgba(255,255,255,.04);
+    }
+
+    .who-icon {
+      font-size: 28px; margin-bottom: 18px;
+    }
+
+    .who-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px; font-weight: 700;
+      letter-spacing: -.5px; margin-bottom: 10px;
+      color: var(--white);
+    }
+
+    .who-card p {
+      font-size: 15px; line-height: 1.65;
+      color: rgba(255,255,255,.5);
+    }
+
+    .who-tag {
+      display: inline-block; margin-top: 18px;
+      font-size: 12px; padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .tag-teal { background: rgba(13,122,95,.3); color: #2dd4a0; }
+    .tag-gold { background: rgba(200,168,75,.2); color: var(--gold); }
+    .tag-coral { background: rgba(217,95,59,.2); color: #f0826a; }
+
+    /* ── STATS BANNER ── */
+    .stats-banner {
+      background: var(--teal);
+      padding: 56px 48px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+    }
+
+    .stat-item {
+      text-align: center; padding: 20px;
+      border-right: 1px solid rgba(255,255,255,.15);
+    }
+    .stat-item:last-child { border-right: none; }
+
+    .stat-n {
+      font-family: 'Syne', sans-serif;
+      font-size: 42px; font-weight: 800;
+      color: var(--white); letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    .stat-lbl {
+      font-size: 14px; color: rgba(255,255,255,.65);
+      margin-top: 6px;
+    }
+
+    /* ── INSTITUTIONS ── */
+    .institutions {
+      padding: 80px 48px;
+      text-align: center;
+    }
+
+    .inst-label {
+      font-size: 12px; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--ink-soft);
+      margin-bottom: 32px;
+    }
+
+    .inst-logos {
+      display: flex; align-items: center; justify-content: center;
+      flex-wrap: wrap; gap: 16px;
+    }
+
+    .inst-pill {
+      padding: 10px 22px;
+      border: 1px solid rgba(14,17,23,.12);
+      border-radius: 8px;
+      font-size: 14px; font-weight: 500;
+      color: var(--ink-soft);
+      background: var(--white);
+    }
+
+    /* ── CTA SECTION ── */
+    .cta-section {
+      padding: 100px 48px;
+      text-align: center;
+      background: var(--paper2);
+      border-top: 1px solid rgba(14,17,23,.07);
+    }
+
+    .cta-section h2 { max-width: 600px; margin: 0 auto; }
+    .cta-section .section-sub { margin: 16px auto 0; text-align: center; }
+
+    .cta-btns {
+      display: flex; justify-content: center; gap: 12px;
+      margin-top: 40px; flex-wrap: wrap;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--ink);
+      color: rgba(255,255,255,.45);
+      padding: 40px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+
+    .footer-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 16px;
+      color: var(--white); text-decoration: none;
+    }
+
+    .footer-logo span { color: var(--teal); }
+
+    footer p { font-size: 13px; }
+
+    .footer-links {
+      display: flex; gap: 24px;
+    }
+
+    .footer-links a {
+      font-size: 13px; color: rgba(255,255,255,.45);
+      text-decoration: none; transition: color .15s;
+    }
+
+    .footer-links a:hover { color: var(--white); }
+
+    .mict-badge {
+      font-size: 11px; padding: 4px 10px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 6px; color: rgba(255,255,255,.4);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes growBar {
+      to { width: var(--w, 90%); }
+    }
+
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      nav { padding: 16px 20px; }
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero-left { padding: 60px 20px 40px; }
+      .hero-right { display: none; }
+      .section { padding: 60px 20px; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .who-section { padding: 60px 20px; }
+      .who-grid { grid-template-columns: 1fr; }
+      .stats-banner { grid-template-columns: 1fr 1fr; padding: 40px 20px; }
+      .institutions { padding: 50px 20px; }
+      .cta-section { padding: 60px 20px; }
+      footer { padding: 30px 20px; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">Skills<span>Match</span> ZA</a>
+    <div class="nav-links">
+      <a href="login.html" class="btn btn-ghost">Log in</a>
+      <a href="register.html" class="btn btn-primary">Get started</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="hero-kicker">MICT SETA — National Skills Competition</div>
+      <h1>
+        Your skills.<br>
+        Your <span class="accent">opportunity</span>.<br>
+        <span class="underline-gold">Connected.</span>
+      </h1>
+      <p class="hero-sub">
+        SkillsMatch ZA uses AI to bridge the gap between trained youth and real jobs, learnerships, and projects — especially in rural and semi-urban South Africa.
+      </p>
+      <div class="hero-ctas">
+        <a href="register.html" class="btn btn-primary btn-lg">Find my matches</a>
+        <a href="register.html?role=employer" class="btn btn-outline-dark btn-lg">Post an opportunity</a>
+      </div>
+      <div class="hero-proof">
+        <div class="proof-item">
+          <span class="proof-num">2 400+</span>
+          <span class="proof-label">Learners registered</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-item">
+          <span class="proof-num">380</span>
+          <span class="proof-label">Opportunities listed</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-item">
+          <span class="proof-num">9 provinces</span>
+          <span class="proof-label">Covered nationwide</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="hero-card-stack">
+        <div class="hcard">
+          <div class="hcard-label">AI match found</div>
+          <div class="hcard-title">IT Support Learnership</div>
+          <div class="hcard-meta">Telkom SA &mdash; Mahikeng, North West</div>
+          <div class="hcard-score">
+            <div class="score-bar-bg">
+              <div class="score-bar" style="--w:92%"></div>
+            </div>
+            <span class="score-val">92%</span>
+          </div>
+          <div class="hcard-ai-tip">
+            <strong>AI insight:</strong> Strong match on Python and networking. Missing: CCNA certification.
+          </div>
+          <span class="hcard-badge">MICT SETA funded</span>
+        </div>
+
+        <div class="hcard">
+          <div class="hcard-label">New opportunity</div>
+          <div class="hcard-title">Junior Web Developer</div>
+          <div class="hcard-meta">DigitalHub &mdash; Remote / Mafikeng</div>
+          <div class="hcard-score">
+            <div class="score-bar-bg">
+              <div class="score-bar" style="--w:76%; animation-delay:1.2s"></div>
+            </div>
+            <span class="score-val">76%</span>
+          </div>
+          <div class="hcard-ai-tip">
+            <strong>AI insight:</strong> Good HTML/CSS match. Add a portfolio project to boost your score.
+          </div>
+        </div>
+
+        <div class="hcard">
+          <div class="hcard-label">Entrepreneurship grant</div>
+          <div class="hcard-title">SEDA Tech Startup Fund</div>
+          <div class="hcard-meta">Small Enterprise Development Agency</div>
+          <div class="hcard-score">
+            <div class="score-bar-bg">
+              <div class="score-bar" style="--w:68%; animation-delay:1.4s"></div>
+            </div>
+            <span class="score-val">68%</span>
+          </div>
+          <div class="hcard-ai-tip">
+            <strong>AI insight:</strong> Business plan and TVET qualification align well with this grant.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how">
+    <div class="reveal">
+      <p class="section-kicker">How it works</p>
+      <h2>From qualification to<br>career in three steps</h2>
+      <p class="section-sub">No more sending CVs into the void. Our AI reads your skills and qualification, then surfaces the opportunities most likely to hire you.</p>
+    </div>
+
+    <div class="steps-grid reveal">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-icon teal">&#127891;</div>
+        <h3>Build your skills profile</h3>
+        <p>Enter your qualification, institution (TVET, university, or SETA programme), and skills. It takes under 5 minutes.</p>
+        <div class="step-divider"></div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-icon gold">&#129302;</div>
+        <h3>AI finds your best matches</h3>
+        <p>Our matching engine compares your profile against hundreds of jobs, learnerships, and projects — and ranks them with an explanation.</p>
+        <div class="step-divider"></div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-icon coral">&#128640;</div>
+        <h3>Apply with one click</h3>
+        <p>Apply directly through the platform. Employers and coordinators can see your full profile and respond to your application.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS BANNER -->
+  <div class="stats-banner reveal">
+    <div class="stat-item">
+      <div class="stat-n">2 400+</div>
+      <div class="stat-lbl">Learners on platform</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-n">380</div>
+      <div class="stat-lbl">Active opportunities</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-n">94%</div>
+      <div class="stat-lbl">Match accuracy</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-n">9</div>
+      <div class="stat-lbl">Provinces covered</div>
+    </div>
+  </div>
+
+  <!-- WHO IT'S FOR -->
+  <section class="who-section" id="who">
+    <div class="reveal">
+      <p class="section-kicker">Who it's for</p>
+      <h2>Built for the whole<br>skills ecosystem</h2>
+      <p class="section-sub">SkillsMatch ZA connects every stakeholder — from the learner looking for a first job, to the employer hiring, to the SETA tracking placements.</p>
+    </div>
+
+    <div class="who-grid reveal">
+      <div class="who-card">
+        <div class="who-icon">&#127891;</div>
+        <h3>Learners &amp; graduates</h3>
+        <p>TVET college students, university graduates, and SETA programme completers looking for their first real opportunity.</p>
+        <span class="who-tag tag-teal">Create profile &rarr;</span>
+      </div>
+      <div class="who-card">
+        <div class="who-icon">&#127970;</div>
+        <h3>Employers &amp; industry</h3>
+        <p>Companies and enterprises looking to hire, run learnerships, or offer internships to qualified young South Africans.</p>
+        <span class="who-tag tag-gold">Post opportunity &rarr;</span>
+      </div>
+      <div class="who-card">
+        <div class="who-icon">&#128202;</div>
+        <h3>SETAs &amp; TVETs</h3>
+        <p>Training providers and SETA coordinators who need to track learner placement, report on outcomes, and plan future programmes.</p>
+        <span class="who-tag tag-coral">Admin dashboard &rarr;</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTITUTIONS -->
+  <section class="institutions reveal">
+    <p class="inst-label">Connected institutions &amp; partners</p>
+    <div class="inst-logos">
+      <div class="inst-pill">MICT SETA</div>
+      <div class="inst-pill">MDiHub</div>
+      <div class="inst-pill">TVET Colleges</div>
+      <div class="inst-pill">SEDA</div>
+      <div class="inst-pill">DHET</div>
+      <div class="inst-pill">Propella</div>
+      <div class="inst-pill">NYDA</div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section reveal">
+    <p class="section-kicker">Get started today</p>
+    <h2>Stop waiting for<br>opportunity to find you</h2>
+    <p class="section-sub">Join thousands of learners already matched to jobs, learnerships, and entrepreneurship funding across South Africa.</p>
+    <div class="cta-btns">
+      <a href="register.html" class="btn btn-primary btn-lg">Register as a learner</a>
+      <a href="register.html?role=employer" class="btn btn-ghost btn-lg">Register as an employer</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <a href="#" class="footer-logo">Skills<span>Match</span> ZA</a>
+    <p>&copy; 2025 SkillsMatch ZA. Built for the MICT SETA National Skills Competition.</p>
+    <div class="footer-links">
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+      <a href="login.html">Log in</a>
+    </div>
+    <span class="mict-badge">MICT SETA Submission</span>
+  </footer>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
