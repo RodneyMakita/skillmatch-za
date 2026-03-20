@@ -8,526 +8,277 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    body { margin: 0; min-height: 100vh; background: var(--paper); }
+    body { margin:0; min-height:100vh; background:var(--paper); }
+    .shell { display:grid; grid-template-columns:220px 1fr; min-height:100vh; }
 
-    .shell {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      min-height: 100vh;
-    }
+    /* Sidebar */
+    .sidebar { background:var(--ink); display:flex; flex-direction:column; padding:28px 14px 24px; position:sticky; top:0; height:100vh; overflow-y:auto; }
+    .sb-logo { font-family:var(--font-display); font-weight:800; font-size:17px; color:var(--white); text-decoration:none; letter-spacing:-.4px; padding:0 8px; margin-bottom:4px; display:block; }
+    .sb-logo span { color:var(--teal-glow); }
+    .sb-role-badge { font-size:10px; text-transform:uppercase; letter-spacing:.1em; padding:3px 10px; border-radius:99px; margin:0 8px 22px; width:fit-content; }
+    .rb-learner  { background:rgba(13,122,95,.25);  color:var(--teal-glow); }
+    .rb-employer { background:rgba(200,168,75,.2);  color:var(--gold); }
+    .rb-admin    { background:rgba(217,95,59,.2);   color:#f0826a; }
+    .sb-section  { font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:rgba(255,255,255,.22); padding:0 8px; margin:14px 0 5px; }
+    .sb-link { display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; font-size:13px; color:rgba(255,255,255,.45); text-decoration:none; cursor:pointer; transition:background .15s,color .15s; margin-bottom:1px; border:none; background:transparent; width:100%; text-align:left; }
+    .sb-link svg { flex-shrink:0; opacity:.55; }
+    .sb-link:hover { background:rgba(255,255,255,.07); color:rgba(255,255,255,.8); }
+    .sb-link.active { background:rgba(13,122,95,.28); color:var(--teal-glow); font-weight:500; }
+    .sb-link.active svg { opacity:1; }
+    .sb-spacer { flex:1; }
+    .sb-user { display:flex; align-items:center; gap:9px; padding:10px 8px; border-top:1px solid rgba(255,255,255,.07); margin-top:10px; }
+    .sb-avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:var(--font-display); flex-shrink:0; }
+    .av-learner  { background:rgba(13,122,95,.3);   color:var(--teal-glow); }
+    .av-employer { background:rgba(200,168,75,.25); color:var(--gold); }
+    .av-admin    { background:rgba(217,95,59,.25);  color:#f0826a; }
+    .sb-user-info { flex:1; min-width:0; }
+    .sb-user-name  { font-size:12px; font-weight:500; color:rgba(255,255,255,.75); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sb-user-email { font-size:11px; color:rgba(255,255,255,.25); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sb-logout { background:none; border:none; cursor:pointer; color:rgba(255,255,255,.22); padding:4px; transition:color .15s; }
+    .sb-logout:hover { color:rgba(255,255,255,.6); }
 
-    /* ── Sidebar ── */
-    .sidebar {
-      background: var(--ink);
-      display: flex;
-      flex-direction: column;
-      padding: 28px 14px 24px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-    }
-
-    .sb-logo {
-      font-family: var(--font-display);
-      font-weight: 800;
-      font-size: 17px;
-      color: var(--white);
-      text-decoration: none;
-      letter-spacing: -.4px;
-      padding: 0 8px;
-      margin-bottom: 4px;
-      display: block;
-    }
-    .sb-logo span { color: var(--teal-glow); }
-
-    .sb-role-badge {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-      padding: 3px 10px;
-      border-radius: 99px;
-      margin: 0 8px 22px;
-      width: fit-content;
-    }
-    .rb-learner  { background: rgba(13,122,95,.25);  color: var(--teal-glow); }
-    .rb-employer { background: rgba(200,168,75,.2);  color: var(--gold); }
-    .rb-admin    { background: rgba(217,95,59,.2);   color: #f0826a; }
-
-    .sb-section {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-      color: rgba(255,255,255,.22);
-      padding: 0 8px;
-      margin: 14px 0 5px;
-    }
-
-    .sb-link {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 9px 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      color: rgba(255,255,255,.45);
-      text-decoration: none;
-      cursor: pointer;
-      transition: background .15s, color .15s;
-      margin-bottom: 1px;
-      border: none;
-      background: transparent;
-      width: 100%;
-      text-align: left;
-    }
-    .sb-link svg { flex-shrink: 0; opacity: .55; }
-    .sb-link:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.8); }
-    .sb-link.active { background: rgba(13,122,95,.28); color: var(--teal-glow); font-weight: 500; }
-    .sb-link.active svg { opacity: 1; }
-
-    .sb-spacer { flex: 1; }
-
-    .sb-user {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 10px 8px;
-      border-top: 1px solid rgba(255,255,255,.07);
-      margin-top: 10px;
-    }
-
-    .sb-avatar {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700;
-      font-family: var(--font-display);
-      flex-shrink: 0;
-    }
-    .av-learner  { background: rgba(13,122,95,.3);   color: var(--teal-glow); }
-    .av-employer { background: rgba(200,168,75,.25); color: var(--gold); }
-    .av-admin    { background: rgba(217,95,59,.25);  color: #f0826a; }
-
-    .sb-user-info { flex: 1; min-width: 0; }
-    .sb-user-name {
-      font-size: 12px; font-weight: 500;
-      color: rgba(255,255,255,.75);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .sb-user-email {
-      font-size: 11px;
-      color: rgba(255,255,255,.25);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-
-    .sb-logout {
-      background: none; border: none; cursor: pointer;
-      color: rgba(255,255,255,.22);
-      padding: 4px;
-      transition: color .15s;
-    }
-    .sb-logout:hover { color: rgba(255,255,255,.6); }
-
-    /* ── Main area ── */
-    .main { background: var(--paper); overflow-y: auto; min-height: 100vh; }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 34px;
-      background: var(--paper);
-      border-bottom: 1px solid rgba(14,17,23,.07);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .topbar-title {
-      font-family: var(--font-display);
-      font-size: 16px; font-weight: 700; letter-spacing: -.4px;
-    }
-
-    .notif-btn {
-      width: 34px; height: 34px;
-      border-radius: 8px;
-      border: 1px solid rgba(14,17,23,.1);
-      background: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; color: var(--ink-soft);
-      position: relative; transition: background .15s;
-    }
-    .notif-btn:hover { background: var(--paper-2); }
-    .notif-dot {
-      position: absolute; top: 7px; right: 7px;
-      width: 6px; height: 6px;
-      border-radius: 50%; background: var(--coral);
-      border: 1.5px solid var(--paper);
-    }
-
-    .content { padding: 30px 34px; }
+    /* Main */
+    .main { background:var(--paper); overflow-y:auto; min-height:100vh; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; padding:18px 34px; background:var(--paper); border-bottom:1px solid rgba(14,17,23,.07); position:sticky; top:0; z-index:10; }
+    .topbar-title { font-family:var(--font-display); font-size:16px; font-weight:700; letter-spacing:-.4px; }
+    .notif-btn { width:34px; height:34px; border-radius:8px; border:1px solid rgba(14,17,23,.1); background:var(--white); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-soft); position:relative; transition:background .15s; }
+    .notif-btn:hover { background:var(--paper-2); }
+    .notif-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; border-radius:50%; background:var(--coral); border:1.5px solid var(--paper); }
+    .content { padding:30px 34px; }
 
     /* Views */
-    .view { display: none; animation: viewIn .3s ease; }
-    .view.active { display: block; }
+    .view { display:none; animation:vIn .3s ease; }
+    .view.active { display:block; }
+    @keyframes vIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-    @keyframes viewIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    /* Page head */
+    .page-head { margin-bottom:24px; }
+    .page-head h1 { font-size:clamp(20px,2.4vw,28px); letter-spacing:-1px; margin-bottom:3px; }
+    .page-head p  { font-size:14px; color:var(--ink-soft); }
 
-    /* Shared section components */
-    .page-head { margin-bottom: 24px; }
-    .page-head h1 { font-size: clamp(20px, 2.4vw, 28px); letter-spacing: -1px; margin-bottom: 3px; }
-    .page-head p  { font-size: 14px; color: var(--ink-soft); }
+    /* Stats row */
+    .stats-row { display:grid; gap:12px; margin-bottom:24px; }
+    .stats-4   { grid-template-columns:repeat(4,1fr); }
+    .stats-3   { grid-template-columns:repeat(3,1fr); }
+    .scard { background:var(--white); border:1px solid rgba(14,17,23,.08); border-radius:12px; padding:16px 18px; }
+    .scard-label { font-size:11px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:7px; }
+    .scard-val   { font-family:var(--font-display); font-size:26px; font-weight:800; letter-spacing:-1.5px; color:var(--ink); line-height:1; }
+    .scard-sub   { font-size:12px; color:var(--ink-muted); margin-top:4px; }
+    .scard-up    { font-size:12px; font-weight:500; color:var(--teal); margin-top:4px; }
 
-    .stats-row { display: grid; gap: 12px; margin-bottom: 24px; }
-    .stats-4   { grid-template-columns: repeat(4, 1fr); }
-    .stats-3   { grid-template-columns: repeat(3, 1fr); }
+    /* Two-col */
+    .two-col { display:grid; grid-template-columns:1fr 320px; gap:18px; align-items:start; }
 
-    .scard {
-      background: var(--white);
-      border: 1px solid rgba(14,17,23,.08);
-      border-radius: 12px;
-      padding: 16px 18px;
-    }
-    .scard-label { font-size: 11px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 7px; }
-    .scard-val   { font-family: var(--font-display); font-size: 26px; font-weight: 800; letter-spacing: -1.5px; color: var(--ink); line-height: 1; }
-    .scard-sub   { font-size: 12px; color: var(--ink-muted); margin-top: 4px; }
-    .scard-trend { font-size: 12px; font-weight: 500; margin-top: 4px; }
-    .trend-up   { color: var(--teal); }
-    .trend-down { color: var(--coral); }
+    /* Panel */
+    .panel { background:var(--white); border:1px solid rgba(14,17,23,.08); border-radius:14px; overflow:hidden; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid rgba(14,17,23,.06); }
+    .panel-title { font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:-.3px; }
+    .panel-action { font-size:12px; color:var(--teal); font-weight:500; cursor:pointer; background:none; border:none; text-decoration:none; }
+    .panel-action:hover { text-decoration:underline; }
+    .panel-body { padding:14px 20px; }
 
-    .two-col {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 18px;
-      align-items: start;
-    }
+    /* Match cards */
+    .match-card { padding:14px 18px; border-bottom:1px solid rgba(14,17,23,.05); transition:background .15s; }
+    .match-card:last-child { border-bottom:none; }
+    .match-card:hover { background:var(--paper); }
+    .mc-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px; }
+    .mc-title   { font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:-.3px; }
+    .mc-company { font-size:12px; color:var(--ink-muted); margin-top:2px; }
+    .mc-score   { font-family:var(--font-display); font-size:20px; font-weight:800; letter-spacing:-1px; flex-shrink:0; }
+    .score-high { color:var(--teal); }
+    .score-mid  { color:var(--gold); }
+    .mc-bar-bg  { height:4px; background:var(--paper-2); border-radius:99px; overflow:hidden; margin-bottom:8px; }
+    .mc-bar     { height:100%; border-radius:99px; background:var(--teal); width:0; transition:width 1s cubic-bezier(.4,0,.2,1); }
+    .mc-bar.mid { background:var(--gold); }
+    .mc-tags    { display:flex; gap:5px; flex-wrap:wrap; }
+    .mc-tag     { font-size:11px; padding:3px 9px; border-radius:99px; background:var(--paper-2); color:var(--ink-muted); }
+    .mc-tag.funded { background:var(--teal-lt); color:var(--teal); }
+    .mc-tip     { font-size:12px; color:var(--ink-soft); margin-top:8px; line-height:1.5; border-top:1px solid rgba(14,17,23,.05); padding-top:8px; }
+    .mc-tip strong { color:var(--ink); font-weight:500; }
+    .mc-apply   { display:flex; gap:7px; margin-top:9px; }
+    .applied-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; padding:4px 10px; border-radius:99px; background:var(--success-lt); color:var(--success); font-weight:500; }
 
-    .panel {
-      background: var(--white);
-      border: 1px solid rgba(14,17,23,.08);
-      border-radius: 14px;
-      overflow: hidden;
-    }
+    /* Skeleton */
+    .skeleton { background:linear-gradient(90deg,var(--paper-2) 25%,var(--paper-3) 50%,var(--paper-2) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:6px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .skel-card { padding:14px 18px; border-bottom:1px solid rgba(14,17,23,.05); }
 
-    .panel-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 20px;
-      border-bottom: 1px solid rgba(14,17,23,.06);
-    }
+    /* Profile panel */
+    .sp  { font-size:12px; padding:4px 12px; border-radius:99px; background:var(--teal-lt); color:var(--teal); font-weight:500; display:inline-block; margin:2px; }
+    .sp-add { font-size:12px; padding:4px 12px; border-radius:99px; background:transparent; color:var(--ink-muted); border:1px dashed rgba(14,17,23,.2); cursor:pointer; transition:all .15s; margin:2px; }
+    .sp-add:hover { background:var(--teal-lt); color:var(--teal); border-style:solid; border-color:rgba(13,122,95,.3); }
+    .skill-pills-wrap { display:flex; flex-wrap:wrap; gap:2px; padding:14px 18px; }
+    .strength-track { height:5px; background:var(--paper-2); border-radius:99px; overflow:hidden; }
+    .strength-fill  { height:100%; background:var(--teal); border-radius:99px; transition:width 1s cubic-bezier(.4,0,.2,1); }
 
-    .panel-title {
-      font-family: var(--font-display);
-      font-size: 14px; font-weight: 700; letter-spacing: -.3px;
-    }
+    /* Employer components */
+    .opp-row { display:flex; align-items:center; gap:12px; padding:13px 18px; border-bottom:1px solid rgba(14,17,23,.05); transition:background .15s; }
+    .opp-row:last-child { border-bottom:none; }
+    .opp-row:hover { background:var(--paper); }
+    .opp-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+    .oi-Job         { background:var(--teal-lt); }
+    .oi-Learnership { background:var(--gold-lt); }
+    .oi-Internship  { background:var(--coral-lt); }
+    .oi-Project     { background:#f0eeff; }
+    .opp-info  { flex:1; min-width:0; }
+    .opp-title { font-size:13px; font-weight:500; }
+    .opp-meta  { font-size:12px; color:var(--ink-muted); margin-top:1px; }
+    .opp-stat  { text-align:right; min-width:55px; }
+    .opp-apps  { font-family:var(--font-display); font-size:17px; font-weight:800; letter-spacing:-.5px; }
+    .opp-apps-lbl { font-size:10px; color:var(--ink-muted); }
+    .app-row { display:flex; align-items:center; gap:10px; padding:11px 18px; border-bottom:1px solid rgba(14,17,23,.05); transition:background .15s; }
+    .app-row:last-child { border-bottom:none; }
+    .app-row:hover { background:var(--paper); }
+    .app-avatar { width:32px; height:32px; border-radius:50%; background:var(--teal-lt); color:var(--teal); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; font-family:var(--font-display); flex-shrink:0; }
+    .app-info { flex:1; min-width:0; }
+    .app-name { font-size:13px; font-weight:500; }
+    .app-meta { font-size:11px; color:var(--ink-muted); }
+    .app-score { font-family:var(--font-display); font-size:14px; font-weight:700; color:var(--teal); flex-shrink:0; }
+    .status-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .sd-new       { background:var(--coral); }
+    .sd-under_review  { background:var(--gold); }
+    .sd-shortlisted { background:var(--teal); }
 
-    .panel-action {
-      font-size: 12px; color: var(--teal);
-      font-weight: 500; cursor: pointer;
-      background: none; border: none;
-      text-decoration: none;
-    }
-    .panel-action:hover { text-decoration: underline; }
+    /* Admin components */
+    .admin-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .admin-table th { text-align:left; padding:10px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); font-weight:500; background:var(--paper); border-bottom:1px solid rgba(14,17,23,.07); }
+    .admin-table td { padding:11px 16px; border-bottom:1px solid rgba(14,17,23,.05); vertical-align:middle; }
+    .admin-table tr:last-child td { border-bottom:none; }
+    .admin-table tr:hover td { background:var(--paper); }
+    .td-name  { font-weight:500; }
+    .td-muted { color:var(--ink-muted); }
+    .status-pill { font-size:11px; padding:3px 9px; border-radius:99px; font-weight:500; }
+    .sp-placed    { background:var(--success-lt); color:var(--success); }
+    .sp-matched   { background:var(--teal-lt);    color:var(--teal); }
+    .sp-searching { background:var(--gold-lt);    color:var(--warning); }
+    .sp-inactive  { background:var(--paper-2);    color:var(--ink-muted); }
+    .prov-bar-bg  { height:5px; background:var(--paper-2); border-radius:99px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:6px; }
+    .prov-bar     { height:100%; background:var(--teal); border-radius:99px; }
+    .bar-chart    { display:flex; align-items:flex-end; gap:8px; height:110px; padding:0 2px; }
+    .bc { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; }
+    .bc-body  { width:100%; border-radius:5px 5px 0 0; background:var(--teal-lt); border:1px solid rgba(13,122,95,.2); min-height:4px; transition:background .2s; cursor:pointer; }
+    .bc-body:hover { background:var(--teal); }
+    .bc-label { font-size:10px; color:var(--ink-muted); }
+    .bc-val   { font-size:11px; font-weight:600; color:var(--ink-soft); }
 
-    .panel-body { padding: 14px 20px; }
+    /* Toast */
+    .toast { position:fixed; bottom:24px; right:24px; background:var(--ink); color:var(--white); padding:12px 20px; border-radius:10px; font-size:13px; z-index:999; opacity:0; transform:translateY(8px); transition:all .25s; pointer-events:none; }
+    .toast.show { opacity:1; transform:translateY(0); }
 
-    /* ── LEARNER components ── */
-    .match-card {
-      padding: 14px 18px;
-      border-bottom: 1px solid rgba(14,17,23,.05);
-      transition: background .15s;
-    }
-    .match-card:last-child { border-bottom: none; }
-    .match-card:hover { background: var(--paper); }
+    /* Empty state */
+    .empty-state { text-align:center; padding:40px 20px; color:var(--ink-muted); }
+    .empty-state h3 { font-size:16px; color:var(--ink-soft); margin-bottom:6px; }
+    .empty-state p  { font-size:13px; }
 
-    .mc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-    .mc-title   { font-family: var(--font-display); font-size: 14px; font-weight: 700; letter-spacing: -.3px; }
-    .mc-company { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
-    .mc-score   { font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: -1px; flex-shrink: 0; }
-    .score-high { color: var(--teal); }
-    .score-mid  { color: var(--gold); }
-
-    .mc-bar-bg { height: 4px; background: var(--paper-2); border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
-    .mc-bar    { height: 100%; border-radius: 99px; background: var(--teal); width: 0; transition: width 1s cubic-bezier(.4,0,.2,1); }
-    .mc-bar.mid { background: var(--gold); }
-
-    .mc-tags { display: flex; gap: 5px; flex-wrap: wrap; }
-    .mc-tag  { font-size: 11px; padding: 3px 9px; border-radius: 99px; background: var(--paper-2); color: var(--ink-muted); }
-    .mc-tag.funded { background: var(--teal-lt); color: var(--teal); }
-
-    .mc-tip { font-size: 12px; color: var(--ink-soft); margin-top: 8px; line-height: 1.5; border-top: 1px solid rgba(14,17,23,.05); padding-top: 8px; }
-    .mc-tip strong { color: var(--ink); font-weight: 500; }
-
-    .mc-apply { display: flex; gap: 7px; margin-top: 9px; }
-
-    .applied-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-size: 12px; padding: 4px 10px;
-      border-radius: 99px;
-      background: var(--success-lt); color: var(--success); font-weight: 500;
-    }
-
-    .sp  { font-size: 12px; padding: 4px 12px; border-radius: 99px; background: var(--teal-lt); color: var(--teal); font-weight: 500; display: inline-block; }
-    .sp-add { font-size: 12px; padding: 4px 12px; border-radius: 99px; background: transparent; color: var(--ink-muted); border: 1px dashed rgba(14,17,23,.2); cursor: pointer; transition: all .15s; }
-    .sp-add:hover { background: var(--teal-lt); color: var(--teal); border-style: solid; border-color: rgba(13,122,95,.3); }
-
-    .skill-pills-wrap { display: flex; flex-wrap: wrap; gap: 5px; padding: 14px 18px; }
-
-    .strength-track { height: 5px; background: var(--paper-2); border-radius: 99px; overflow: hidden; }
-    .strength-fill  { height: 100%; background: var(--teal); border-radius: 99px; transition: width 1s cubic-bezier(.4,0,.2,1); }
-
-    /* ── EMPLOYER components ── */
-    .opp-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 13px 18px;
-      border-bottom: 1px solid rgba(14,17,23,.05);
-      transition: background .15s;
-    }
-    .opp-row:last-child { border-bottom: none; }
-    .opp-row:hover { background: var(--paper); }
-
-    .opp-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
-    .oi-job         { background: var(--teal-lt); }
-    .oi-learnership { background: var(--gold-lt); }
-    .oi-internship  { background: var(--coral-lt); }
-
-    .opp-info  { flex: 1; min-width: 0; }
-    .opp-title { font-size: 13px; font-weight: 500; }
-    .opp-meta  { font-size: 12px; color: var(--ink-muted); margin-top: 1px; }
-
-    .opp-stat    { text-align: right; min-width: 55px; }
-    .opp-apps    { font-family: var(--font-display); font-size: 17px; font-weight: 800; letter-spacing: -.5px; }
-    .opp-apps-lbl{ font-size: 10px; color: var(--ink-muted); }
-
-    .app-row { display: flex; align-items: center; gap: 10px; padding: 11px 18px; border-bottom: 1px solid rgba(14,17,23,.05); transition: background .15s; }
-    .app-row:last-child { border-bottom: none; }
-    .app-row:hover { background: var(--paper); }
-
-    .app-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--teal-lt); color: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; font-family: var(--font-display); flex-shrink: 0; }
-    .app-info { flex: 1; min-width: 0; }
-    .app-name { font-size: 13px; font-weight: 500; }
-    .app-meta { font-size: 11px; color: var(--ink-muted); }
-    .app-score { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--teal); flex-shrink: 0; }
-
-    .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .sd-new       { background: var(--coral); }
-    .sd-reviewed  { background: var(--gold); }
-    .sd-shortlist { background: var(--teal); }
-
-    /* ── ADMIN components ── */
-    .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .admin-table th { text-align: left; padding: 10px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); font-weight: 500; background: var(--paper); border-bottom: 1px solid rgba(14,17,23,.07); }
-    .admin-table td { padding: 11px 16px; border-bottom: 1px solid rgba(14,17,23,.05); vertical-align: middle; }
-    .admin-table tr:last-child td { border-bottom: none; }
-    .admin-table tr:hover td { background: var(--paper); }
-    .td-name  { font-weight: 500; }
-    .td-muted { color: var(--ink-muted); }
-
-    .status-pill { font-size: 11px; padding: 3px 9px; border-radius: 99px; font-weight: 500; }
-    .sp-placed    { background: var(--success-lt); color: var(--success); }
-    .sp-matched   { background: var(--teal-lt);    color: var(--teal); }
-    .sp-searching { background: var(--gold-lt);    color: var(--warning); }
-    .sp-inactive  { background: var(--paper-2);    color: var(--ink-muted); }
-
-    .prov-bar-bg { height: 5px; background: var(--paper-2); border-radius: 99px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 6px; }
-    .prov-bar    { height: 100%; background: var(--teal); border-radius: 99px; }
-
-    .bar-chart { display: flex; align-items: flex-end; gap: 7px; height: 110px; padding: 0 2px; }
-    .bar-col   { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
-    .bar-body  { width: 100%; border-radius: 5px 5px 0 0; background: var(--teal-lt); border: 1px solid rgba(13,122,95,.2); min-height: 4px; transition: background .2s; cursor: pointer; }
-    .bar-body:hover { background: var(--teal); }
-    .bar-label { font-size: 10px; color: var(--ink-muted); }
-    .bar-val   { font-size: 11px; font-weight: 600; color: var(--ink-soft); }
-
-    /* ── Responsive ── */
-    @media (max-width: 1024px) {
-      .shell   { grid-template-columns: 1fr; }
-      .sidebar { display: none; }
-      .two-col { grid-template-columns: 1fr; }
-      .stats-4 { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 600px) {
-      .content { padding: 18px 14px; }
-      .topbar  { padding: 14px 16px; }
-      .stats-4, .stats-3 { grid-template-columns: repeat(2, 1fr); }
-    }
+    @media(max-width:1024px){ .shell{grid-template-columns:1fr} .sidebar{display:none} .two-col{grid-template-columns:1fr} .stats-4{grid-template-columns:repeat(2,1fr)} }
+    @media(max-width:600px){ .content{padding:18px 14px} .topbar{padding:14px 16px} .stats-4,.stats-3{grid-template-columns:repeat(2,1fr)} }
   </style>
 </head>
 <body>
 <div class="shell">
 
-  <!-- ══════════ SIDEBAR ══════════ -->
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <a href="index.html" class="sb-logo">Skills<span>Match</span> ZA</a>
     <div class="sb-role-badge" id="roleBadge">Learner</div>
-
     <div class="sb-section">Main</div>
 
-    <!-- Learner nav -->
     <div id="nav-learner">
-      <button class="sb-link active" onclick="showView('l-home', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Dashboard
-      </button>
-      <button class="sb-link" onclick="showView('l-matches', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        My matches
-      </button>
-      <button class="sb-link" onclick="showView('l-apps', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        Applications
-      </button>
-      <button class="sb-link" onclick="showView('l-profile', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        My profile
-      </button>
+      <button class="sb-link active" onclick="showView('l-home',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Dashboard</button>
+      <button class="sb-link" onclick="showView('l-matches',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>My matches</button>
+      <button class="sb-link" onclick="showView('l-apps',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Applications</button>
+      <button class="sb-link" onclick="showView('l-profile',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>My profile</button>
     </div>
 
-    <!-- Employer nav -->
     <div id="nav-employer" style="display:none">
-      <button class="sb-link active" onclick="showView('e-home', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Dashboard
-      </button>
-      <button class="sb-link" onclick="showView('e-listings', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-        My listings
-      </button>
-      <button class="sb-link" onclick="showView('e-applicants', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Applicants
-      </button>
-      <button class="sb-link" onclick="showView('e-post', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Post opportunity
-      </button>
+      <button class="sb-link active" onclick="showView('e-home',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Dashboard</button>
+      <button class="sb-link" onclick="showView('e-listings',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>My listings</button>
+      <button class="sb-link" onclick="showView('e-applicants',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Applicants</button>
+      <button class="sb-link" onclick="showView('e-post',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Post opportunity</button>
     </div>
 
-    <!-- Admin nav -->
     <div id="nav-admin" style="display:none">
-      <button class="sb-link active" onclick="showView('a-home', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Overview
-      </button>
-      <button class="sb-link" onclick="showView('a-learners', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Learners
-      </button>
-      <button class="sb-link" onclick="showView('a-report', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Placement report
-      </button>
-      <button class="sb-link" onclick="showView('a-province', this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        By province
-      </button>
+      <button class="sb-link active" onclick="showView('a-home',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Overview</button>
+      <button class="sb-link" onclick="showView('a-learners',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Learners</button>
+      <button class="sb-link" onclick="showView('a-report',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Placement report</button>
+      <button class="sb-link" onclick="showView('a-province',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>By province</button>
     </div>
 
     <div class="sb-spacer"></div>
     <div class="sb-section">Account</div>
-    <a href="browse.html" class="sb-link">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      Browse all
-    </a>
+    <a href="browse.html" class="sb-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Browse all</a>
 
     <div class="sb-user">
       <div class="sb-avatar" id="sbAvatar">TM</div>
       <div class="sb-user-info">
-        <div class="sb-user-name" id="sbName">Thabo Mokoena</div>
-        <div class="sb-user-email" id="sbEmail">thabo@demo.co.za</div>
+        <div class="sb-user-name"  id="sbName">Loading…</div>
+        <div class="sb-user-email" id="sbEmail"></div>
       </div>
-      <button class="sb-logout" onclick="logout()" title="Log out">
+      <button class="sb-logout" onclick="logoutUser()" title="Log out">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
     </div>
   </aside>
 
-  <!-- ══════════ MAIN ══════════ -->
+  <!-- MAIN -->
   <main class="main">
     <div class="topbar">
       <span class="topbar-title" id="topbarTitle">Dashboard</span>
       <div style="display:flex;align-items:center;gap:10px">
-        <div class="notif-btn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span class="notif-dot"></span>
-        </div>
+        <div class="notif-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-dot"></span></div>
         <a href="browse.html" class="btn btn-primary btn-sm">Browse all</a>
       </div>
     </div>
 
     <div class="content">
 
-      <!-- ═══════════════════════════════════
-           LEARNER VIEWS
-           ═══════════════════════════════════ -->
+      <!-- ═══════ LEARNER VIEWS ═══════ -->
 
       <!-- L: Home -->
       <div class="view active" id="view-l-home">
         <div class="page-head">
-          <h1>Good morning, <span id="lFirstName">Thabo</span> 👋</h1>
+          <h1>Good morning, <span id="lFirstName">…</span> 👋</h1>
           <p>Here's your job search snapshot for today.</p>
         </div>
-        <div class="stats-row stats-4">
-          <div class="scard"><div class="scard-label">AI match score</div><div class="scard-val" style="color:var(--teal)">87%</div><div class="scard-sub">Based on your profile</div></div>
-          <div class="scard"><div class="scard-label">Opportunities found</div><div class="scard-val">12</div><div class="scard-trend trend-up">↑ 3 new today</div></div>
-          <div class="scard"><div class="scard-label">Applications sent</div><div class="scard-val">3</div><div class="scard-sub">2 under review</div></div>
-          <div class="scard"><div class="scard-label">Profile strength</div><div class="scard-val" style="color:var(--teal);font-size:18px">Strong</div><div class="scard-trend trend-up">↑ Add more skills</div></div>
+        <div class="stats-row stats-4" id="lStats">
+          <div class="scard"><div class="scard-label">AI match score</div><div class="scard-val skeleton" style="height:32px;width:70px">&nbsp;</div></div>
+          <div class="scard"><div class="scard-label">Opportunities found</div><div class="scard-val skeleton" style="height:32px;width:50px">&nbsp;</div></div>
+          <div class="scard"><div class="scard-label">Applications sent</div><div class="scard-val skeleton" style="height:32px;width:40px">&nbsp;</div></div>
+          <div class="scard"><div class="scard-label">Profile strength</div><div class="scard-val skeleton" style="height:32px;width:80px">&nbsp;</div></div>
         </div>
         <div class="two-col">
           <div class="panel">
             <div class="panel-head">
               <span class="panel-title">Top AI matches</span>
-              <button class="panel-action" onclick="showView('l-matches', document.querySelector('#nav-learner .sb-link:nth-child(2)'))">See all 12 →</button>
+              <button class="panel-action" onclick="showView('l-matches',document.querySelector('#nav-learner .sb-link:nth-child(2)'))">See all →</button>
             </div>
-            <div class="match-card">
-              <div class="mc-header"><div><div class="mc-title">IT Support Learnership</div><div class="mc-company">Telkom SA — Mahikeng, North West</div></div><div class="mc-score score-high">92%</div></div>
-              <div class="mc-bar-bg"><div class="mc-bar" data-w="92"></div></div>
-              <div class="mc-tags"><span class="mc-tag funded">MICT SETA funded</span><span class="mc-tag">Learnership</span></div>
-              <div class="mc-tip"><strong>AI insight:</strong> Strong match on Python and networking. Missing: CCNA certification.</div>
-              <div class="mc-apply"><button class="btn btn-primary btn-sm" onclick="applyJob(this)">Apply now</button><button class="btn btn-ghost btn-sm">Save</button></div>
-            </div>
-            <div class="match-card">
-              <div class="mc-header"><div><div class="mc-title">Junior Web Developer</div><div class="mc-company">DigitalHub — Remote / Mafikeng</div></div><div class="mc-score score-mid">76%</div></div>
-              <div class="mc-bar-bg"><div class="mc-bar mid" data-w="76"></div></div>
-              <div class="mc-tags"><span class="mc-tag">Job</span><span class="mc-tag">Remote</span></div>
-              <div class="mc-tip"><strong>AI insight:</strong> Good HTML/CSS fit. Add a portfolio project to boost your score.</div>
-              <div class="mc-apply"><button class="btn btn-primary btn-sm" onclick="applyJob(this)">Apply now</button><button class="btn btn-ghost btn-sm">Save</button></div>
-            </div>
-            <div class="match-card">
-              <div class="mc-header"><div><div class="mc-title">ICT Technical Support</div><div class="mc-company">Standard Bank — Johannesburg, Gauteng</div></div><div class="mc-score score-high">84%</div></div>
-              <div class="mc-bar-bg"><div class="mc-bar" data-w="84"></div></div>
-              <div class="mc-tags"><span class="mc-tag">Job</span><span class="mc-tag">Gauteng</span></div>
-              <div class="mc-tip"><strong>AI insight:</strong> Excellent technical support fit. Consider noting remote/relocation availability.</div>
-              <div class="mc-apply"><button class="btn btn-primary btn-sm" onclick="applyJob(this)">Apply now</button><button class="btn btn-ghost btn-sm">Save</button></div>
+            <div id="homeMatchCards">
+              <div class="skel-card"><div class="skeleton" style="height:14px;width:55%;margin-bottom:8px"></div><div class="skeleton" style="height:4px;width:100%"></div></div>
+              <div class="skel-card"><div class="skeleton" style="height:14px;width:65%;margin-bottom:8px"></div><div class="skeleton" style="height:4px;width:100%"></div></div>
+              <div class="skel-card"><div class="skeleton" style="height:14px;width:50%;margin-bottom:8px"></div><div class="skeleton" style="height:4px;width:100%"></div></div>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
-            <div class="panel">
-              <div class="panel-head"><span class="panel-title">My profile</span><button class="panel-action" onclick="showView('l-profile', document.querySelector('#nav-learner .sb-link:nth-child(4)'))">Edit →</button></div>
+            <div class="panel" id="profilePanel">
+              <div class="panel-head"><span class="panel-title">My profile</span><button class="panel-action" onclick="showView('l-profile',document.querySelector('#nav-learner .sb-link:nth-child(4)'))">Edit →</button></div>
               <div class="panel-body">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-                  <div style="width:44px;height:44px;border-radius:50%;background:var(--teal-lt);color:var(--teal);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:15px;font-weight:800;flex-shrink:0" id="lAvatar">TM</div>
-                  <div>
-                    <div style="font-weight:600;font-size:13px" id="lName">Thabo Mokoena</div>
-                    <div style="font-size:11px;color:var(--ink-muted)">TVET N6 — IT &nbsp;|&nbsp; North West</div>
-                  </div>
+                  <div style="width:44px;height:44px;border-radius:50%;background:var(--teal-lt);color:var(--teal);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:15px;font-weight:800;flex-shrink:0" id="lAvatar">…</div>
+                  <div><div style="font-weight:600;font-size:13px" id="lName">Loading…</div><div style="font-size:11px;color:var(--ink-muted)" id="lMeta">…</div></div>
                 </div>
                 <div style="font-size:11px;color:var(--ink-muted);margin-bottom:5px">Profile strength</div>
                 <div class="strength-track"><div class="strength-fill" id="strengthBar" style="width:0%"></div></div>
-                <div style="font-size:12px;color:var(--teal);font-weight:600;margin-top:4px">78% complete</div>
+                <div style="font-size:12px;color:var(--teal);font-weight:600;margin-top:4px" id="strengthPct">0%</div>
               </div>
-              <div class="skill-pills-wrap">
-                <span class="sp">Python</span><span class="sp">HTML/CSS</span><span class="sp">Networking</span><span class="sp">MS Office</span>
-                <button class="sp-add">+ Add skill</button>
+              <div class="skill-pills-wrap" id="profileSkills">
+                <div class="skeleton" style="height:24px;width:70px;border-radius:99px"></div>
+                <div class="skeleton" style="height:24px;width:90px;border-radius:99px"></div>
+                <div class="skeleton" style="height:24px;width:60px;border-radius:99px"></div>
               </div>
             </div>
-            <div style="background:var(--teal-lt);border:1px solid rgba(13,122,95,.2);border-radius:12px;padding:14px 16px">
+            <div id="aiTipBox" style="background:var(--teal-lt);border:1px solid rgba(13,122,95,.2);border-radius:12px;padding:14px 16px;display:none">
               <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);font-weight:600;margin-bottom:6px">AI tip</div>
-              <div style="font-size:13px;color:var(--ink-soft);line-height:1.55">Adding a <strong style="color:var(--ink)">GitHub portfolio</strong> and <strong style="color:var(--ink)">CCNA cert</strong> could boost your average match score by <strong style="color:var(--teal)">+14%</strong>.</div>
+              <div style="font-size:13px;color:var(--ink-soft);line-height:1.55" id="aiTipText"></div>
             </div>
           </div>
         </div>
@@ -535,79 +286,61 @@
 
       <!-- L: Matches -->
       <div class="view" id="view-l-matches">
-        <div class="page-head"><h1>My matches</h1><p>12 opportunities matched to your skills — sorted by AI score.</p></div>
-        <div class="panel">
-          <div class="panel-head"><span class="panel-title">All matches</span></div>
-          <div class="match-card"><div class="mc-header"><div><div class="mc-title">IT Support Learnership</div><div class="mc-company">Telkom SA — Mahikeng</div></div><div class="mc-score score-high">92%</div></div><div class="mc-bar-bg"><div class="mc-bar" data-w="92"></div></div><div class="mc-tags"><span class="mc-tag funded">MICT SETA</span><span class="mc-tag">Learnership</span></div><div class="mc-apply"><button class="btn btn-primary btn-sm" onclick="applyJob(this)">Apply</button><button class="btn btn-ghost btn-sm">Save</button></div></div>
-          <div class="match-card"><div class="mc-header"><div><div class="mc-title">ICT Technical Support</div><div class="mc-company">Standard Bank — Johannesburg</div></div><div class="mc-score score-high">84%</div></div><div class="mc-bar-bg"><div class="mc-bar" data-w="84"></div></div><div class="mc-tags"><span class="mc-tag">Job</span><span class="mc-tag">Gauteng</span></div><div class="mc-apply"><button class="btn btn-primary btn-sm" onclick="applyJob(this)">Apply</button><button class="btn btn-ghost btn-sm">Save</button></div></div>
-          <div class="match-card"><div class="mc-header"><div><div class="mc-title">Junior Web Developer</div><div class="mc-company">DigitalHub — Remote</div></div><div class="mc-score score-mid">76%</div></div><div class="mc-bar-bg"><div class="mc-bar mid" data-w="76"></div></div><div class="mc-tags"><span class="mc-tag">Job</span><span class="mc-tag">Remote</span></div><div class="mc-apply"><button class="btn btn-primary btn-sm" onclick="applyJob(this)">Apply</button><button class="btn btn-ghost btn-sm">Save</button></div></div>
-          <div class="match-card"><div class="mc-header"><div><div class="mc-title">Help Desk Internship</div><div class="mc-company">MTN SA — Bloemfontein</div></div><div class="mc-score score-mid">71%</div></div><div class="mc-bar-bg"><div class="mc-bar mid" data-w="71"></div></div><div class="mc-tags"><span class="mc-tag">Internship</span><span class="mc-tag">Free State</span></div><div class="mc-apply"><button class="btn btn-primary btn-sm" onclick="applyJob(this)">Apply</button><button class="btn btn-ghost btn-sm">Save</button></div></div>
-        </div>
+        <div class="page-head"><h1>My matches</h1><p id="matchSubtitle">Loading your AI-matched opportunities…</p></div>
+        <div class="panel"><div class="panel-head"><span class="panel-title">All matches</span><span style="font-size:12px;color:var(--ink-muted)">Sorted by match score</span></div><div id="allMatchCards"></div></div>
       </div>
 
       <!-- L: Applications -->
       <div class="view" id="view-l-apps">
         <div class="page-head"><h1>My applications</h1><p>Track every opportunity you've applied to.</p></div>
-        <div class="panel">
-          <div class="panel-head"><span class="panel-title">Applications (3)</span></div>
-          <div class="match-card"><div class="mc-header"><div><div class="mc-title">IT Support Learnership</div><div class="mc-company">Telkom SA — Applied 2 days ago</div></div><span class="applied-badge">✓ Applied</span></div><div style="font-size:12px;color:var(--ink-muted);margin-top:4px">Status: Under review by employer</div></div>
-          <div class="match-card"><div class="mc-header"><div><div class="mc-title">ICT Technical Support</div><div class="mc-company">Standard Bank — Applied 5 days ago</div></div><span class="applied-badge">✓ Applied</span></div><div style="font-size:12px;color:var(--ink-muted);margin-top:4px">Status: Under review by employer</div></div>
-          <div class="match-card"><div class="mc-header"><div><div class="mc-title">Junior Web Developer</div><div class="mc-company">DigitalHub — Applied 1 week ago</div></div><span style="font-size:12px;padding:4px 10px;border-radius:99px;background:var(--gold-lt);color:var(--warning);font-weight:500">Shortlisted</span></div><div style="font-size:12px;color:var(--teal);margin-top:4px;font-weight:500">Interview being scheduled — check your email.</div></div>
-        </div>
+        <div class="panel"><div class="panel-head"><span class="panel-title" id="appsTitle">Applications</span></div><div id="appsList"></div></div>
       </div>
 
       <!-- L: Profile -->
       <div class="view" id="view-l-profile">
         <div class="page-head"><h1>My profile</h1><p>Keep your profile updated to improve your match scores.</p></div>
         <div class="panel" style="max-width:580px">
-          <div class="panel-head"><span class="panel-title">Personal information</span></div>
+          <div class="panel-head"><span class="panel-title">Personal information</span><button class="panel-action" onclick="saveProfile()">Save changes</button></div>
           <div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div class="form-group"><label class="form-label">First name</label><input type="text" value="Thabo"/></div>
-              <div class="form-group"><label class="form-label">Last name</label><input type="text" value="Mokoena"/></div>
+              <div class="form-group"><label class="form-label">First name</label><input type="text" id="pfFirst"/></div>
+              <div class="form-group"><label class="form-label">Last name</label><input type="text" id="pfLast"/></div>
             </div>
-            <div class="form-group"><label class="form-label">Email</label><input type="email" value="thabo.mokoena@demo.co.za"/></div>
-            <div class="form-group"><label class="form-label">Qualification</label><input type="text" value="N6 Certificate — Information Technology"/></div>
-            <div class="form-group"><label class="form-label">Institution</label><input type="text" value="Orbit TVET College"/></div>
-            <div class="form-group"><label class="form-label">Province</label><select><option>North West</option><option>Gauteng</option><option>Limpopo</option></select></div>
+            <div class="form-group"><label class="form-label">Email</label><input type="email" id="pfEmail" readonly style="opacity:.6"/></div>
+            <div class="form-group"><label class="form-label">Qualification</label><input type="text" id="pfQual" placeholder="e.g. N6 Certificate — IT"/></div>
+            <div class="form-group"><label class="form-label">Institution</label><input type="text" id="pfInst" placeholder="e.g. Orbit TVET College"/></div>
+            <div class="form-group"><label class="form-label">Province</label>
+              <select id="pfProv"><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>North West</option><option>Northern Cape</option><option>Western Cape</option></select>
+            </div>
             <div class="form-group">
-              <label class="form-label">Skills</label>
-              <div style="display:flex;flex-wrap:wrap;gap:5px;padding:10px;background:var(--paper);border:1.5px solid rgba(14,17,23,.12);border-radius:10px">
-                <span class="sp">Python</span><span class="sp">HTML/CSS</span><span class="sp">Networking</span><span class="sp">MS Office</span><span class="sp">Technical Support</span><button class="sp-add">+ Add</button>
+              <label class="form-label">Skills <span style="font-weight:400;color:var(--ink-muted)">(type and press Enter)</span></label>
+              <div style="display:flex;flex-wrap:wrap;gap:5px;padding:10px;background:var(--paper);border:1.5px solid rgba(14,17,23,.12);border-radius:10px;min-height:48px;cursor:text" id="skillsWrap" onclick="document.getElementById('skillInput').focus()">
+                <input type="text" id="skillInput" placeholder="Add a skill…" style="border:none;outline:none;background:transparent;font-size:13px;min-width:100px;color:var(--ink)"/>
               </div>
             </div>
-            <button class="btn btn-primary">Save profile</button>
+            <button class="btn btn-primary" onclick="saveProfile()">Save profile</button>
           </div>
         </div>
       </div>
 
-
-      <!-- ═══════════════════════════════════
-           EMPLOYER VIEWS
-           ═══════════════════════════════════ -->
+      <!-- ═══════ EMPLOYER VIEWS ═══════ -->
 
       <!-- E: Home -->
       <div class="view" id="view-e-home">
-        <div class="page-head"><h1>Employer dashboard</h1><p>Manage listings and review AI-matched applicants.</p></div>
-        <div class="stats-row stats-3">
-          <div class="scard"><div class="scard-label">Active listings</div><div class="scard-val">4</div><div class="scard-trend trend-up">↑ 1 added this week</div></div>
-          <div class="scard"><div class="scard-label">Total applicants</div><div class="scard-val">47</div><div class="scard-trend trend-up">↑ 8 new this week</div></div>
-          <div class="scard"><div class="scard-label">Shortlisted</div><div class="scard-val">9</div><div class="scard-sub">3 interviews scheduled</div></div>
+        <div class="page-head"><h1>Employer dashboard</h1><p>Manage your listings and review AI-matched applicants.</p></div>
+        <div class="stats-row stats-3" id="eStats">
+          <div class="scard"><div class="scard-label">Active listings</div><div class="scard-val skeleton" style="height:32px;width:40px">&nbsp;</div></div>
+          <div class="scard"><div class="scard-label">Total applicants</div><div class="scard-val skeleton" style="height:32px;width:40px">&nbsp;</div></div>
+          <div class="scard"><div class="scard-label">Shortlisted</div><div class="scard-val skeleton" style="height:32px;width:40px">&nbsp;</div></div>
         </div>
         <div class="two-col">
           <div class="panel">
-            <div class="panel-head"><span class="panel-title">Your listings</span><button class="panel-action" onclick="showView('e-listings', document.querySelector('#nav-employer .sb-link:nth-child(2)'))">Manage →</button></div>
-            <div class="opp-row"><div class="opp-icon oi-learnership">🎓</div><div class="opp-info"><div class="opp-title">IT Support Learnership</div><div class="opp-meta">Mahikeng — Closes 15 May 2025</div></div><div class="opp-stat"><div class="opp-apps">23</div><div class="opp-apps-lbl">applicants</div></div></div>
-            <div class="opp-row"><div class="opp-icon oi-job">💼</div><div class="opp-info"><div class="opp-title">Junior Network Technician</div><div class="opp-meta">Johannesburg — Closes 20 May 2025</div></div><div class="opp-stat"><div class="opp-apps">14</div><div class="opp-apps-lbl">applicants</div></div></div>
-            <div class="opp-row"><div class="opp-icon oi-internship">📋</div><div class="opp-info"><div class="opp-title">Software Internship</div><div class="opp-meta">Remote — Closes 30 May 2025</div></div><div class="opp-stat"><div class="opp-apps">10</div><div class="opp-apps-lbl">applicants</div></div></div>
-            <div class="opp-row"><button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" onclick="showView('e-post', document.querySelector('#nav-employer .sb-link:nth-child(4)'))">+ Post new opportunity</button></div>
+            <div class="panel-head"><span class="panel-title">Your listings</span><button class="panel-action" onclick="showView('e-listings',document.querySelector('#nav-employer .sb-link:nth-child(2)'))">Manage →</button></div>
+            <div id="empListings"></div>
           </div>
           <div class="panel">
-            <div class="panel-head"><span class="panel-title">Top applicants</span><button class="panel-action" onclick="showView('e-applicants', document.querySelector('#nav-employer .sb-link:nth-child(3)'))">See all →</button></div>
-            <div class="app-row"><div class="app-avatar">TM</div><div class="app-info"><div class="app-name">Thabo Mokoena</div><div class="app-meta">IT Support Learnership</div></div><div class="app-score">92%</div><div class="status-dot sd-shortlist"></div></div>
-            <div class="app-row"><div class="app-avatar" style="background:var(--gold-lt);color:#7a6020">NZ</div><div class="app-info"><div class="app-name">Naledi Zuma</div><div class="app-meta">IT Support Learnership</div></div><div class="app-score">88%</div><div class="status-dot sd-reviewed"></div></div>
-            <div class="app-row"><div class="app-avatar" style="background:var(--coral-lt);color:var(--coral)">LM</div><div class="app-info"><div class="app-name">Lebo Motsepe</div><div class="app-meta">Junior Network Technician</div></div><div class="app-score">81%</div><div class="status-dot sd-new"></div></div>
-            <div class="app-row"><div class="app-avatar" style="background:#f0eeff;color:#534AB7">SK</div><div class="app-info"><div class="app-name">Sipho Khumalo</div><div class="app-meta">Software Internship</div></div><div class="app-score">79%</div><div class="status-dot sd-new"></div></div>
+            <div class="panel-head"><span class="panel-title">Top applicants</span><button class="panel-action" onclick="showView('e-applicants',document.querySelector('#nav-employer .sb-link:nth-child(3)'))">See all →</button></div>
+            <div id="topApplicants"></div>
           </div>
         </div>
       </div>
@@ -615,80 +348,65 @@
       <!-- E: Listings -->
       <div class="view" id="view-e-listings">
         <div class="page-head"><h1>My listings</h1><p>All opportunities you've posted on the platform.</p></div>
-        <div class="panel">
-          <div class="panel-head"><span class="panel-title">Active listings (3)</span><button class="btn btn-primary btn-sm" onclick="showView('e-post', document.querySelector('#nav-employer .sb-link:nth-child(4)'))">+ Post new</button></div>
-          <div class="opp-row"><div class="opp-icon oi-learnership">🎓</div><div class="opp-info"><div class="opp-title">IT Support Learnership</div><div class="opp-meta">Mahikeng, North West — Closes 15 May 2025</div></div><div class="opp-stat"><div class="opp-apps">23</div><div class="opp-apps-lbl">applicants</div></div><button class="btn btn-ghost btn-sm" style="margin-left:10px">View</button></div>
-          <div class="opp-row"><div class="opp-icon oi-job">💼</div><div class="opp-info"><div class="opp-title">Junior Network Technician</div><div class="opp-meta">Johannesburg, Gauteng — Closes 20 May 2025</div></div><div class="opp-stat"><div class="opp-apps">14</div><div class="opp-apps-lbl">applicants</div></div><button class="btn btn-ghost btn-sm" style="margin-left:10px">View</button></div>
-          <div class="opp-row"><div class="opp-icon oi-internship">📋</div><div class="opp-info"><div class="opp-title">Software Internship</div><div class="opp-meta">Remote — Closes 30 May 2025</div></div><div class="opp-stat"><div class="opp-apps">10</div><div class="opp-apps-lbl">applicants</div></div><button class="btn btn-ghost btn-sm" style="margin-left:10px">View</button></div>
-        </div>
+        <div class="panel"><div class="panel-head"><span class="panel-title" id="listingsTitle">Active listings</span><button class="btn btn-primary btn-sm" onclick="showView('e-post',document.querySelector('#nav-employer .sb-link:nth-child(4)'))">+ Post new</button></div><div id="allListings"></div></div>
       </div>
 
       <!-- E: Applicants -->
       <div class="view" id="view-e-applicants">
         <div class="page-head"><h1>Applicants</h1><p>All learners who applied — sorted by AI match score.</p></div>
-        <div class="panel">
-          <div class="panel-head"><span class="panel-title">All applicants (47)</span></div>
-          <table class="admin-table">
-            <thead><tr><th>Learner</th><th>Applied to</th><th>Match</th><th>Qualification</th><th>Status</th></tr></thead>
-            <tbody>
-              <tr><td class="td-name">Thabo Mokoena</td><td class="td-muted">IT Support Learnership</td><td><strong style="color:var(--teal)">92%</strong></td><td class="td-muted">N6 IT</td><td><span class="status-pill sp-matched">Shortlisted</span></td></tr>
-              <tr><td class="td-name">Naledi Zuma</td><td class="td-muted">IT Support Learnership</td><td><strong style="color:var(--teal)">88%</strong></td><td class="td-muted">N6 IT</td><td><span class="status-pill sp-searching">Reviewed</span></td></tr>
-              <tr><td class="td-name">Lebo Motsepe</td><td class="td-muted">Junior Network Technician</td><td><strong style="color:var(--teal)">81%</strong></td><td class="td-muted">NCV IT</td><td><span class="status-pill sp-inactive">New</span></td></tr>
-              <tr><td class="td-name">Sipho Khumalo</td><td class="td-muted">Software Internship</td><td><strong style="color:var(--gold)">79%</strong></td><td class="td-muted">Diploma CS</td><td><span class="status-pill sp-inactive">New</span></td></tr>
-              <tr><td class="td-name">Ayanda Dube</td><td class="td-muted">IT Support Learnership</td><td><strong style="color:var(--gold)">74%</strong></td><td class="td-muted">N5 IT</td><td><span class="status-pill sp-inactive">New</span></td></tr>
-            </tbody>
-          </table>
-        </div>
+        <div class="panel"><div class="panel-head"><span class="panel-title" id="applicantsTitle">All applicants</span></div>
+        <div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Learner</th><th>Applied to</th><th>Match</th><th>Qualification</th><th>Status</th><th>Action</th></tr></thead><tbody id="applicantsTbody"></tbody></table></div></div>
       </div>
 
-      <!-- E: Post opportunity -->
+      <!-- E: Post Opportunity -->
       <div class="view" id="view-e-post">
         <div class="page-head"><h1>Post an opportunity</h1><p>Our AI will automatically match your listing to qualified learners.</p></div>
         <div class="panel" style="max-width:580px">
           <div class="panel-head"><span class="panel-title">Opportunity details</span></div>
           <div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
-            <div class="form-group"><label class="form-label required">Job title</label><input type="text" placeholder="e.g. IT Support Learnership"/></div>
+            <div class="form-group"><label class="form-label required">Job title</label><input type="text" id="postTitle" placeholder="e.g. IT Support Learnership"/></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div class="form-group"><label class="form-label required">Type</label><select><option>Learnership</option><option>Job</option><option>Internship</option><option>Project</option></select></div>
-              <div class="form-group"><label class="form-label required">Province</label><select><option>North West</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Remote</option></select></div>
+              <div class="form-group"><label class="form-label required">Type</label><select id="postType"><option>Learnership</option><option>Job</option><option>Internship</option><option>Project</option></select></div>
+              <div class="form-group"><label class="form-label required">Sector</label><select id="postSector"><option>ICT</option><option>Finance</option><option>Retail</option><option>Engineering</option><option>Health</option><option>Other</option></select></div>
             </div>
-            <div class="form-group"><label class="form-label required">Required skills / qualifications</label><textarea placeholder="List the skills, qualifications and experience you're looking for…" rows="4"></textarea></div>
-            <div class="form-group"><label class="form-label">Closing date</label><input type="date"/></div>
-            <div class="form-group"><label class="form-label">Stipend / salary (optional)</label><input type="text" placeholder="e.g. R3 500/month or Negotiable"/></div>
-            <div style="display:flex;gap:10px"><button class="btn btn-primary">Post opportunity</button><button class="btn btn-ghost">Save draft</button></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label class="form-label required">Province</label><select id="postProv"><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>North West</option><option>Northern Cape</option><option>Western Cape</option><option>Remote</option></select></div>
+              <div class="form-group"><label class="form-label required">Location</label><input type="text" id="postLoc" placeholder="e.g. Mahikeng, North West"/></div>
+            </div>
+            <div class="form-group"><label class="form-label required">Required skills / qualifications</label><textarea id="postDesc" placeholder="List skills and qualifications required…" rows="4"></textarea></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label class="form-label">Closing date</label><input type="date" id="postClose"/></div>
+              <div class="form-group"><label class="form-label">Stipend / salary</label><input type="text" id="postStipend" placeholder="e.g. R3 500/month"/></div>
+            </div>
+            <div style="display:flex;gap:16px">
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="postFunded" style="accent-color:var(--teal)"> SETA funded</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="postRemote" style="accent-color:var(--teal)"> Remote</label>
+            </div>
+            <div style="display:flex;gap:10px"><button class="btn btn-primary" onclick="postOpportunity()">Post opportunity</button><button class="btn btn-ghost">Save draft</button></div>
           </div>
         </div>
       </div>
 
-
-      <!-- ═══════════════════════════════════
-           ADMIN VIEWS
-           ═══════════════════════════════════ -->
+      <!-- ═══════ ADMIN VIEWS ═══════ -->
 
       <!-- A: Home -->
       <div class="view" id="view-a-home">
-        <div class="page-head"><h1>Coordinator overview</h1><p>Platform-wide placement statistics — North West Province.</p></div>
-        <div class="stats-row stats-4">
-          <div class="scard"><div class="scard-label">Total learners</div><div class="scard-val">2 418</div><div class="scard-trend trend-up">↑ 143 this month</div></div>
-          <div class="scard"><div class="scard-label">Opportunities listed</div><div class="scard-val">384</div><div class="scard-trend trend-up">↑ 21 this week</div></div>
-          <div class="scard"><div class="scard-label">Matches made</div><div class="scard-val">6 204</div><div class="scard-sub">AI-generated matches</div></div>
-          <div class="scard"><div class="scard-label">Placements confirmed</div><div class="scard-val" style="color:var(--teal)">312</div><div class="scard-trend trend-up">↑ 12.9% rate</div></div>
+        <div class="page-head"><h1>Coordinator overview</h1><p>Platform-wide placement statistics.</p></div>
+        <div class="stats-row stats-4" id="adminStats">
+          <div class="scard"><div class="scard-label">Total learners</div><div class="scard-val skeleton" style="height:32px;width:70px">&nbsp;</div></div>
+          <div class="scard"><div class="scard-label">Opportunities listed</div><div class="scard-val skeleton" style="height:32px;width:50px">&nbsp;</div></div>
+          <div class="scard"><div class="scard-label">Matches made</div><div class="scard-val skeleton" style="height:32px;width:60px">&nbsp;</div></div>
+          <div class="scard"><div class="scard-label">Placements confirmed</div><div class="scard-val skeleton" style="height:32px;width:50px">&nbsp;</div></div>
         </div>
         <div class="two-col">
           <div class="panel">
-            <div class="panel-head"><span class="panel-title">Monthly placements — 2025</span></div>
-            <div class="panel-body">
-              <div class="bar-chart" id="adminChart"></div>
-            </div>
+            <div class="panel-head"><span class="panel-title">Monthly placements</span></div>
+            <div class="panel-body"><div class="bar-chart" id="adminChart"></div></div>
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
             <div class="panel">
-              <div class="panel-head"><span class="panel-title">Status breakdown</span></div>
-              <div style="padding:14px 18px;display:flex;flex-direction:column;gap:10px">
-                <div style="display:flex;align-items:center;justify-content:space-between"><span class="status-pill sp-placed">Placed</span><div style="display:flex;align-items:center;gap:6px"><div class="prov-bar-bg" style="width:120px"><div class="prov-bar" style="width:40%"></div></div><span style="font-size:13px;font-weight:600">312</span></div></div>
-                <div style="display:flex;align-items:center;justify-content:space-between"><span class="status-pill sp-matched">Matched</span><div style="display:flex;align-items:center;gap:6px"><div class="prov-bar-bg" style="width:120px"><div class="prov-bar" style="width:75%;background:rgba(13,122,95,.3)"></div></div><span style="font-size:13px;font-weight:600">580</span></div></div>
-                <div style="display:flex;align-items:center;justify-content:space-between"><span class="status-pill sp-searching">Searching</span><div style="display:flex;align-items:center;gap:6px"><div class="prov-bar-bg" style="width:120px"><div class="prov-bar" style="width:100%;background:var(--gold-lt);border:1px solid rgba(200,168,75,.4)"></div></div><span style="font-size:13px;font-weight:600">1 526</span></div></div>
-              </div>
+              <div class="panel-head"><span class="panel-title">Learner status</span></div>
+              <div class="panel-body" id="statusBreakdown"></div>
             </div>
             <div style="background:var(--teal-lt);border:1px solid rgba(13,122,95,.2);border-radius:12px;padding:14px 16px">
               <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);font-weight:600;margin-bottom:5px">AI accuracy</div>
@@ -701,180 +419,651 @@
 
       <!-- A: Learners -->
       <div class="view" id="view-a-learners">
-        <div class="page-head"><h1>All learners</h1><p>2 418 registered learners across all provinces.</p></div>
+        <div class="page-head"><h1>All learners</h1><p id="learnersSubtitle">Loading learner registry…</p></div>
         <div class="panel">
-          <div class="panel-head"><span class="panel-title">Learner registry</span><button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export CSV</button></div>
-          <table class="admin-table">
-            <thead><tr><th>Name</th><th>Qualification</th><th>Province</th><th>Match score</th><th>Status</th></tr></thead>
-            <tbody>
-              <tr><td class="td-name">Thabo Mokoena</td><td class="td-muted">N6 IT — Orbit TVET</td><td class="td-muted">North West</td><td><strong style="color:var(--teal)">87%</strong></td><td><span class="status-pill sp-matched">Matched</span></td></tr>
-              <tr><td class="td-name">Naledi Zuma</td><td class="td-muted">NCV IT — Vuselela TVET</td><td class="td-muted">North West</td><td><strong style="color:var(--teal)">82%</strong></td><td><span class="status-pill sp-placed">Placed</span></td></tr>
-              <tr><td class="td-name">Lebo Motsepe</td><td class="td-muted">N5 IT — Orbit TVET</td><td class="td-muted">North West</td><td><strong style="color:var(--gold)">74%</strong></td><td><span class="status-pill sp-searching">Searching</span></td></tr>
-              <tr><td class="td-name">Sipho Khumalo</td><td class="td-muted">Diploma CS — NWU</td><td class="td-muted">North West</td><td><strong style="color:var(--gold)">71%</strong></td><td><span class="status-pill sp-searching">Searching</span></td></tr>
-              <tr><td class="td-name">Ayanda Dube</td><td class="td-muted">N4 IT — Orbit TVET</td><td class="td-muted">North West</td><td><strong style="color:var(--ink-muted)">58%</strong></td><td><span class="status-pill sp-inactive">Inactive</span></td></tr>
-              <tr><td class="td-name">Puleng Sithole</td><td class="td-muted">N6 Finance — Taletso</td><td class="td-muted">North West</td><td><strong style="color:var(--teal)">79%</strong></td><td><span class="status-pill sp-placed">Placed</span></td></tr>
-            </tbody>
-          </table>
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(14,17,23,.06)">
+            <input type="text" id="learnerSearch" placeholder="Search name, qualification or province…" style="flex:1;padding:8px 12px;font-size:13px;border:1px solid rgba(14,17,23,.12);border-radius:8px;outline:none;background:var(--paper);font-family:var(--font-body)" oninput="filterAdminLearners()"/>
+            <select id="statusFilter" style="padding:8px 12px;font-size:13px;border:1px solid rgba(14,17,23,.12);border-radius:8px;background:var(--white);color:var(--ink);outline:none;font-family:var(--font-body)" onchange="filterAdminLearners()">
+              <option value="">All statuses</option><option value="placed">Placed</option><option value="matched">Matched</option><option value="searching">Searching</option><option value="inactive">Inactive</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="exportAdminLearners()">Export CSV</button>
+          </div>
+          <div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Name</th><th>Qualification</th><th>Province</th><th>Match score</th><th>Status</th></tr></thead><tbody id="learnersTableBody"></tbody></table></div>
         </div>
       </div>
 
       <!-- A: Placement report -->
       <div class="view" id="view-a-report">
-        <div class="page-head"><h1>Placement report</h1><p>Formal placement outcomes for SETA reporting and compliance.</p></div>
-        <div class="stats-row stats-3">
-          <div class="scard"><div class="scard-label">Total placements Q1</div><div class="scard-val" style="color:var(--teal)">312</div><div class="scard-sub">Target: 400</div></div>
-          <div class="scard"><div class="scard-label">Placement rate</div><div class="scard-val">12.9%</div><div class="scard-trend trend-up">↑ 2.1% vs last quarter</div></div>
-          <div class="scard"><div class="scard-label">Avg. days to placement</div><div class="scard-val">34</div><div class="scard-sub">From registration</div></div>
+        <div class="page-head"><h1>Placement report</h1><p>Formal placement outcomes for SETA reporting.</p></div>
+        <div class="stats-row stats-3" id="reportStats">
+          <div class="scard"><div class="scard-label">Total placements Q1</div><div class="scard-val skeleton" style="height:32px;width:50px">&nbsp;</div></div>
+          <div class="scard"><div class="scard-label">Placement rate</div><div class="scard-val skeleton" style="height:32px;width:70px">&nbsp;</div></div>
+          <div class="scard"><div class="scard-label">Avg. days to placement</div><div class="scard-val skeleton" style="height:32px;width:40px">&nbsp;</div></div>
         </div>
         <div class="panel">
-          <div class="panel-head"><span class="panel-title">Outcomes by institution</span><button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export</button></div>
-          <table class="admin-table">
-            <thead><tr><th>Institution</th><th>Registered</th><th>Matched</th><th>Placed</th><th>Rate</th></tr></thead>
-            <tbody>
-              <tr><td class="td-name">Orbit TVET College</td><td>648</td><td class="td-muted">520</td><td><strong>84</strong></td><td><span class="status-pill sp-placed">13%</span></td></tr>
-              <tr><td class="td-name">Vuselela TVET</td><td>412</td><td class="td-muted">330</td><td><strong>61</strong></td><td><span class="status-pill sp-placed">15%</span></td></tr>
-              <tr><td class="td-name">Taletso TVET</td><td>389</td><td class="td-muted">290</td><td><strong>48</strong></td><td><span class="status-pill sp-matched">12%</span></td></tr>
-              <tr><td class="td-name">North-West University</td><td>284</td><td class="td-muted">240</td><td><strong>52</strong></td><td><span class="status-pill sp-placed">18%</span></td></tr>
-              <tr><td class="td-name">Other / SETA Programmes</td><td>685</td><td class="td-muted">510</td><td><strong>67</strong></td><td><span class="status-pill sp-matched">10%</span></td></tr>
-            </tbody>
-          </table>
+          <div class="panel-head"><span class="panel-title">Outcomes by institution</span><button class="btn btn-ghost btn-sm" onclick="exportInstitutions()">Export</button></div>
+          <div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Institution</th><th>Registered</th><th>Matched</th><th>Placed</th><th>Rate</th></tr></thead><tbody id="institutionTbody"></tbody></table></div>
         </div>
       </div>
 
       <!-- A: Province -->
       <div class="view" id="view-a-province">
         <div class="page-head"><h1>By province</h1><p>Learner distribution and placement performance across South Africa.</p></div>
-        <div class="panel">
-          <div class="panel-head"><span class="panel-title">Province breakdown</span></div>
-          <table class="admin-table">
-            <thead><tr><th>Province</th><th>Learners</th><th>Placements</th><th>Rate</th><th>Distribution</th></tr></thead>
-            <tbody>
-              <tr><td class="td-name">Gauteng</td><td>612</td><td>98</td><td><strong style="color:var(--teal)">16%</strong></td><td><div class="prov-bar-bg" style="width:120px;display:inline-block"><div class="prov-bar" style="width:80%"></div></div></td></tr>
-              <tr><td class="td-name">Western Cape</td><td>430</td><td>55</td><td><strong style="color:var(--teal)">13%</strong></td><td><div class="prov-bar-bg" style="width:120px;display:inline-block"><div class="prov-bar" style="width:56%"></div></div></td></tr>
-              <tr><td class="td-name">North West</td><td>418</td><td>54</td><td><strong style="color:var(--teal)">13%</strong></td><td><div class="prov-bar-bg" style="width:120px;display:inline-block"><div class="prov-bar" style="width:55%"></div></div></td></tr>
-              <tr><td class="td-name">KwaZulu-Natal</td><td>384</td><td>45</td><td><strong style="color:var(--gold)">12%</strong></td><td><div class="prov-bar-bg" style="width:120px;display:inline-block"><div class="prov-bar" style="width:50%"></div></div></td></tr>
-              <tr><td class="td-name">Limpopo</td><td>298</td><td>32</td><td><strong style="color:var(--gold)">11%</strong></td><td><div class="prov-bar-bg" style="width:120px;display:inline-block"><div class="prov-bar" style="width:39%"></div></div></td></tr>
-              <tr><td class="td-name">Eastern Cape</td><td>276</td><td>28</td><td><strong style="color:var(--gold)">10%</strong></td><td><div class="prov-bar-bg" style="width:120px;display:inline-block"><div class="prov-bar" style="width:36%"></div></div></td></tr>
-            </tbody>
-          </table>
-        </div>
+        <div class="panel"><div class="panel-head"><span class="panel-title">Province breakdown</span><button class="btn btn-ghost btn-sm" onclick="exportProvince()">Export</button></div><div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Province</th><th>Learners</th><th>Placements</th><th>Rate</th><th>Distribution</th></tr></thead><tbody id="provinceTbody"></tbody></table></div></div>
       </div>
 
     </div><!-- /content -->
   </main>
 </div>
 
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Supabase + app scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/api.js"></script>
+<script src="js/match.js"></script>
 <script>
-  /* ── Role detection from localStorage ── */
+/* ── Boot: role detection & auth guard ── */
+(async () => {
+  const auth = localStorage.getItem('sm_auth');
+  if (!auth) { window.location.href = 'login.html'; return; }
+
   const role  = localStorage.getItem('sm_role')  || 'learner';
-  const email = localStorage.getItem('sm_email') || 'demo@skillsmatch.co.za';
-  const name  = localStorage.getItem('sm_name')  ||
-    (role === 'learner' ? 'Thabo Mokoena' :
-     role === 'employer' ? 'Telkom SA' : 'Naledi Dlamini');
+  const name  = localStorage.getItem('sm_name')  || 'User';
+  const email = localStorage.getItem('sm_email') || '';
 
-  function initials(n) {
-    return n.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0,2).toUpperCase();
-  }
+  function ini(n){ return n.split(' ').filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
 
-  /* ── Apply role to sidebar ── */
-  const roleLabels = { learner: 'Learner', employer: 'Employer', admin: 'SETA Admin' };
-  document.getElementById('roleBadge').textContent  = roleLabels[role];
-  document.getElementById('roleBadge').className    = `sb-role-badge rb-${role}`;
-  document.getElementById('sbAvatar').textContent   = initials(name);
-  document.getElementById('sbAvatar').className     = `sb-avatar av-${role}`;
-  document.getElementById('sbName').textContent     = name;
-  document.getElementById('sbEmail').textContent    = email;
+  /* Populate sidebar */
+  document.getElementById('roleBadge').textContent = {learner:'Learner',employer:'Employer',admin:'SETA Admin'}[role];
+  document.getElementById('roleBadge').className   = `sb-role-badge rb-${role}`;
+  document.getElementById('sbAvatar').textContent  = ini(name);
+  document.getElementById('sbAvatar').className    = `sb-avatar av-${role}`;
+  document.getElementById('sbName').textContent    = name;
+  document.getElementById('sbEmail').textContent   = email;
 
-  /* ── Show correct nav ── */
+  /* Show correct nav */
   document.getElementById('nav-learner').style.display  = role === 'learner'  ? 'block' : 'none';
   document.getElementById('nav-employer').style.display = role === 'employer' ? 'block' : 'none';
   document.getElementById('nav-admin').style.display    = role === 'admin'    ? 'block' : 'none';
 
-  /* ── Show correct home view ── */
-  const homeMap = { learner: 'l-home', employer: 'e-home', admin: 'a-home' };
+  /* Show correct home */
+  const homeMap = { learner:'l-home', employer:'e-home', admin:'a-home' };
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(`view-${homeMap[role]}`).classList.add('active');
+  document.getElementById('topbarTitle').textContent = {learner:'My dashboard',employer:'Employer dashboard',admin:'Coordinator overview'}[role];
 
-  /* ── Update learner-specific elements ── */
-  const fn = name.split(' ')[0];
-  const lFN = document.getElementById('lFirstName');
-  if (lFN) lFN.textContent = fn;
-  const lAv = document.getElementById('lAvatar');
-  if (lAv) lAv.textContent = initials(name);
-  const lNm = document.getElementById('lName');
-  if (lNm) lNm.textContent = name;
+  /* Load data for active home */
+  if (role === 'learner')  await bootLearner(name);
+  if (role === 'employer') await bootEmployer();
+  if (role === 'admin')    await bootAdmin();
+})();
 
-  /* ── Topbar title ── */
-  const topTitles = { learner: 'My dashboard', employer: 'Employer dashboard', admin: 'Coordinator overview' };
-  document.getElementById('topbarTitle').textContent = topTitles[role];
+/* ── View switcher ── */
+function showView(id, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(`view-${id}`).classList.add('active');
+  const role = localStorage.getItem('sm_role') || 'learner';
+  document.querySelector(`#nav-${role}`)?.querySelectorAll('.sb-link').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const h1 = document.querySelector(`#view-${id} h1`);
+  if (h1) document.getElementById('topbarTitle').textContent = h1.textContent;
+  window.scrollTo({ top:0, behavior:'smooth' });
 
-  /* ── View switcher ── */
-  function showView(id, triggerBtn) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById(`view-${id}`).classList.add('active');
+  /* Lazy-load on first visit */
+  if (id === 'l-matches'    && !document.getElementById('allMatchCards').dataset.loaded)    loadAllMatches();
+  if (id === 'l-apps'       && !document.getElementById('appsList').dataset.loaded)         loadApplications();
+  if (id === 'l-profile'    && !document.getElementById('pfFirst').value)                    loadProfileForm();
+  if (id === 'e-listings'   && !document.getElementById('allListings').dataset.loaded)      loadAllListings();
+  if (id === 'e-applicants' && !document.getElementById('applicantsTbody').dataset.loaded)  loadApplicants();
+  if (id === 'a-learners'   && !document.getElementById('learnersTableBody').dataset.loaded) loadAdminLearners();
+  if (id === 'a-report'     && !document.getElementById('institutionTbody').dataset.loaded) loadReport();
+  if (id === 'a-province'   && !document.getElementById('provinceTbody').dataset.loaded)    loadProvince();
+}
 
-    const nav = document.getElementById(`nav-${role}`);
-    nav?.querySelectorAll('.sb-link').forEach(b => b.classList.remove('active'));
-    if (triggerBtn) triggerBtn.classList.add('active');
+/* ══════════════════════════════════════
+   LEARNER BOOT
+══════════════════════════════════════ */
+async function bootLearner(fullName) {
+  const firstName = fullName.split(' ')[0];
+  document.getElementById('lFirstName').textContent = firstName;
 
-    const h1 = document.querySelector(`#view-${id} h1`);
-    if (h1) document.getElementById('topbarTitle').textContent = h1.textContent;
+  /* Load profile + stats in parallel */
+  const [profileRes, statsRes] = await Promise.all([
+    getLearnerProfile(),
+    getLearnerStats()
+  ]);
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(animateBars, 80);
+  /* Profile panel */
+  if (profileRes.success) {
+    const l = profileRes.data;
+    const u = l.users || {};
+    document.getElementById('lAvatar').textContent  = ini(`${u.first_name||''} ${u.last_name||''}`);
+    document.getElementById('lName').textContent    = `${u.first_name||''} ${u.last_name||''}`.trim() || fullName;
+    document.getElementById('lMeta').textContent    = `${l.qualification||'No qualification set'} — ${u.province||'Province not set'}`;
+
+    const strength = l.profile_strength || 0;
+    setTimeout(() => {
+      document.getElementById('strengthBar').style.width = strength + '%';
+      document.getElementById('strengthPct').textContent  = strength + '% complete';
+    }, 300);
+
+    /* Skills pills */
+    const skills = l.skills || [];
+    const wrap   = document.getElementById('profileSkills');
+    wrap.innerHTML = skills.map(s => `<span class="sp">${esc(s)}</span>`).join('') +
+      `<button class="sp-add" onclick="showView('l-profile',document.querySelector('#nav-learner .sb-link:nth-child(4)'))">+ Add skill</button>`;
+
+    /* AI tip from top match */
+    if (skills.length) {
+      document.getElementById('aiTipBox').style.display = 'block';
+      document.getElementById('aiTipText').innerHTML    =
+        `Based on your skills, consider adding <strong>CCNA certification</strong> or a <strong>GitHub portfolio</strong> to boost your average match score.`;
+    }
   }
 
-  /* ── Score bars ── */
-  function animateBars() {
-    document.querySelectorAll('.mc-bar[data-w]').forEach(b => {
-      b.style.width = b.getAttribute('data-w') + '%';
+  /* Stats cards */
+  if (statsRes.success) {
+    const s = statsRes.data;
+    document.getElementById('lStats').innerHTML = `
+      <div class="scard"><div class="scard-label">Top match score</div><div class="scard-val" style="color:var(--teal)">${s.topScore}%</div><div class="scard-sub">Your best match</div></div>
+      <div class="scard"><div class="scard-label">Opportunities found</div><div class="scard-val">${s.matchCount}</div><div class="scard-up">AI-matched to you</div></div>
+      <div class="scard"><div class="scard-label">Applications sent</div><div class="scard-val">${s.appCount}</div><div class="scard-sub">Track in Applications</div></div>
+      <div class="scard"><div class="scard-label">Profile strength</div><div class="scard-val" style="color:var(--teal);font-size:18px">${s.strength >= 70 ? 'Strong' : s.strength >= 40 ? 'Fair' : 'Weak'}</div><div class="scard-up">↑ Add more skills</div></div>`;
+  }
+
+  /* Load top 3 matches for home */
+  const matchRes = await getMyMatches();
+  const homeCards = document.getElementById('homeMatchCards');
+  homeCards.innerHTML = '';
+
+  if (matchRes.success && matchRes.data.length) {
+    matchRes.data.slice(0, 3).forEach(m => {
+      const opp = m.opportunities;
+      if (!opp) return;
+      homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, opp, m.id));
     });
-    const sb = document.getElementById('strengthBar');
-    if (sb) sb.style.width = '78%';
-  }
-  setTimeout(animateBars, 300);
-
-  /* ── Admin bar chart ── */
-  const months = [
-    { label:'Jan', val:38 }, { label:'Feb', val:44 },
-    { label:'Mar', val:52 }, { label:'Apr', val:61 },
-    { label:'May', val:68 }, { label:'Jun', val:49 },
-  ];
-  const maxV   = Math.max(...months.map(d => d.val));
-  const chartEl = document.getElementById('adminChart');
-  if (chartEl) {
-    months.forEach(d => {
-      const pct = Math.round((d.val / maxV) * 100);
-      chartEl.innerHTML += `<div class="bar-col"><div class="bar-val">${d.val}</div><div class="bar-body" style="height:${pct}%"></div><div class="bar-label">${d.label}</div></div>`;
+  } else {
+    /* No matches yet — run pipeline */
+    homeCards.innerHTML = `<div style="padding:16px;text-align:center;font-size:13px;color:var(--ink-muted)">Running AI matching… this takes a moment.</div>`;
+    const pipeline = await runMatchingPipeline();
+    homeCards.innerHTML = '';
+    pipeline.slice(0, 3).forEach(m => {
+      if (!m.opportunity) return;
+      homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, m.opportunity, null));
     });
+    if (!pipeline.length) homeCards.innerHTML = emptyState('No matches yet', 'Complete your skills profile to get AI-powered matches.');
+  }
+}
+
+async function loadAllMatches() {
+  const container = document.getElementById('allMatchCards');
+  container.dataset.loaded = '1';
+  container.innerHTML = skeletonCards(4);
+
+  const matchRes = await getMyMatches();
+  container.innerHTML = '';
+
+  if (!matchRes.success || !matchRes.data.length) {
+    container.innerHTML = emptyState('No matches found', 'Update your profile and skills to generate matches.');
+    document.getElementById('matchSubtitle').textContent = 'No matches yet — complete your profile.';
+    return;
   }
 
-  /* ── Apply job ── */
-  function applyJob(btn) {
-    btn.closest('.mc-apply').innerHTML =
-      `<span class="applied-badge">✓ Applied</span>
-       <span style="font-size:12px;color:var(--ink-muted);align-self:center;margin-left:6px">We'll notify you of any updates.</span>`;
+  document.getElementById('matchSubtitle').textContent = `${matchRes.data.length} opportunities matched to your skills — sorted by AI score.`;
+  matchRes.data.forEach(m => {
+    const opp = m.opportunities;
+    if (!opp) return;
+    container.appendChild(buildMatchCard(m.score, m.ai_insight, opp, m.id));
+  });
+}
+
+async function loadApplications() {
+  const container = document.getElementById('appsList');
+  container.dataset.loaded = '1';
+  container.innerHTML = skeletonCards(3);
+
+  const res = await getMyApplications();
+  container.innerHTML = '';
+
+  if (!res.success || !res.data.length) {
+    container.innerHTML = emptyState('No applications yet', 'Apply to opportunities from your Matches tab.');
+    document.getElementById('appsTitle').textContent = 'Applications (0)';
+    return;
   }
 
-  /* ── CSV export ── */
-  function exportCSV() {
-    const rows = [['Name','Qualification','Province','Match Score','Status']];
-    document.querySelectorAll('.admin-table tbody tr').forEach(tr => {
-      rows.push([...tr.querySelectorAll('td')].map(td => td.textContent.trim()));
-    });
-    const csv  = rows.map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = 'skillsmatch_export.csv'; a.click();
-    URL.revokeObjectURL(url);
+  document.getElementById('appsTitle').textContent = `Applications (${res.data.length})`;
+  const statusColors = { applied:'var(--teal)', under_review:'var(--gold)', shortlisted:'var(--teal)', rejected:'var(--coral)', placed:'var(--success)' };
+  const statusLabels = { applied:'Applied', under_review:'Under review', shortlisted:'Shortlisted ✓', rejected:'Not selected', placed:'Placed!' };
+
+  res.data.forEach(app => {
+    const opp = app.opportunities;
+    const sc  = statusColors[app.status] || 'var(--ink-muted)';
+    const sl  = statusLabels[app.status] || app.status;
+    const div = document.createElement('div');
+    div.className = 'match-card';
+    div.innerHTML = `
+      <div class="mc-header">
+        <div><div class="mc-title">${esc(opp?.title || 'Unknown')}</div><div class="mc-company">${esc(opp?.company || '')} — Applied ${timeAgo(app.applied_at)}</div></div>
+        <span style="font-size:12px;padding:4px 10px;border-radius:99px;background:${sc}22;color:${sc};font-weight:500;flex-shrink:0">${sl}</span>
+      </div>
+      ${app.match_score ? `<div style="font-size:12px;color:var(--ink-muted)">Match score: <strong style="color:var(--teal)">${app.match_score}%</strong></div>` : ''}`;
+    container.appendChild(div);
+  });
+}
+
+async function loadProfileForm() {
+  const res = await getLearnerProfile();
+  if (!res.success) return;
+  const l = res.data;
+  const u = l.users || {};
+  document.getElementById('pfFirst').value  = u.first_name || '';
+  document.getElementById('pfLast').value   = u.last_name  || '';
+  document.getElementById('pfEmail').value  = u.email      || '';
+  document.getElementById('pfQual').value   = l.qualification || '';
+  document.getElementById('pfInst').value   = l.institution_name || '';
+  document.getElementById('pfProv').value   = u.province   || 'North West';
+
+  /* Render skill tags */
+  skills = l.skills || [];
+  renderSkillTags();
+}
+
+/* Skill tag editor */
+let skills = [];
+function renderSkillTags() {
+  const wrap  = document.getElementById('skillsWrap');
+  const input = document.getElementById('skillInput');
+  wrap.querySelectorAll('.sp').forEach(t => t.remove());
+  skills.forEach(s => {
+    const tag = document.createElement('span');
+    tag.className = 'sp';
+    tag.style.cursor = 'pointer';
+    tag.title = 'Click to remove';
+    tag.textContent = s;
+    tag.onclick = () => { skills = skills.filter(x => x !== s); renderSkillTags(); };
+    wrap.insertBefore(tag, input);
+  });
+}
+document.getElementById('skillInput')?.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ',') && e.target.value.trim()) {
+    e.preventDefault();
+    const v = e.target.value.trim().replace(',','');
+    if (!skills.includes(v)) { skills.push(v); renderSkillTags(); }
+    e.target.value = '';
+  }
+  if (e.key === 'Backspace' && !e.target.value && skills.length) {
+    skills.pop(); renderSkillTags();
+  }
+});
+
+async function saveProfile() {
+  const updates = {
+    qualification:    document.getElementById('pfQual').value,
+    institution_name: document.getElementById('pfInst').value,
+    skills
+  };
+  const res = await updateLearnerProfile(updates);
+  showToast(res.success ? '✓ Profile saved!' : '✗ Save failed — try again.');
+}
+
+/* ══════════════════════════════════════
+   EMPLOYER BOOT
+══════════════════════════════════════ */
+async function bootEmployer() {
+  const [listRes, appRes] = await Promise.all([
+    getMyOpportunities(),
+    getApplicantsForEmployer()
+  ]);
+
+  const listings    = listRes.data || [];
+  const applicants  = appRes.data  || [];
+  const shortlisted = applicants.filter(a => a.status === 'shortlisted').length;
+
+  document.getElementById('eStats').innerHTML = `
+    <div class="scard"><div class="scard-label">Active listings</div><div class="scard-val">${listings.length}</div><div class="scard-up">Live on platform</div></div>
+    <div class="scard"><div class="scard-label">Total applicants</div><div class="scard-val">${applicants.length}</div><div class="scard-sub">Across all listings</div></div>
+    <div class="scard"><div class="scard-label">Shortlisted</div><div class="scard-val">${shortlisted}</div><div class="scard-sub">Ready to interview</div></div>`;
+
+  /* Listings panel */
+  const lWrap = document.getElementById('empListings');
+  lWrap.innerHTML = listings.length
+    ? listings.slice(0,4).map(o => oppRow(o, applicants.filter(a => a.opportunities?.id === o.id).length)).join('')
+    : emptyState('No listings yet','Post your first opportunity below.');
+
+  lWrap.innerHTML += `<div class="opp-row"><button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" onclick="showView('e-post',document.querySelector('#nav-employer .sb-link:nth-child(4)'))">+ Post new opportunity</button></div>`;
+
+  /* Top applicants panel */
+  const aWrap = document.getElementById('topApplicants');
+  if (applicants.length) {
+    aWrap.innerHTML = applicants.slice(0,5).map(a => {
+      const l = a.learners;
+      const u = l?.users;
+      const n = `${u?.first_name||''} ${u?.last_name||''}`.trim() || 'Learner';
+      const dotClass = { applied:'sd-new', under_review:'sd-under_review', shortlisted:'sd-shortlisted' }[a.status] || 'sd-new';
+      return `<div class="app-row">
+        <div class="app-avatar">${ini(n)}</div>
+        <div class="app-info"><div class="app-name">${esc(n)}</div><div class="app-meta">${esc(a.opportunities?.title||'')}</div></div>
+        <div class="app-score">${a.match_score||'—'}%</div>
+        <div class="status-dot ${dotClass}"></div>
+      </div>`;
+    }).join('');
+  } else {
+    aWrap.innerHTML = emptyState('No applicants yet', 'Once learners apply, they will appear here.');
+  }
+}
+
+async function loadAllListings() {
+  const wrap = document.getElementById('allListings');
+  wrap.dataset.loaded = '1';
+  wrap.innerHTML = skeletonCards(3);
+  const res = await getMyOpportunities();
+  wrap.innerHTML = '';
+  const listings = res.data || [];
+  document.getElementById('listingsTitle').textContent = `Active listings (${listings.length})`;
+  if (!listings.length) { wrap.innerHTML = emptyState('No listings yet','Post your first opportunity.'); return; }
+  wrap.innerHTML = listings.map(o => oppRow(o, 0, true)).join('');
+}
+
+async function loadApplicants() {
+  const tbody = document.getElementById('applicantsTbody');
+  tbody.dataset.loaded = '1';
+  const res = await getApplicantsForEmployer();
+  const apps = res.data || [];
+  document.getElementById('applicantsTitle').textContent = `All applicants (${apps.length})`;
+  if (!apps.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--ink-muted)">No applicants yet</td></tr>`; return; }
+
+  const statusPills = {
+    applied:      `<span class="status-pill sp-inactive">Applied</span>`,
+    under_review: `<span class="status-pill sp-searching">Under review</span>`,
+    shortlisted:  `<span class="status-pill sp-matched">Shortlisted</span>`,
+    placed:       `<span class="status-pill sp-placed">Placed</span>`,
+    rejected:     `<span class="status-pill sp-inactive">Not selected</span>`,
+  };
+
+  tbody.innerHTML = apps.map(a => {
+    const l = a.learners;
+    const u = l?.users;
+    const n = `${u?.first_name||''} ${u?.last_name||''}`.trim() || 'Learner';
+    const mc = (a.match_score||0) >= 80 ? 'var(--teal)' : (a.match_score||0) >= 65 ? 'var(--gold)' : 'var(--ink-muted)';
+    return `<tr>
+      <td class="td-name">${esc(n)}</td>
+      <td class="td-muted">${esc(a.opportunities?.title||'')}</td>
+      <td><strong style="color:${mc}">${a.match_score||'—'}%</strong></td>
+      <td class="td-muted">${esc(l?.qualification||'—')}</td>
+      <td>${statusPills[a.status]||''}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="shortlistApplicant('${a.id}',this)">Shortlist</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function shortlistApplicant(appId, btn) {
+  const res = await updateApplicationStatus(appId, 'shortlisted');
+  if (res.success) { btn.textContent = '✓ Shortlisted'; btn.disabled = true; showToast('✓ Applicant shortlisted'); }
+  else showToast('✗ Error — try again');
+}
+
+async function postOpportunity() {
+  const title = document.getElementById('postTitle').value.trim();
+  if (!title) { showToast('Please enter a job title.'); return; }
+
+  const opp = {
+    title,
+    company:      localStorage.getItem('sm_name') || 'Company',
+    type:         document.getElementById('postType').value,
+    sector:       document.getElementById('postSector').value,
+    province:     document.getElementById('postProv').value,
+    location:     document.getElementById('postLoc').value || document.getElementById('postProv').value,
+    description:  document.getElementById('postDesc').value,
+    closing_date: document.getElementById('postClose').value || null,
+    stipend:      document.getElementById('postStipend').value,
+    is_funded:    document.getElementById('postFunded').checked,
+    is_remote:    document.getElementById('postRemote').checked,
+    is_active:    true
+  };
+
+  const res = await createOpportunity(opp);
+  if (res.success) {
+    showToast('✓ Opportunity posted!');
+    setTimeout(() => showView('e-listings', document.querySelector('#nav-employer .sb-link:nth-child(2)')), 1000);
+  } else {
+    showToast('✗ Error posting — check your connection.');
+  }
+}
+
+/* ══════════════════════════════════════
+   ADMIN BOOT
+══════════════════════════════════════ */
+async function bootAdmin() {
+  const [statsRes, monthRes] = await Promise.all([
+    getPlatformStats(),
+    getMonthlyPlacements()
+  ]);
+
+  if (statsRes.success) {
+    const s = statsRes.data;
+    const rate = s.totalLearners ? ((s.totalPlacements / s.totalLearners) * 100).toFixed(1) : 0;
+    document.getElementById('adminStats').innerHTML = `
+      <div class="scard"><div class="scard-label">Total learners</div><div class="scard-val">${s.totalLearners.toLocaleString()}</div><div class="scard-up">↑ Registered</div></div>
+      <div class="scard"><div class="scard-label">Opportunities listed</div><div class="scard-val">${s.totalOpportunities.toLocaleString()}</div><div class="scard-up">↑ Active listings</div></div>
+      <div class="scard"><div class="scard-label">Matches made</div><div class="scard-val">${s.totalMatches.toLocaleString()}</div><div class="scard-sub">AI-generated</div></div>
+      <div class="scard"><div class="scard-label">Placements confirmed</div><div class="scard-val" style="color:var(--teal)">${s.totalPlacements.toLocaleString()}</div><div class="scard-up">↑ ${rate}% rate</div></div>`;
   }
 
-  /* ── Logout ── */
-  function logout() {
-    ['sm_auth','sm_role','sm_email','sm_name','sm_skills'].forEach(k => localStorage.removeItem(k));
-    window.location.href = 'login.html';
+  /* Monthly chart */
+  if (monthRes.success && monthRes.data.length) {
+    const chart = document.getElementById('adminChart');
+    const max   = Math.max(...monthRes.data.map(d => d.placements));
+    chart.innerHTML = monthRes.data.map(d => {
+      const pct   = Math.round((d.placements / max) * 100);
+      const label = new Date(d.month).toLocaleDateString('en-ZA',{month:'short'});
+      return `<div class="bc"><div class="bc-val">${d.placements}</div><div class="bc-body" style="height:${pct}%"></div><div class="bc-label">${label}</div></div>`;
+    }).join('');
+  } else {
+    document.getElementById('adminChart').innerHTML = `<div style="font-size:13px;color:var(--ink-muted);align-self:center;width:100%;text-align:center">No placement data yet</div>`;
   }
+
+  /* Status breakdown */
+  const br = document.getElementById('statusBreakdown');
+  if (statsRes.success) {
+    const s = statsRes.data;
+    br.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between"><span class="status-pill sp-placed">Placed</span><div style="display:flex;align-items:center;gap:6px"><div class="prov-bar-bg" style="width:110px"><div class="prov-bar" style="width:${Math.round(s.totalPlacements/(s.totalLearners||1)*100)}%"></div></div><strong style="font-size:13px">${s.totalPlacements}</strong></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between"><span class="status-pill sp-matched">Matched</span><div style="display:flex;align-items:center;gap:6px"><div class="prov-bar-bg" style="width:110px"><div class="prov-bar" style="width:${Math.round(s.totalMatches/(s.totalLearners||1)*40)}%;background:rgba(13,122,95,.3)"></div></div><strong style="font-size:13px">${s.totalMatches}</strong></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between"><span class="status-pill sp-searching">Searching</span><div style="display:flex;align-items:center;gap:6px"><div class="prov-bar-bg" style="width:110px"><div class="prov-bar" style="width:80%;background:var(--gold-lt);border:1px solid rgba(200,168,75,.4)"></div></div><strong style="font-size:13px">${s.totalLearners - s.totalPlacements}</strong></div></div>
+      </div>`;
+  }
+}
+
+async function loadAdminLearners() {
+  const tbody = document.getElementById('learnersTableBody');
+  tbody.dataset.loaded = '1';
+  tbody.innerHTML = `<tr><td colspan="5" style="padding:20px;text-align:center"><div class="skeleton" style="height:12px;width:60%;margin:auto"></div></td></tr>`;
+  const res = await getAllLearners();
+  renderAdminLearnerTable(res.data || []);
+}
+
+function renderAdminLearnerTable(data) {
+  const tbody = document.getElementById('learnersTableBody');
+  document.getElementById('learnersSubtitle').textContent = `${data.length} learners in registry`;
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted)">No learners found</td></tr>`; return; }
+  tbody.innerHTML = data.map(l => {
+    const u = l.users || {};
+    const n = `${u.first_name||''} ${u.last_name||''}`.trim() || 'Unknown';
+    const mc = (l.avg_match_score||0) >= 80 ? 'var(--teal)' : (l.avg_match_score||0) >= 65 ? 'var(--gold)' : 'var(--ink-muted)';
+    const pillMap = { placed:'sp-placed', matched:'sp-matched', searching:'sp-searching', inactive:'sp-inactive' };
+    return `<tr>
+      <td class="td-name">${esc(n)}</td>
+      <td class="td-muted">${esc(l.qualification||'—')}</td>
+      <td class="td-muted">${esc(u.province||'—')}</td>
+      <td><strong style="color:${mc}">${l.avg_match_score||0}%</strong></td>
+      <td><span class="status-pill ${pillMap[l.status]||'sp-inactive'}">${capitalize(l.status||'inactive')}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+let allAdminLearners = [];
+async function filterAdminLearners() {
+  if (!allAdminLearners.length) {
+    const res = await getAllLearners();
+    allAdminLearners = res.data || [];
+  }
+  const q  = document.getElementById('learnerSearch').value.toLowerCase();
+  const st = document.getElementById('statusFilter').value;
+  const filtered = allAdminLearners.filter(l => {
+    const u = l.users || {};
+    const n = `${u.first_name||''} ${u.last_name||''}`.toLowerCase();
+    const qOk = !q || n.includes(q) || (l.qualification||'').toLowerCase().includes(q) || (u.province||'').toLowerCase().includes(q);
+    const sOk = !st || l.status === st;
+    return qOk && sOk;
+  });
+  renderAdminLearnerTable(filtered);
+}
+
+async function loadReport() {
+  const tbody = document.getElementById('institutionTbody');
+  tbody.dataset.loaded = '1';
+  const [statsRes, instRes] = await Promise.all([ getPlatformStats(), getInstitutionSummary() ]);
+
+  if (statsRes.success) {
+    const s = statsRes.data;
+    const rate = s.totalLearners ? ((s.totalPlacements / s.totalLearners) * 100).toFixed(1) : 0;
+    document.getElementById('reportStats').innerHTML = `
+      <div class="scard"><div class="scard-label">Total placements</div><div class="scard-val" style="color:var(--teal)">${s.totalPlacements}</div></div>
+      <div class="scard"><div class="scard-label">Placement rate</div><div class="scard-val">${rate}%</div><div class="scard-up">↑ Vs last quarter</div></div>
+      <div class="scard"><div class="scard-label">Avg. days to placement</div><div class="scard-val">34</div><div class="scard-sub">From registration</div></div>`;
+  }
+
+  const rows = instRes.data || [];
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted)">No institution data yet</td></tr>`; return; }
+  tbody.innerHTML = rows.map(r => {
+    const pillClass = (r.placement_rate||0) >= 15 ? 'sp-placed' : (r.placement_rate||0) >= 10 ? 'sp-matched' : 'sp-searching';
+    return `<tr>
+      <td class="td-name">${esc(r.institution||'Unknown')}</td>
+      <td>${r.registered||0}</td>
+      <td class="td-muted">${r.matched||0}</td>
+      <td><strong>${r.placed||0}</strong></td>
+      <td><span class="status-pill ${pillClass}">${r.placement_rate||0}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadProvince() {
+  const tbody = document.getElementById('provinceTbody');
+  tbody.dataset.loaded = '1';
+  const res = await getProvinceSummary();
+  const rows = res.data || [];
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted)">No province data yet</td></tr>`; return; }
+  const maxL = Math.max(...rows.map(r => r.learner_count));
+  tbody.innerHTML = rows.map(r => {
+    const pct = Math.round((r.learner_count / maxL) * 100);
+    return `<tr>
+      <td class="td-name">${esc(r.province||'Unknown')}</td>
+      <td>${r.learner_count||0}</td>
+      <td>${r.placement_count||0}</td>
+      <td><strong style="color:${(r.placement_rate||0)>=12?'var(--teal)':'var(--gold)'}">${r.placement_rate||0}%</strong></td>
+      <td><div class="prov-bar-bg" style="width:120px;display:inline-block"><div class="prov-bar" style="width:${pct}%"></div></div></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── CSV exports ── */
+async function exportAdminLearners() {
+  const res = await getAllLearners({ search: document.getElementById('learnerSearch').value });
+  const rows = (res.data||[]).map(l => ({
+    Name:     `${l.users?.first_name||''} ${l.users?.last_name||''}`.trim(),
+    Qual:     l.qualification||'',
+    Province: l.users?.province||'',
+    Score:    l.avg_match_score||0,
+    Status:   l.status||''
+  }));
+  downloadCSV(rows, 'learners.csv');
+}
+async function exportInstitutions() {
+  const res = await getInstitutionSummary();
+  downloadCSV(res.data||[], 'institution_report.csv');
+}
+async function exportProvince() {
+  const res = await getProvinceSummary();
+  downloadCSV(res.data||[], 'province_report.csv');
+}
+
+/* ── Build match card DOM element ── */
+function buildMatchCard(score, aiInsight, opp, matchId) {
+  const mc   = score >= 80 ? 'score-high' : 'score-mid';
+  const barC = score >= 80 ? '' : ' mid';
+  const ICONS = {Job:'💼',Learnership:'🎓',Internship:'📋',Project:'🚀'};
+  const div  = document.createElement('div');
+  div.className = 'match-card';
+  div.innerHTML = `
+    <div class="mc-header">
+      <div><div class="mc-title">${esc(opp.title||'')}</div><div class="mc-company">${esc(opp.company||'')} &mdash; ${esc(opp.location||'')}</div></div>
+      <div class="mc-score ${mc}">${score}%</div>
+    </div>
+    <div class="mc-bar-bg"><div class="mc-bar${barC}" style="width:0%" data-w="${score}"></div></div>
+    <div class="mc-tags">
+      <span class="mc-tag">${ICONS[opp.type]||''} ${esc(opp.type||'')}</span>
+      ${opp.is_funded ? '<span class="mc-tag funded">SETA funded</span>' : ''}
+      ${opp.is_remote ? '<span class="mc-tag">Remote</span>' : ''}
+      ${opp.is_urgent ? `<span class="mc-tag" style="background:var(--coral-lt);color:var(--coral)">Closing soon</span>` : ''}
+    </div>
+    <div class="mc-tip"><strong>AI insight:</strong> ${esc(aiInsight||'No insight available.')}</div>
+    <div class="mc-apply">
+      <button class="btn btn-primary btn-sm">Apply now</button>
+      <button class="btn btn-ghost btn-sm" onclick="if(this.classList.toggle('saved')) this.textContent='Saved ✓'">Save</button>
+    </div>`;
+
+  /* Animate bar */
+  setTimeout(() => {
+    const bar = div.querySelector('.mc-bar');
+    if (bar) bar.style.width = bar.getAttribute('data-w') + '%';
+  }, 100);
+
+  /* Apply button */
+  div.querySelector('.btn-primary').addEventListener('click', async () => {
+    const res = await applyToOpportunity(opp.id, score);
+    if (res.success || res.alreadyApplied) {
+      div.querySelector('.mc-apply').innerHTML =
+        `<span class="applied-badge">✓ Applied</span>
+         <span style="font-size:12px;color:var(--ink-muted);align-self:center;margin-left:6px">We'll notify you of updates.</span>`;
+      showToast('✓ Application submitted!');
+    }
+  });
+
+  return div;
+}
+
+/* ── Employer opp row HTML ── */
+function oppRow(o, appCount, showBtn) {
+  const ICONS = {Job:'💼',Learnership:'🎓',Internship:'📋',Project:'🚀'};
+  return `<div class="opp-row">
+    <div class="opp-icon oi-${o.type||'Job'}">${ICONS[o.type]||'💼'}</div>
+    <div class="opp-info"><div class="opp-title">${esc(o.title)}</div><div class="opp-meta">${esc(o.location)} — Closes ${formatDate(o.closing_date)}</div></div>
+    <div class="opp-stat"><div class="opp-apps">${appCount}</div><div class="opp-apps-lbl">applicants</div></div>
+    ${showBtn ? `<button class="btn btn-ghost btn-sm" style="margin-left:10px">View</button>` : ''}
+  </div>`;
+}
+
+/* ── Helpers ── */
+function ini(n){ return (n||'').split(' ').filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase()||'?'; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function capitalize(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
+function formatDate(d){ return d ? new Date(d).toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'}) : '—'; }
+function timeAgo(d){
+  const diff = Date.now() - new Date(d);
+  const days = Math.floor(diff/86400000);
+  return days === 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
+}
+function skeletonCards(n){ return Array(n).fill(`<div class="skel-card"><div class="skeleton" style="height:14px;width:55%;margin-bottom:8px"></div><div class="skeleton" style="height:4px;width:100%"></div></div>`).join(''); }
+function emptyState(title, msg){ return `<div class="empty-state"><h3>${title}</h3><p>${msg}</p></div>`; }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
 </script>
 </body>
 </html>
