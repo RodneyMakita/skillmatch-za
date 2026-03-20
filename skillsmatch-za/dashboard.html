@@ -170,6 +170,54 @@
     .empty-state h3 { font-size:16px; color:var(--ink-soft); margin-bottom:6px; }
     .empty-state p  { font-size:13px; }
 
+    /* ── Employer skill tag input ── */
+    .emp-skill-tag { display:inline-flex; align-items:center; gap:5px; font-size:12px; padding:4px 10px; border-radius:99px; background:var(--teal-lt); color:var(--teal); font-weight:500; }
+    .emp-skill-rm  { background:none; border:none; cursor:pointer; color:var(--teal); font-size:14px; line-height:1; padding:0; opacity:.7; }
+    .emp-skill-rm:hover { opacity:1; }
+    .skill-suggest-btn { font-size:11px; padding:3px 10px; border-radius:99px; border:1px solid rgba(14,17,23,.15); background:var(--white); color:var(--ink-soft); cursor:pointer; transition:all .15s; font-family:var(--font-body); }
+    .skill-suggest-btn:hover { background:var(--teal-lt); border-color:rgba(13,122,95,.3); color:var(--teal); }
+
+    /* ── Applicant status action buttons ── */
+    .status-actions { display:inline-flex; gap:4px; flex-wrap:wrap; align-items:center; }
+    .sa-btn { font-size:11px; padding:4px 10px; border-radius:99px; border:1.5px solid; cursor:pointer; font-family:var(--font-body); font-weight:500; transition:all .15s; white-space:nowrap; }
+    .sa-btn:disabled { opacity:.45; cursor:not-allowed; }
+    .sa-shortlist { border-color:rgba(13,122,95,.3);  color:var(--teal);  background:var(--teal-lt); }
+    .sa-shortlist:hover { background:var(--teal); color:var(--white); }
+    .sa-interview { border-color:rgba(200,168,75,.4); color:var(--gold);  background:var(--gold-lt); }
+    .sa-interview:hover { background:var(--gold); color:var(--white); }
+    .sa-approve   { border-color:rgba(13,122,95,.5);  color:var(--white); background:var(--teal); }
+    .sa-approve:hover { background:#0a6750; }
+    .sa-reject    { border-color:rgba(217,95,59,.3);  color:var(--coral); background:var(--coral-lt); }
+    .sa-reject:hover { background:var(--coral); color:var(--white); }
+    .pill-applied      { background:var(--paper-2);    color:var(--ink-muted); }
+    .pill-under_review { background:var(--gold-lt);    color:var(--warning); }
+    .pill-shortlisted  { background:var(--teal-lt);    color:var(--teal); }
+    .pill-interview    { background:#f0eeff;            color:#7c3aed; }
+    .pill-approved     { background:var(--success-lt); color:var(--success); }
+    .pill-rejected     { background:var(--coral-lt);   color:var(--coral); }
+    .pill-placed       { background:var(--success-lt); color:var(--success); font-weight:600; }
+
+    /* ── Notification panel ── */
+    .notif-panel { position:absolute; top:52px; right:34px; width:340px; background:var(--white); border:1px solid rgba(14,17,23,.1); border-radius:14px; box-shadow:0 8px 32px rgba(14,17,23,.12); z-index:100; overflow:hidden; display:none; }
+    .notif-panel.open { display:block; animation:vIn .2s ease; }
+    .notif-panel-head { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(14,17,23,.07); }
+    .notif-panel-title { font-family:var(--font-display); font-size:14px; font-weight:700; }
+    .notif-mark-all { font-size:12px; color:var(--teal); background:none; border:none; cursor:pointer; font-family:var(--font-body); }
+    .notif-mark-all:hover { text-decoration:underline; }
+    .notif-item { display:flex; gap:10px; padding:12px 16px; border-bottom:1px solid rgba(14,17,23,.05); transition:background .15s; cursor:pointer; }
+    .notif-item:last-child { border-bottom:none; }
+    .notif-item:hover { background:var(--paper); }
+    .notif-item.unread { background:var(--teal-lt); }
+    .notif-item.unread:hover { background:#d4eee7; }
+    .notif-dot-item { width:8px; height:8px; border-radius:50%; background:var(--teal); flex-shrink:0; margin-top:5px; }
+    .notif-dot-item.read { background:transparent; }
+    .notif-item-content { flex:1; min-width:0; }
+    .notif-item-title { font-size:13px; font-weight:500; color:var(--ink); margin-bottom:2px; }
+    .notif-item-msg { font-size:12px; color:var(--ink-muted); line-height:1.4; }
+    .notif-item-time { font-size:11px; color:var(--ink-muted); margin-top:3px; }
+    .notif-empty { padding:32px 16px; text-align:center; color:var(--ink-muted); font-size:13px; }
+    .notif-btn { cursor:pointer; }
+
     @media(max-width:1024px){ .shell{grid-template-columns:1fr} .sidebar{display:none} .two-col{grid-template-columns:1fr} .stats-4{grid-template-columns:repeat(2,1fr)} }
     @media(max-width:600px){ .content{padding:18px 14px} .topbar{padding:14px 16px} .stats-4,.stats-3{grid-template-columns:repeat(2,1fr)} }
   </style>
@@ -225,7 +273,18 @@
     <div class="topbar">
       <span class="topbar-title" id="topbarTitle">Dashboard</span>
       <div style="display:flex;align-items:center;gap:10px">
-        <div class="notif-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-dot"></span></div>
+        <div class="notif-btn" id="notifBtn" onclick="toggleNotifPanel()" title="Notifications">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot" id="notifDot" style="display:none"></span>
+        </div>
+        <!-- Notification panel -->
+        <div class="notif-panel" id="notifPanel">
+          <div class="notif-panel-head">
+            <span class="notif-panel-title">Notifications</span>
+            <button class="notif-mark-all" onclick="markAllRead()">Mark all read</button>
+          </div>
+          <div id="notifList"><div class="notif-empty">No notifications yet</div></div>
+        </div>
         <a href="browse.html" class="btn btn-primary btn-sm">Browse all</a>
       </div>
     </div>
@@ -373,7 +432,21 @@
               <div class="form-group"><label class="form-label required">Province</label><select id="postProv"><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>North West</option><option>Northern Cape</option><option>Western Cape</option><option>Remote</option></select></div>
               <div class="form-group"><label class="form-label required">Location</label><input type="text" id="postLoc" placeholder="e.g. Mahikeng, North West"/></div>
             </div>
-            <div class="form-group"><label class="form-label required">Required skills / qualifications</label><textarea id="postDesc" placeholder="List skills and qualifications required…" rows="4"></textarea></div>
+            <div class="form-group">
+              <label class="form-label required">Required skills <span style="font-weight:400;color:var(--ink-muted)">(type and press Enter)</span></label>
+              <div style="display:flex;flex-wrap:wrap;gap:5px;padding:10px;background:var(--paper);border:1.5px solid rgba(14,17,23,.12);border-radius:10px;min-height:48px;cursor:text" id="postSkillsWrap" onclick="document.getElementById('postSkillInput').focus()">
+                <input type="text" id="postSkillInput" placeholder="e.g. Python, Networking, SQL…" style="border:none;outline:none;background:transparent;font-size:13px;min-width:120px;color:var(--ink)"/>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">
+                <span style="font-size:11px;color:var(--ink-muted);align-self:center">Suggest:</span>
+                <button type="button" class="skill-suggest-btn" onclick="addPostSkill('Python')">Python</button>
+                <button type="button" class="skill-suggest-btn" onclick="addPostSkill('JavaScript')">JavaScript</button>
+                <button type="button" class="skill-suggest-btn" onclick="addPostSkill('SQL')">SQL</button>
+                <button type="button" class="skill-suggest-btn" onclick="addPostSkill('Networking')">Networking</button>
+                <button type="button" class="skill-suggest-btn" onclick="addPostSkill('MS Office')">MS Office</button>
+                <button type="button" class="skill-suggest-btn" onclick="addPostSkill('Communication')">Communication</button>
+              </div>
+            </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
               <div class="form-group"><label class="form-label">Closing date</label><input type="date" id="postClose"/></div>
               <div class="form-group"><label class="form-label">Stipend / salary</label><input type="text" id="postStipend" placeholder="e.g. R3 500/month"/></div>
@@ -454,6 +527,47 @@
 
     </div><!-- /content -->
   </main>
+
+  <!-- ── Edit Opportunity Modal ── -->
+  <div id="editOppModal" style="display:none;position:fixed;inset:0;background:rgba(14,17,23,.5);z-index:200;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--white);border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:28px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h2 style="font-size:18px;letter-spacing:-.5px">Edit listing</h2>
+        <button onclick="closeEditOpp()" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--ink-muted);line-height:1">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <input type="hidden" id="editOppId"/>
+        <div class="form-group"><label class="form-label required">Job title</label><input type="text" id="editTitle"/></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group"><label class="form-label">Type</label><select id="editType"><option>Learnership</option><option>Job</option><option>Internship</option><option>Project</option></select></div>
+          <div class="form-group"><label class="form-label">Sector</label><select id="editSector"><option>ICT</option><option>Finance</option><option>Retail</option><option>Engineering</option><option>Health</option><option>Other</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group"><label class="form-label">Province</label><select id="editProv"><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>North West</option><option>Northern Cape</option><option>Western Cape</option><option>Remote</option></select></div>
+          <div class="form-group"><label class="form-label">Location</label><input type="text" id="editLoc"/></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Required skills <span style="font-weight:400;color:var(--ink-muted)">(type and press Enter)</span></label>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;padding:10px;background:var(--paper);border:1.5px solid rgba(14,17,23,.12);border-radius:10px;min-height:48px;cursor:text" id="editSkillsWrap" onclick="document.getElementById('editSkillInput').focus()">
+            <input type="text" id="editSkillInput" placeholder="Add a skill…" style="border:none;outline:none;background:transparent;font-size:13px;min-width:120px;color:var(--ink)"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group"><label class="form-label">Closing date</label><input type="date" id="editClose"/></div>
+          <div class="form-group"><label class="form-label">Stipend / salary</label><input type="text" id="editStipend"/></div>
+        </div>
+        <div style="display:flex;gap:16px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="editFunded" style="accent-color:var(--teal)"> SETA funded</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="editRemote" style="accent-color:var(--teal)"> Remote</label>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button class="btn btn-primary" onclick="saveEditOpp()">Save changes</button>
+          <button class="btn btn-ghost" onclick="closeEditOpp()">Cancel</button>
+          <button class="btn btn-ghost" style="margin-left:auto;color:var(--coral)" onclick="archiveOpp(document.getElementById('editOppId').value,this)">Archive listing</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Toast -->
@@ -845,47 +959,157 @@ async function loadAllListings() {
   wrap.innerHTML = listings.map(o => oppRow(o, 0, true)).join('');
 }
 
+/* ── Status labels ── */
+const STATUS_LABELS = {
+  applied:      'Applied',
+  under_review: 'Under review',
+  shortlisted:  'Shortlisted',
+  interview:    'Interview',
+  approved:     'Approved',
+  rejected:     'Unsuccessful',
+  placed:       'Placed ✓',
+};
+
+/* Actions available at each status stage */
+function statusActions(appId, status) {
+  const b = (label, cls, next) =>
+    `<button class="sa-btn ${cls}" onclick="setAppStatus('${appId}','${next}',this)">${label}</button>`;
+  switch (status) {
+    case 'applied':
+      return [b('Review',      'sa-shortlist', 'under_review'),
+              b('Shortlist',   'sa-shortlist', 'shortlisted'),
+              b('Unsuccessful','sa-reject',    'rejected')];
+    case 'under_review':
+      return [b('Shortlist',   'sa-shortlist', 'shortlisted'),
+              b('Unsuccessful','sa-reject',    'rejected')];
+    case 'shortlisted':
+      return [b('📅 Interview', 'sa-interview', 'interview'),
+              b('✓ Approve',   'sa-approve',   'approved'),
+              b('Unsuccessful','sa-reject',    'rejected')];
+    case 'interview':
+      return [b('✓ Approve',   'sa-approve',   'approved'),
+              b('Unsuccessful','sa-reject',    'rejected')];
+    case 'approved':
+      return [b('🎉 Place',    'sa-approve',   'placed'),
+              b('Unsuccessful','sa-reject',    'rejected')];
+    case 'rejected':
+      return [b('Shortlist',   'sa-shortlist', 'shortlisted')];
+    case 'placed':
+      return [];
+    default:
+      return [b('Shortlist',   'sa-shortlist', 'shortlisted')];
+  }
+}
+
 async function loadApplicants() {
   const tbody = document.getElementById('applicantsTbody');
   tbody.dataset.loaded = '1';
-  const res = await getApplicantsForEmployer();
+  tbody.innerHTML = `<tr><td colspan="6" style="padding:20px;text-align:center"><div class="skeleton" style="height:12px;width:60%;margin:auto"></div></td></tr>`;
+
+  const res  = await getApplicantsForEmployer();
   const apps = res.data || [];
   document.getElementById('applicantsTitle').textContent = `All applicants (${apps.length})`;
-  if (!apps.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--ink-muted)">No applicants yet</td></tr>`; return; }
 
-  const statusPills = {
-    applied:      `<span class="status-pill sp-inactive">Applied</span>`,
-    under_review: `<span class="status-pill sp-searching">Under review</span>`,
-    shortlisted:  `<span class="status-pill sp-matched">Shortlisted</span>`,
-    placed:       `<span class="status-pill sp-placed">Placed</span>`,
-    rejected:     `<span class="status-pill sp-inactive">Not selected</span>`,
-  };
+  if (!apps.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--ink-muted)">No applicants yet</td></tr>`;
+    return;
+  }
+
+  /* Build cache for notify calls */
+  _applicantsCache = {};
+  apps.forEach(a => {
+    const u = a.learners?.users;
+    if (u) _applicantsCache[a.id] = {
+      userId: a.learners?.user_id || '',
+      email:  u.email || '',
+    };
+  });
 
   tbody.innerHTML = apps.map(a => {
-    const l = a.learners;
-    const u = l?.users;
-    const n = `${u?.first_name||''} ${u?.last_name||''}`.trim() || 'Learner';
-    const mc = (a.match_score||0) >= 80 ? 'var(--teal)' : (a.match_score||0) >= 65 ? 'var(--gold)' : 'var(--ink-muted)';
-    return `<tr>
-      <td class="td-name">${esc(n)}</td>
-      <td class="td-muted">${esc(a.opportunities?.title||'')}</td>
-      <td><strong style="color:${mc}">${a.match_score||'—'}%</strong></td>
-      <td class="td-muted">${esc(l?.qualification||'—')}</td>
-      <td>${statusPills[a.status]||''}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="shortlistApplicant('${a.id}',this)">Shortlist</button></td>
+    const l   = a.learners;
+    const u   = l?.users;
+    const n   = `${u?.first_name||''} ${u?.last_name||''}`.trim() || 'Learner';
+    const mc  = (a.match_score||0) >= 80 ? 'var(--teal)' : (a.match_score||0) >= 65 ? 'var(--gold)' : 'var(--ink-muted)';
+    const st  = a.status || 'applied';
+    const pill = `<span class="status-pill pill-${st}">${STATUS_LABELS[st]||st}</span>`;
+    const acts = statusActions(a.id, st).join('');
+    return `<tr id="app-row-${a.id}">
+      <td>
+        <div class="td-name">${esc(n)}</div>
+        <div style="font-size:11px;color:var(--ink-muted)">${esc(u?.province||'')}</div>
+      </td>
+      <td class="td-muted" style="font-size:12px">${esc(a.opportunities?.title||'')}</td>
+      <td><strong style="color:${mc};font-family:var(--font-display)">${a.match_score||'—'}%</strong></td>
+      <td class="td-muted" style="font-size:12px">${esc(l?.qualification||'—')}</td>
+      <td>${pill}</td>
+      <td><div class="status-actions">${acts}</div></td>
     </tr>`;
   }).join('');
 }
 
-async function shortlistApplicant(appId, btn) {
-  const res = await updateApplicationStatus(appId, 'shortlisted');
-  if (res.success) { btn.textContent = '✓ Shortlisted'; btn.disabled = true; showToast('✓ Applicant shortlisted'); }
-  else showToast('✗ Error — try again');
+async function setAppStatus(appId, newStatus, btn) {
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = '…';
+
+  const res = await updateApplicationStatus(appId, newStatus);
+  if (!res.success) {
+    btn.disabled = false;
+    btn.textContent = orig;
+    showToast('✗ Could not update — ' + (res.error || 'try again'));
+    return;
+  }
+
+  /* Re-render just this row's pill + actions in-place */
+  const row = document.getElementById(`app-row-${appId}`);
+  if (row) {
+    row.children[4].innerHTML = `<span class="status-pill pill-${newStatus}">${STATUS_LABELS[newStatus]||newStatus}</span>`;
+    row.children[5].innerHTML = `<div class="status-actions">${statusActions(appId, newStatus).join('')}</div>`;
+  }
+
+  const toasts = {
+    under_review: '→ Moved to under review',
+    shortlisted:  '✓ Applicant shortlisted',
+    interview:    '📅 Interview scheduled',
+    approved:     '✓ Applicant approved',
+    rejected:     '✗ Marked as unsuccessful',
+    placed:       '🎉 Placement confirmed!',
+  };
+  showToast(toasts[newStatus] || '✓ Status updated');
+
+  /* Notify the learner via in-app + email */
+  try {
+    // Get learner details from the row data attributes
+    const row = document.getElementById(`app-row-${appId}`);
+    const nameEl = row?.children[0]?.querySelector('.td-name');
+    const learnerName = nameEl?.textContent?.trim() || 'Learner';
+    const oppTitle    = row?.children[1]?.textContent?.trim() || '';
+    const empName     = localStorage.getItem('sm_name') || 'Employer';
+
+    // Get learner's user_id + email from applicants cache
+    const cached = _applicantsCache?.[appId];
+    if (cached?.userId && cached?.email) {
+      await notifyLearner({
+        userId:       cached.userId,
+        learnerEmail: cached.email,
+        learnerName,
+        oppTitle,
+        employerName: empName,
+        newStatus,
+      });
+    }
+  } catch (e) {
+    console.warn('Notify learner failed (non-critical):', e.message);
+  }
 }
+
+/* Cache learner userId + email when applicants load */
+let _applicantsCache = {};
 
 async function postOpportunity() {
   const title = document.getElementById('postTitle').value.trim();
-  if (!title) { showToast('Please enter a job title.'); return; }
+  if (!title)             { showToast('Please enter a job title.'); return; }
+  if (!postSkills.length) { showToast('Please add at least one required skill.'); return; }
 
   const opp = {
     title,
@@ -894,7 +1118,8 @@ async function postOpportunity() {
     sector:       document.getElementById('postSector').value,
     province:     document.getElementById('postProv').value,
     location:     document.getElementById('postLoc').value || document.getElementById('postProv').value,
-    description:  document.getElementById('postDesc').value,
+    description:  postSkills.join(', '),
+    skills_req:   [...postSkills],
     closing_date: document.getElementById('postClose').value || null,
     stipend:      document.getElementById('postStipend').value,
     is_funded:    document.getElementById('postFunded').checked,
@@ -905,9 +1130,13 @@ async function postOpportunity() {
   const res = await createOpportunity(opp);
   if (res.success) {
     showToast('✓ Opportunity posted!');
-    setTimeout(() => showView('e-listings', document.querySelector('#nav-employer .sb-link:nth-child(2)')), 1000);
+    postSkills = [];
+    renderPostSkillTags();
+    document.getElementById('postTitle').value = '';
+    document.getElementById('allListings').dataset.loaded = '';
+    setTimeout(() => showView('e-listings', document.querySelector('#nav-employer .sb-link:nth-child(2)')), 800);
   } else {
-    showToast('✗ Error posting — check your connection.');
+    showToast('✗ Error posting — ' + (res.error || 'check your connection.'));
   }
 }
 
@@ -1148,7 +1377,10 @@ function oppRow(o, appCount, showBtn) {
     <div class="opp-icon oi-${o.type||'Job'}">${ICONS[o.type]||'💼'}</div>
     <div class="opp-info"><div class="opp-title">${esc(o.title)}</div><div class="opp-meta">${esc(o.location)} — Closes ${formatDate(o.closing_date)}</div></div>
     <div class="opp-stat"><div class="opp-apps">${appCount}</div><div class="opp-apps-lbl">applicants</div></div>
-    ${showBtn ? `<button class="btn btn-ghost btn-sm" style="margin-left:10px">View</button>` : ''}
+    ${showBtn ? `<div style="display:flex;gap:6px;margin-left:10px;flex-shrink:0">
+      <button class="btn btn-ghost btn-sm" onclick="openEditOpp('${o.id}')">Edit</button>
+      <button class="btn btn-ghost btn-sm" style="color:var(--coral)" onclick="archiveOpp('${o.id}',this)">Archive</button>
+    </div>` : ''}
   </div>`;
 }
 
@@ -1170,6 +1402,214 @@ function showToast(msg){
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
 }
+
+/* ══════════════════════════════════════
+   EMPLOYER SKILL TAG INPUTS
+   postSkills → Post form
+   editSkills → Edit modal
+══════════════════════════════════════ */
+let postSkills = [];
+function addPostSkill(val) {
+  const v = val.trim();
+  if (!v || postSkills.includes(v)) return;
+  postSkills.push(v);
+  renderPostSkillTags();
+}
+function renderPostSkillTags() {
+  const wrap  = document.getElementById('postSkillsWrap');
+  const input = document.getElementById('postSkillInput');
+  if (!wrap) return;
+  wrap.querySelectorAll('.emp-skill-tag').forEach(t => t.remove());
+  postSkills.forEach(s => {
+    const tag = document.createElement('span');
+    tag.className = 'emp-skill-tag';
+    tag.innerHTML = `${esc(s)}<button class="emp-skill-rm" onclick="postSkills=postSkills.filter(x=>x!==this.dataset.s);renderPostSkillTags()" data-s="${esc(s)}">×</button>`;
+    wrap.insertBefore(tag, input);
+  });
+}
+document.getElementById('postSkillInput')?.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ',') && e.target.value.trim()) {
+    e.preventDefault();
+    addPostSkill(e.target.value.replace(',',''));
+    e.target.value = '';
+  }
+  if (e.key === 'Backspace' && !e.target.value && postSkills.length) {
+    postSkills.pop(); renderPostSkillTags();
+  }
+});
+
+let editSkills = [];
+function addEditSkill(val) {
+  const v = val.trim();
+  if (!v || editSkills.includes(v)) return;
+  editSkills.push(v);
+  renderEditSkillTags();
+}
+function renderEditSkillTags() {
+  const wrap  = document.getElementById('editSkillsWrap');
+  const input = document.getElementById('editSkillInput');
+  if (!wrap) return;
+  wrap.querySelectorAll('.emp-skill-tag').forEach(t => t.remove());
+  editSkills.forEach(s => {
+    const tag = document.createElement('span');
+    tag.className = 'emp-skill-tag';
+    tag.innerHTML = `${esc(s)}<button class="emp-skill-rm" onclick="editSkills=editSkills.filter(x=>x!==this.dataset.s);renderEditSkillTags()" data-s="${esc(s)}">×</button>`;
+    wrap.insertBefore(tag, input);
+  });
+}
+document.getElementById('editSkillInput')?.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ',') && e.target.value.trim()) {
+    e.preventDefault();
+    addEditSkill(e.target.value.replace(',',''));
+    e.target.value = '';
+  }
+  if (e.key === 'Backspace' && !e.target.value && editSkills.length) {
+    editSkills.pop(); renderEditSkillTags();
+  }
+});
+
+/* ══════════════════════════════════════
+   EDIT OPPORTUNITY MODAL
+══════════════════════════════════════ */
+async function openEditOpp(oppId) {
+  const res = await getOpportunityById(oppId);
+  if (!res.success) { showToast('✗ Could not load listing'); return; }
+  const o = res.data;
+
+  document.getElementById('editOppId').value    = o.id;
+  document.getElementById('editTitle').value    = o.title    || '';
+  document.getElementById('editType').value     = o.type     || 'Job';
+  document.getElementById('editSector').value   = o.sector   || 'ICT';
+  document.getElementById('editProv').value     = o.province || '';
+  document.getElementById('editLoc').value      = o.location || '';
+  document.getElementById('editClose').value    = o.closing_date ? o.closing_date.split('T')[0] : '';
+  document.getElementById('editStipend').value  = o.stipend  || '';
+  document.getElementById('editFunded').checked = !!o.is_funded;
+  document.getElementById('editRemote').checked = !!o.is_remote;
+
+  /* Load skills into tag pills */
+  editSkills = Array.isArray(o.skills_req) && o.skills_req.length
+    ? [...o.skills_req]
+    : (o.description || '').split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
+  renderEditSkillTags();
+
+  document.getElementById('editOppModal').style.display = 'flex';
+}
+
+function closeEditOpp() {
+  document.getElementById('editOppModal').style.display = 'none';
+}
+
+/* Close on backdrop click */
+document.getElementById('editOppModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('editOppModal')) closeEditOpp();
+});
+
+async function saveEditOpp() {
+  const oppId = document.getElementById('editOppId').value;
+  const title = document.getElementById('editTitle').value.trim();
+  if (!title) { showToast('Please enter a job title'); return; }
+
+  const updates = {
+    title,
+    type:         document.getElementById('editType').value,
+    sector:       document.getElementById('editSector').value,
+    province:     document.getElementById('editProv').value,
+    location:     document.getElementById('editLoc').value,
+    description:  editSkills.join(', '),
+    skills_req:   [...editSkills],
+    closing_date: document.getElementById('editClose').value || null,
+    stipend:      document.getElementById('editStipend').value,
+    is_funded:    document.getElementById('editFunded').checked,
+    is_remote:    document.getElementById('editRemote').checked,
+  };
+
+  const res = await updateOpportunity(oppId, updates);
+  if (res.success) {
+    closeEditOpp();
+    showToast('✓ Listing updated!');
+    /* Reload listings */
+    document.getElementById('allListings').dataset.loaded = '';
+    document.getElementById('empListings').innerHTML = '';
+    bootEmployer();
+  } else {
+    showToast('✗ Save failed — ' + (res.error || 'try again'));
+  }
+}
+
+async function archiveOpp(oppId, btn) {
+  if (!confirm('Archive this listing? It will no longer appear to learners.')) return;
+  btn.disabled = true;
+  const res = await deleteOpportunity(oppId);
+  if (res.success) {
+    closeEditOpp();
+    showToast('✓ Listing archived');
+    document.getElementById('allListings').dataset.loaded = '';
+    document.getElementById('empListings').innerHTML = '';
+    bootEmployer();
+  } else {
+    btn.disabled = false;
+    showToast('✗ Could not archive — try again');
+  }
+}
+
+/* ══════════════════════════════════════
+   NOTIFICATIONS
+══════════════════════════════════════ */
+let _notifOpen = false;
+
+async function loadNotifications() {
+  const res = await getNotifications(30);
+  const notifs = res.data || [];
+  const unread = notifs.filter(n => !n.is_read).length;
+  const dot = document.getElementById('notifDot');
+  if (dot) dot.style.display = unread > 0 ? 'block' : 'none';
+  const list = document.getElementById('notifList');
+  if (!list) return;
+  if (!notifs.length) { list.innerHTML = '<div class="notif-empty">No notifications yet</div>'; return; }
+  list.innerHTML = notifs.map(n => `
+    <div class="notif-item ${n.is_read ? '' : 'unread'}" onclick="openNotif('${n.id}','${n.link||''}')">
+      <div class="notif-dot-item ${n.is_read ? 'read' : ''}"></div>
+      <div class="notif-item-content">
+        <div class="notif-item-title">${esc(n.title)}</div>
+        <div class="notif-item-msg">${esc(n.message.replace(/<[^>]+>/g,' '))}</div>
+        <div class="notif-item-time">${timeAgo(n.created_at)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleNotifPanel() {
+  _notifOpen = !_notifOpen;
+  document.getElementById('notifPanel').classList.toggle('open', _notifOpen);
+  if (_notifOpen) loadNotifications();
+}
+
+async function openNotif(notifId, link) {
+  await markNotificationsRead(notifId);
+  document.getElementById('notifPanel').classList.remove('open');
+  _notifOpen = false;
+  if (link) {
+    const hash = link.split('#')[1];
+    if (hash) showView(hash, null);
+  }
+  loadNotifications();
+}
+
+async function markAllRead() {
+  await markNotificationsRead(null);
+  loadNotifications();
+}
+
+document.addEventListener('click', e => {
+  if (_notifOpen && !document.getElementById('notifPanel')?.contains(e.target)
+      && !document.getElementById('notifBtn')?.contains(e.target)) {
+    document.getElementById('notifPanel').classList.remove('open');
+    _notifOpen = false;
+  }
+});
+
+setInterval(loadNotifications, 60000);
+
 </script>
 </body>
 </html>

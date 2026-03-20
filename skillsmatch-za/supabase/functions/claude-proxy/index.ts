@@ -1,145 +1,225 @@
 // Supabase Edge Function: claude-proxy
-// Uses Groq (FREE — no credit card, 14,400 requests/day, very fast).
-// Llama 3.3 70B runs at ~500 tokens/second on Groq's free tier.
+// AI: Groq (free) — console.groq.com
+// Jobs: Adzuna SA (free 250/month) + Reed.co.uk (free 250/month)
+//       Both have real SA jobs with working direct apply links.
 //
 // SETUP:
-//   1. Get free Groq key (no credit card):
-//      https://console.groq.com → API Keys → Create API Key
-//   2. supabase secrets set GROQ_API_KEY=your-groq-key
-//   3. supabase secrets set JSEARCH_KEY=your-rapidapi-key   (already set)
-//   4. supabase functions deploy claude-proxy --no-verify-jwt
+//   supabase secrets set GROQ_API_KEY=gsk_your-key
+//   supabase secrets set ADZUNA_APP_ID=xxx   (developer.adzuna.com — free)
+//   supabase secrets set ADZUNA_APP_KEY=xxx
+//   supabase secrets set REED_API_KEY=xxx    (reed.co.uk/developers — free)
+//   supabase functions deploy claude-proxy --no-verify-jwt
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
-const GROQ_MODEL = 'llama-3.3-70b-versatile';  // free, fast, very capable
+const GROQ_MODEL = 'llama-3.3-70b-versatile';
 const GROQ_URL   = 'https://api.groq.com/openai/v1/chat/completions';
-const JSEARCH_URL = 'https://jsearch.p.rapidapi.com/search';
 
-const ALLOWED_ORIGINS = [
-  'http://localhost',
-  'http://127.0.0.1',
-  'http://localhost:8080',
-  'https://xykfvlyidatykliocqam.supabase.co',
-];
-
-function corsHeaders(origin: string) {
-  const allowed = ALLOWED_ORIGINS.some(o => origin?.startsWith(o)) ? origin : ALLOWED_ORIGINS[0];
+function cors(origin: string) {
   return {
-    'Access-Control-Allow-Origin':  allowed,
+    'Access-Control-Allow-Origin':  origin || '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Action',
   };
 }
 
-// Convert Anthropic-format → Groq/OpenAI format
-function toGroq(body: any) {
-  const system  = body.system   || '';
-  const msgs    = body.messages || [];
-  const maxTok  = body.max_tokens || 1000;
+function json(data: any, status = 200, origin = '') {
+  return new Response(JSON.stringify(data), {
+    status, headers: { ...cors(origin), 'Content-Type': 'application/json' }
+  });
+}
 
-  const messages = [];
-  if (system) messages.push({ role: 'system', content: system });
-  msgs.forEach((m: any) => messages.push({
+function toGroq(body: any) {
+  const msgs: any[] = [];
+  if (body.system) msgs.push({ role: 'system', content: body.system });
+  (body.messages || []).forEach((m: any) => msgs.push({
     role:    m.role === 'assistant' ? 'assistant' : 'user',
     content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
   }));
-
-  return { model: GROQ_MODEL, messages, max_tokens: maxTok, temperature: 0.2 };
+  return { model: GROQ_MODEL, messages: msgs, max_tokens: body.max_tokens || 1000, temperature: 0.2 };
 }
 
-// Convert Groq/OpenAI response → Anthropic format so match.js needs no changes
-function fromGroq(data: any) {
-  const text = data?.choices?.[0]?.message?.content || '';
-  return { content: [{ type: 'text', text }], model: GROQ_MODEL, role: 'assistant' };
+// ── Adzuna SA ─────────────────────────────────────────────────
+async function adzuna(keywords: string, province: string, appId: string, appKey: string) {
+  const kw  = encodeURIComponent(keywords);
+  const loc = province && province !== 'South Africa' ? `&where=${encodeURIComponent(province)}` : '';
+  const url = `https://api.adzuna.com/v1/api/jobs/za/search/1?app_id=${appId}&app_key=${appKey}&results_per_page=20&what=${kw}${loc}&content-type=application/json&sort_by=date`;
+  const r   = await fetch(url, { signal: AbortSignal.timeout(10000) });
+  if (!r.ok) { console.warn('Adzuna', r.status, await r.text()); return []; }
+  const d = await r.json();
+  return (d.results || []).map((j: any) => ({
+    title:        j.title || '',
+    company:      j.company?.display_name || '',
+    location:     j.location?.display_name || province,
+    description:  (j.description || '').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,600),
+    apply_url:    j.redirect_url || null,
+    source:       'adzuna',
+    closing_date: null,
+    is_remote:    /remote/i.test((j.title||'') + (j.description||'')),
+    stipend:      j.salary_min ? `R${Math.round(j.salary_min)}–R${Math.round(j.salary_max||j.salary_min)}/year` : null,
+  })).filter((j:any) => j.apply_url && j.title);
 }
+
+// ── Reed.co.uk SA jobs ────────────────────────────────────────
+async function reed(keywords: string, province: string, apiKey: string) {
+  const kw   = encodeURIComponent(keywords + ' South Africa');
+  const url  = `https://www.reed.co.uk/api/1.0/search?keywords=${kw}&location=${encodeURIComponent(province || 'South Africa')}&distancefromlocation=50&resultsToTake=20`;
+  const auth = 'Basic ' + btoa(apiKey + ':');
+  const r    = await fetch(url, { headers: { 'Authorization': auth }, signal: AbortSignal.timeout(10000) });
+  if (!r.ok) { console.warn('Reed', r.status); return []; }
+  const d = await r.json();
+  return (d.results || []).map((j: any) => ({
+    title:        j.jobTitle  || '',
+    company:      j.employerName || '',
+    location:     j.locationName || province,
+    description:  (j.jobDescription || '').replace(/<[^>]+>/g,' ').trim().slice(0,600),
+    apply_url:    j.jobUrl   || null,
+    source:       'reed',
+    closing_date: j.expirationDate ? j.expirationDate.slice(0,10) : null,
+    is_remote:    j.locationName === 'Remote' || /remote/i.test(j.jobTitle||''),
+    stipend:      j.minimumSalary ? `R${Math.round(j.minimumSalary)}–R${Math.round(j.maximumSalary||j.minimumSalary)}/year` : null,
+  })).filter((j:any) => j.apply_url && j.title);
+}
+
+// ── Supabase client for DB writes (notifications) ──────────
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 serve(async (req: Request) => {
   const origin = req.headers.get('origin') || '';
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
+  if (req.method !== 'POST')    return new Response('Method not allowed', { status: 405, headers: cors(origin) });
 
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders(origin) });
-  }
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405, headers: corsHeaders(origin) });
-  }
-
-  // Verify Supabase JWT
   const auth = req.headers.get('Authorization') || '';
-  if (!auth.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized — please log in.' }),
-      { status: 401, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } });
-  }
+  if (!auth.startsWith('Bearer ')) return json({ error: 'Unauthorized' }, 401, origin);
+
+  // Build a Supabase service-role client for writes (notifications)
+  const supabaseUrl  = Deno.env.get('SUPABASE_URL')              || '';
+  const serviceKey   = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+  const supa = (supabaseUrl && serviceKey)
+    ? createClient(supabaseUrl, serviceKey)
+    : null;
 
   try {
     const body   = await req.json();
     const action = req.headers.get('X-Action') || 'ai';
 
-    // ── JSearch: LinkedIn + Indeed + Glassdoor + ZipRecruiter ──
-    if (action === 'jsearch') {
-      const jsearchKey = Deno.env.get('JSEARCH_KEY') || '';
-      if (!jsearchKey) {
-        return new Response(JSON.stringify({ error: 'JSEARCH_KEY not set.' }),
-          { status: 500, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } });
+    // ── Job fetch ──────────────────────────────────────────
+    if (action === 'jobs') {
+      const keywords  = body.keywords || body.query || 'IT learnership';
+      const province  = body.province || 'South Africa';
+      const adzunaId  = Deno.env.get('ADZUNA_APP_ID')  || '';
+      const adzunaKey = Deno.env.get('ADZUNA_APP_KEY') || '';
+      const reedKey   = Deno.env.get('REED_API_KEY')   || '';
+
+      if (!adzunaId && !reedKey) {
+        return json({
+          data: [], count: 0,
+          warning: 'No job API keys set. Add ADZUNA_APP_ID+ADZUNA_APP_KEY (developer.adzuna.com) or REED_API_KEY (reed.co.uk/developers) — both free.'
+        }, 200, origin);
       }
-      const query = encodeURIComponent(body.query || 'IT jobs South Africa');
-      const pages = body.pages || 2;
-      const url   = `${JSEARCH_URL}?query=${query}&page=1&num_pages=${pages}&date_posted=month&country=za&language=en`;
-      const jRes  = await fetch(url, {
-        headers: { 'X-RapidAPI-Key': jsearchKey, 'X-RapidAPI-Host': 'jsearch.p.rapidapi.com' }
+
+      const [adzunaJobs, reedJobs] = await Promise.allSettled([
+        adzunaId && adzunaKey ? adzuna(keywords, province, adzunaId, adzunaKey) : Promise.resolve([]),
+        reedKey               ? reed(keywords, province, reedKey)               : Promise.resolve([]),
+      ]);
+
+      const all = [
+        ...(adzunaJobs.status === 'fulfilled' ? adzunaJobs.value : []),
+        ...(reedJobs.status   === 'fulfilled' ? reedJobs.value   : []),
+      ];
+
+      // Deduplicate by title+company
+      const seen = new Set<string>();
+      const deduped = all.filter((j: any) => {
+        const k = `${(j.title||'').toLowerCase()}|${(j.company||'').toLowerCase()}`;
+        if (seen.has(k)) return false;
+        seen.add(k); return true;
       });
-      const jData = await jRes.json();
-      return new Response(JSON.stringify(jData),
-        { status: jRes.ok ? 200 : jRes.status,
-          headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } });
+
+      console.log(`Jobs: Adzuna=${adzunaJobs.status==='fulfilled'?adzunaJobs.value.length:'err'} Reed=${reedJobs.status==='fulfilled'?reedJobs.value.length:'err'} → ${deduped.length} unique`);
+      return json({ data: deduped, count: deduped.length }, 200, origin);
     }
 
-    // ── Adzuna: free job API — 250 calls/month, no credit card
-    //    Sign up: https://developer.adzuna.com
-    //    supabase secrets set ADZUNA_APP_ID=xxx ADZUNA_APP_KEY=xxx ──
-    if (action === 'adzuna') {
-      const appId  = Deno.env.get('ADZUNA_APP_ID')  || '';
-      const appKey = Deno.env.get('ADZUNA_APP_KEY')  || '';
-      if (!appId || !appKey) {
-        // Not configured — return empty results (optional source)
-        return new Response(JSON.stringify({ results: [] }),
-          { status: 200, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } });
+    // ── Notify: create in-app notification + send email ──────
+    if (action === 'notify') {
+      // body: { userId, learnerEmail, learnerName, title, message, type, link, employerName, oppTitle, newStatus }
+      if (!supa) return json({ error: 'Supabase service role key not configured' }, 500, origin);
+
+      // 1. Insert notification row for the learner
+      const { error: nErr } = await supa
+        .from('notifications')
+        .insert({
+          user_id: body.userId,
+          title:   body.title   || 'Application update',
+          message: body.message || '',
+          type:    body.type    || 'info',
+          link:    body.link    || null,
+        });
+      if (nErr) console.warn('Notification insert error:', nErr.message);
+
+      // 2. Send email via Resend (free 3,000/month — resend.com)
+      const resendKey = Deno.env.get('RESEND_API_KEY') || '';
+      if (resendKey && body.learnerEmail) {
+        const statusColors: Record<string,string> = {
+          under_review: '#c8a84b',
+          shortlisted:  '#0d7a5f',
+          interview:    '#7c3aed',
+          approved:     '#0d7a5f',
+          rejected:     '#d95f3b',
+          placed:       '#0d7a5f',
+        };
+        const color = statusColors[body.newStatus] || '#0d7a5f';
+
+        const emailBody = {
+          from:    'SkillsMatch ZA <noreply@skillsmatch.co.za>',
+          to:      [body.learnerEmail],
+          subject: body.title,
+          html: `<!DOCTYPE html><html><body style="font-family:sans-serif;background:#f5f2eb;padding:32px">
+            <div style="max-width:520px;margin:auto;background:#fff;border-radius:14px;padding:32px">
+              <div style="font-family:sans-serif;font-size:20px;font-weight:800;color:#0e1117;margin-bottom:20px">
+                Skills<span style="color:#0d7a5f">Match</span> ZA
+              </div>
+              <h2 style="color:#0e1117;font-size:18px;margin-bottom:8px">${body.title}</h2>
+              <p style="color:#3a3f4b;font-size:14px;line-height:1.6">${body.message}</p>
+              <div style="margin:24px 0;padding:14px 18px;background:${color}18;border-left:3px solid ${color};border-radius:0 8px 8px 0;font-size:14px;font-weight:600;color:${color}">
+                Application status: ${(body.newStatus||'').replace(/_/g,' ').replace(/\w/g,c=>c.toUpperCase())}
+              </div>
+              <a href="http://127.0.0.1:5500/skillsmatch-za/dashboard.html" style="display:inline-block;padding:12px 24px;background:#0d7a5f;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:500">View in dashboard →</a>
+              <p style="color:#888;font-size:12px;margin-top:24px">SkillsMatch ZA — MICT SETA National Skills Competition</p>
+            </div>
+          </body></html>`
+        };
+
+        const emailRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendKey}` },
+          body: JSON.stringify(emailBody),
+        });
+        if (!emailRes.ok) {
+          const emailErr = await emailRes.text();
+          console.warn('Resend error:', emailRes.status, emailErr.slice(0,200));
+        }
       }
-      const q    = encodeURIComponent(body.query || 'IT South Africa');
-      const rpp  = body.results_per_page || 20;
-      const url  = `https://api.adzuna.com/v1/api/jobs/za/search/1?app_id=${appId}&app_key=${appKey}&results_per_page=${rpp}&what=${q}&content-type=application/json`;
-      const aRes = await fetch(url);
-      const aData = await aRes.json();
-      return new Response(JSON.stringify(aData),
-        { status: aRes.ok ? 200 : aRes.status,
-          headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } });
+
+      return json({ success: true }, 200, origin);
     }
 
-    // ── AI: Groq (Llama 3.3 70B) ──
+    // ── AI scoring via Groq ────────────────────────────────
     const groqKey = Deno.env.get('GROQ_API_KEY') || '';
-    if (!groqKey) {
-      return new Response(
-        JSON.stringify({ error: 'GROQ_API_KEY not set. Run: supabase secrets set GROQ_API_KEY=yourkey  (free at console.groq.com)' }),
-        { status: 500, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } });
-    }
+    if (!groqKey) return json({ error: 'GROQ_API_KEY not set. Run: supabase secrets set GROQ_API_KEY=gsk_...' }, 500, origin);
 
-    const gRes = await fetch(GROQ_URL, {
+    const gRes  = await fetch(GROQ_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
       body:    JSON.stringify(toGroq(body)),
     });
-
     const gData = await gRes.json();
+    if (!gRes.ok) return json(gData, gRes.status, origin);
 
-    if (!gRes.ok) {
-      return new Response(JSON.stringify(gData),
-        { status: gRes.status, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } });
-    }
-
-    return new Response(JSON.stringify(fromGroq(gData)),
-      { status: 200, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } });
+    const text = gData?.choices?.[0]?.message?.content || '';
+    return json({ content: [{ type: 'text', text }], model: GROQ_MODEL, role: 'assistant' }, 200, origin);
 
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }),
-      { status: 500, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } });
+    return json({ error: err.message }, 500, origin);
   }
 });

@@ -264,40 +264,102 @@ async function testEdgeAI(){
    TEST 4: JSearch jobs
    ════════════════════════════════ */
 async function testJSearch(){
-  sep('JSearch (LinkedIn + Indeed + Glassdoor)');
+  sep('JSearch (LinkedIn + Indeed + Glassdoor) — Detailed');
   const token = getToken();
   if (!token){ log('warn','Not logged in — run Test 6 first'); return false; }
 
-  log('info','Fetching real jobs from JSearch via Edge Function…');
-  try {
-    const t0 = Date.now();
-    const r  = await fetch(proxyUrl(),{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`,'X-Action':'jsearch'},
-      body: JSON.stringify({ query:'IT support learnership South Africa', pages:1 })
-    });
-    const ms   = Date.now()-t0;
-    const data = await r.json();
+  // Test with a very simple broad query first
+  const testQueries = [
+    { q:'IT support South Africa', label:'Broad SA search' },
+    { q:'python developer South Africa', label:'Python developer SA' },
+    { q:'learnership South Africa 2026', label:'Learnership 2026' },
+  ];
 
-    log(r.ok?'ok':'fail',`HTTP ${r.status} — ${ms}ms`);
+  let anyWorked = false;
 
-    if (!r.ok){
-      if (data.error?.includes('JSEARCH_KEY')){
-        log('fail','JSEARCH_KEY not set on server');
-        log('warn','Fix: supabase secrets set JSEARCH_KEY=yourkey (free at rapidapi.com → jsearch)');
-      } else {
-        log('fail','Error: '+JSON.stringify(data.error||data));
+  for (const { q, label } of testQueries) {
+    log('info', `Testing query: "${q}" (${label})…`);
+    try {
+      const t0 = Date.now();
+      const r  = await fetch(proxyUrl(),{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`,'X-Action':'jsearch'},
+        body: JSON.stringify({ query: q, pages: 1 })
+      });
+      const ms   = Date.now()-t0;
+      const text = await r.text();
+
+      log(r.ok?'info':'fail', `  HTTP ${r.status} — ${ms}ms`);
+
+      if (!r.ok) {
+        let err = {};
+        try { err = JSON.parse(text); } catch(e){}
+        if (text.includes('JSEARCH_KEY') || text.includes('not set')) {
+          log('fail', '  ✗ JSEARCH_KEY not set on server');
+          log('warn', '  Fix: supabase secrets set JSEARCH_KEY=your-rapidapi-key');
+          log('warn', '  Then: supabase functions deploy claude-proxy --no-verify-jwt');
+          return false;
+        }
+        if (r.status === 401) {
+          log('fail', '  ✗ 401 Unauthorized — token may be expired, try logging in again');
+          return false;
+        }
+        if (r.status === 429) {
+          log('warn', '  ⚠ 429 Rate limit — RapidAPI free tier exhausted for today');
+          log('info', '  JSearch free plan: 200 calls/month. Check usage at rapidapi.com → My Apps');
+          return false;
+        }
+        log('fail', '  Raw error: ' + text.slice(0,300));
+        continue;
       }
-      return false;
-    }
 
-    const jobs = data.data || [];
-    if (!jobs.length){ log('warn','0 jobs returned — check your RapidAPI subscription is active'); return false; }
+      let data = {};
+      try { data = JSON.parse(text); } catch(e) { log('fail','  Could not parse response'); continue; }
 
-    log('ok',`✓ JSearch working! ${jobs.length} real jobs fetched in ${ms}ms`);
-    jobs.slice(0,3).forEach((j,i) => log('info',`  ${i+1}. "${j.job_title}" @ ${j.employer_name} (${j.job_city||'?'})`));
-    return true;
-  } catch(e){ log('fail','Error: '+e.message); return false; }
+      const jobs = data.data || [];
+      log(jobs.length > 0 ? 'ok' : 'warn', `  ${jobs.length} jobs returned`);
+
+      if (jobs.length > 0) {
+        anyWorked = true;
+        jobs.slice(0, 3).forEach((j, i) => {
+          const applyLink = j.job_apply_link || j.job_google_link || '(none)';
+          const isViewjob = applyLink.includes('viewjob') || applyLink.includes('rc/clk');
+          log(isViewjob ? 'warn' : 'ok',
+            `  ${i+1}. "${j.job_title}" @ ${j.employer_name} | posted: ${j.job_posted_at_datetime_utc?.slice(0,10)||'?'} | link: ${isViewjob?'⚠ redirect stub':'✓ direct'}`);
+        });
+
+        // Check date range
+        const dates = jobs.map(j => j.job_posted_at_datetime_utc?.slice(0,10)).filter(Boolean);
+        const oldest = dates.sort()[0];
+        const newest = dates.sort().reverse()[0];
+        if (oldest) log('info', `  Date range: ${oldest} → ${newest}`);
+        if (oldest && oldest < '2025-01-01') log('warn', '  ⚠ Some listings are from 2024 — Edge Function date filter may not be applied yet. Redeploy the function.');
+      }
+
+      if (data.status === 'NOTFOUND') {
+        log('warn', `  No results for this query — try different keywords`);
+      }
+      if (data.message?.includes('exceeded')) {
+        log('fail', '  ✗ RapidAPI quota exceeded — check your plan at rapidapi.com');
+        return false;
+      }
+
+    } catch(e){ log('fail', `  Error: ${e.message}`); }
+    
+    // Small delay between test queries
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  if (anyWorked) {
+    log('ok', '✓ JSearch is working! If you saw 0 results in the dashboard, check the match.js console logs.');
+  } else {
+    log('fail', '✗ All JSearch queries returned 0 results');
+    log('info', 'Possible causes:');
+    log('info', '  1. JSEARCH_KEY not deployed yet → supabase functions deploy claude-proxy --no-verify-jwt');
+    log('info', '  2. RapidAPI monthly quota (200 calls) exhausted → check rapidapi.com → My Apps → Analytics');
+    log('info', '  3. Token expired → log out and log back in');
+  }
+  return anyWorked;
 }
 
 /* ════════════════════════════════

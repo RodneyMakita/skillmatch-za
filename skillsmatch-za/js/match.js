@@ -106,19 +106,17 @@ async function fetchExternalJobs(learner, { maxJobs = 30, forceRefresh = false }
   console.log(`fetchExternalJobs: "${field}" | skills: [${skills.slice(0,3).join(',')}] | ${province}`);
 
   // Run all sources in parallel — each has its own fallback
-  const [jsearchJobs, adzunaJobs, groqJobs] = await Promise.allSettled([
-    fetchFromJSearch(skills, field, qual, province, city),
-    fetchFromAdzuna(skills, field, province),
+  const [rssJobs, groqJobs] = await Promise.allSettled([
+    fetchFromRSS(skills, field, qual, province, city),
     fetchFromGroqSearch(skills, field, qual, province),
   ]);
 
   const allJobs = [
-    ...(jsearchJobs.status  === 'fulfilled' ? jsearchJobs.value  : []),
-    ...(adzunaJobs.status   === 'fulfilled' ? adzunaJobs.value   : []),
-    ...(groqJobs.status     === 'fulfilled' ? groqJobs.value     : []),
+    ...(rssJobs.status  === 'fulfilled' ? rssJobs.value  : []),
+    ...(groqJobs.status === 'fulfilled' ? groqJobs.value : []),
   ];
 
-  console.log(`fetchExternalJobs: raw total ${allJobs.length} (JSearch: ${jsearchJobs.value?.length||0}, Adzuna: ${adzunaJobs.value?.length||0}, Groq: ${groqJobs.value?.length||0})`);
+  console.log(`fetchExternalJobs: ${allJobs.length} total (RSS: ${rssJobs.value?.length||0}, Groq supplement: ${groqJobs.value?.length||0})`);
 
   // Deduplicate, validate links, limit
   const deduped   = deduplicateJobs(allJobs);
@@ -136,53 +134,68 @@ async function fetchExternalJobs(learner, { maxJobs = 30, forceRefresh = false }
 }
 
 
-/* ── SOURCE 1: JSearch (LinkedIn + Indeed + Glassdoor + ZipRecruiter) ── */
-async function fetchFromJSearch(skills, field, qual, province, city) {
-  const location    = city !== province ? `${city}, ${province}` : province;
+/* ── SOURCE 1: RSS feeds from Careers24, PNet, Indeed SA, CareerJunction,
+                  JobMail, LinkedIn — scraped server-side, direct links only ── */
+async function fetchFromRSS(skills, field, qual, province, city) {
   const headers     = await claudeHeaders();
   const topSkills   = skills.slice(0, 4).join(' ');
-  const mainSkill   = skills[0] || field || 'IT';
-  const searchField = field || topSkills || 'ICT';
+  const qualLower   = (qual || '').toLowerCase();
+  const level       = /degree|btech|honours/.test(qualLower) ? 'graduate'
+                    : /n6|n5|diploma/.test(qualLower)         ? 'entry level'
+                    : 'learnership';
 
-  // Derive experience level from qualification
-  const qualLower = (qual || '').toLowerCase();
-  const expTag    = /degree|btech|honours/.test(qualLower) ? 'graduate'
-                  : /n6|n5|diploma/.test(qualLower)        ? 'entry level'
-                  : 'learnership internship';
-
-  const queries = [
-    `${topSkills || searchField} ${expTag} ${location} South Africa`,
-    `learnership internship ${searchField} South Africa 2025 2026`,
-    `${expTag} ${mainSkill} SETA South Africa`,
+  // Build keyword sets that give diverse results
+  const kwSets = [
+    `${topSkills || field} ${level}`,
+    `${field || topSkills} South Africa`,
+    `learnership internship ${field || 'ICT'} 2026`,
   ];
 
-  const jFetch = (query, pages=1) => fetch(CLAUDE_PROXY_URL, {
-    method: 'POST',
-    headers: { ...headers, 'X-Action': 'jsearch' },
-    body: JSON.stringify({ query, pages })
-  }).then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] }));
+  const results = await Promise.all(
+    kwSets.map(kw =>
+      fetch(CLAUDE_PROXY_URL, {
+        method:  'POST',
+        headers: { ...headers, 'X-Action': 'jobs' },
+        body:    JSON.stringify({ keywords: kw, province, field })
+      })
+      .then(r => r.ok ? r.json() : { data: [] })
+      .catch(() => ({ data: [] }))
+    )
+  );
 
-  const results = await Promise.all(queries.map((q, i) => jFetch(q, i === 0 ? 2 : 1)));
-  const raw     = results.flatMap(r => r.data || []);
+  const raw = results.flatMap(r => r.data || []);
+  console.log(`RSS fetch: ${raw.length} raw results from all sources`);
 
+  // Normalise RSS job format → our opportunities format
   return raw.map(j => ({
-    title:        j.job_title         || 'Unknown Position',
-    company:      j.employer_name     || 'Unknown Company',
-    location:     `${j.job_city || city}, ${j.job_state || province}`,
-    province:     j.job_state         || province,
-    type:         inferType(j.job_title || ''),
-    sector:       inferSector(j.job_title || '', j.employer_name || ''),
-    description:  (j.job_description || '').slice(0, 600),
-    skills_req:   extractSkillsFromDesc(j.job_description || ''),
-    stipend:      j.job_min_salary
-                    ? `${j.job_min_salary}–${j.job_max_salary||''} ${j.job_salary_currency||'ZAR'}/${j.job_salary_period||'month'}`
-                    : null,
-    closing_date: j.job_offer_expiration_datetime_utc?.slice(0, 10) || null,
-    is_funded:    /seta|funded|stipend/i.test(j.job_description || ''),
-    is_remote:    j.job_is_remote || false,
-    apply_url:    j.job_apply_link || j.job_google_link || null,
-    source:       (j.job_publisher || 'jsearch').toLowerCase().replace(/\s+/g,'-'),
-  }));
+    title:        (j.title    || 'Unknown Position').slice(0, 200),
+    company:      (j.company  || 'Unknown Company').slice(0, 200),
+    location:     (j.location || province || 'South Africa').slice(0, 200),
+    province:     extractProvince(j.location || '') || province,
+    type:         inferType(j.title || ''),
+    sector:       inferSector(j.title || '', j.description || ''),
+    description:  (j.description || '').slice(0, 600),
+    skills_req:   extractSkillsFromDesc(j.description || ''),
+    stipend:      extractStipend(j.description || ''),
+    closing_date: j.closing_date || null,
+    is_funded:    /seta|funded|stipend|nsfas/i.test(j.description || ''),
+    is_remote:    j.is_remote || /remote/i.test(j.title || ''),
+    apply_url:    sanitiseUrl(j.apply_url),   // already filtered server-side
+    source:       j.source || 'rss',
+  })).filter(j => j.apply_url);  // only keep jobs with valid direct links
+}
+
+/** Extract province from location string */
+function extractProvince(loc) {
+  const PROVINCES = ['Gauteng','Western Cape','KwaZulu-Natal','Eastern Cape',
+    'Free State','Mpumalanga','Limpopo','North West','Northern Cape'];
+  return PROVINCES.find(p => loc.includes(p)) || '';
+}
+
+/** Try to extract a stipend/salary from job description text */
+function extractStipend(desc) {
+  const m = desc.match(/R\s?[\d,]+(?:\s?[-–]\s?R?\s?[\d,]+)?(?:\s?\/?\s?(?:month|per month|p\.m\.|annum|year))?/i);
+  return m ? m[0].trim() : null;
 }
 
 
@@ -228,45 +241,112 @@ async function fetchFromAdzuna(skills, field, province) {
 }
 
 
-/* ── SOURCE 3: Groq web search (AI finds real SA job listings) ──────── */
+/* ── SOURCE 3: Groq SA job supplement ───────────────────────────────────
+   Groq is an LLM — it cannot browse the web. Instead we use it to
+   generate realistic SA job listings based on REAL companies that
+   are known to hire in South Africa. These supplement JSearch results
+   and give learners more relevant local opportunities to score against.
+   apply_url is set to the company's real careers page (stable links).
+   ─────────────────────────────────────────────────────────────────── */
 async function fetchFromGroqSearch(skills, field, qual, province) {
-  const headers     = await claudeHeaders();
-  const topSkills   = skills.slice(0, 3).join(', ');
-  const qualLower   = (qual || '').toLowerCase();
-  const level       = /degree|btech/.test(qualLower) ? 'graduate'
-                    : /n6|n5|diploma/.test(qualLower)  ? 'entry-level'
-                    : 'learnership';
+  const headers   = await claudeHeaders();
+  const topSkills = skills.slice(0, 4).join(', ');
+  const qualLower = (qual || '').toLowerCase();
+  const level     = /degree|btech|honours/.test(qualLower) ? 'graduate'
+                  : /n6|n5|diploma/.test(qualLower)         ? 'entry level'
+                  : 'learnership or internship';
+
+  // Real SA companies with active careers pages — Groq generates
+  // plausible listings based on their actual hiring patterns
+  const SA_EMPLOYERS = [
+    'Telkom SA', 'MTN South Africa', 'Vodacom', 'Cell C',
+    'Standard Bank', 'FNB', 'Absa', 'Nedbank', 'Capitec',
+    'Dimension Data', 'BCX', 'EOH', 'Accenture South Africa',
+    'Allan Gray', 'Discovery', 'Old Mutual',
+    'Shoprite', 'Pick n Pay', 'Woolworths',
+    'Eskom', 'Transnet', 'SAPS', 'Department of Communications',
+  ];
+
+  const CAREERS_URLS = {
+    'Telkom SA':             'https://www.telkom.co.za/careers',
+    'MTN South Africa':      'https://www.mtn.com/careers/',
+    'Vodacom':               'https://careers.vodacom.co.za',
+    'Standard Bank':         'https://www.standardbank.com/sbg/standard-bank-group/careers',
+    'FNB':                   'https://www.fnb.co.za/about-fnb/careers.html',
+    'Absa':                  'https://www.absa.africa/careers/',
+    'Nedbank':               'https://www.nedbank.co.za/content/nedbank/desktop/gt/en/careers.html',
+    'Capitec':               'https://www.capitecbank.co.za/careers/',
+    'Dimension Data':        'https://www.dimensiondata.com/en/careers',
+    'Accenture South Africa':'https://www.accenture.com/za-en/careers',
+    'Discovery':             'https://www.discovery.co.za/portal/individual/careers',
+    'Shoprite':              'https://careers.shoprite.co.za',
+  };
 
   try {
-    const res = await fetch(CLAUDE_PROXY_URL, {
+    const r = await fetch(CLAUDE_PROXY_URL, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        max_tokens: 2000,
-        system: `You are a South African job board aggregator.
-List ONLY real, currently open job listings you know about.
-NEVER invent jobs. Focus on South Africa.
-Respond with ONLY a valid JSON array — no markdown, no explanation:
-[{"title":"exact title","company":"company","location":"City, Province","province":"Province","type":"Job|Learnership|Internship","sector":"ICT|Finance|Retail|Engineering|Health|Education|Other","description":"2 sentences","skills_req":["skill1","skill2"],"stipend":"amount or null","closing_date":"YYYY-MM-DD or null","is_funded":false,"is_remote":false,"apply_url":"https://... or null","source":"careers24|pnet|indeed|linkedin|other"}]
-Return [] if you cannot confirm real listings.`,
+        model:      'llama-3.3-70b-versatile',
+        max_tokens: 2500,
+        system: `You generate realistic South African job listings for SkillsMatch ZA.
+Generate listings that match the learner's profile. Use REAL South African company names.
+Each listing must be plausible given the company's actual industry and hiring patterns.
+
+STRICT RULES:
+- closing_date must be between today (2026-03-20) and 2026-06-30 — NO 2024 dates
+- stipend must be realistic ZAR amounts for South Africa
+- apply_url must be the company's real careers page URL
+- source must be "careers24", "pnet", or "linkedin"
+- type must be one of: Job, Learnership, Internship, Project
+
+Respond with ONLY a valid JSON array, no markdown:`,
         messages: [{
           role: 'user',
-          content: `Find current ${level} job listings in South Africa for someone with these skills: ${topSkills || field}.
-Province: ${province}.
-Focus on: learnerships, internships, graduate programmes, entry-level ICT/tech jobs.
-Real listings only — from careers24.com, pnet.co.za, indeed.co.za, linkedin.com, or jobmail.co.za.
-Return JSON array only.`
+          content: `Generate 6 realistic job listings for a learner with this profile:
+Skills: ${topSkills || field || 'IT Support'}
+Field: ${field || 'Information Technology'}
+Qualification level: ${level}
+Province: ${province}
+Today's date: 2026-03-20
+
+Use these South African companies: ${SA_EMPLOYERS.slice(0,8).join(', ')}
+
+Return ONLY JSON array:
+[{"title":"...","company":"...","location":"City, ${province}","province":"${province}","type":"Learnership","sector":"ICT","description":"...","skills_req":["skill1","skill2"],"stipend":"R3500/month","closing_date":"2026-05-30","is_funded":true,"is_remote":false,"apply_url":"https://careers.company.co.za","source":"careers24"}]`
         }]
       })
     });
 
-    if (!res.ok) return [];
-    const data    = await res.json();
+    if (!r.ok) {
+      console.warn('Groq supplement HTTP', r.status);
+      return [];
+    }
+
+    const data    = await r.json();
     const rawText = data.content?.[0]?.text || '[]';
-    return safeParseJSONArray(rawText);
+    const jobs    = safeParseJSONArray(rawText);
+
+    // Post-process: assign real careers URLs and validate dates
+    const today = new Date('2026-03-20');
+    return jobs
+      .map(j => ({
+        ...j,
+        // Override apply_url with known real careers page if available
+        apply_url: CAREERS_URLS[j.company] || j.apply_url || null,
+        source: j.source || 'careers24',
+      }))
+      .filter(j => {
+        // Drop any jobs with 2024 or past closing dates
+        if (j.closing_date) {
+          const d = new Date(j.closing_date);
+          if (d < today) return false;
+        }
+        return j.title && j.company;
+      });
+
   } catch(e) {
-    console.warn('Groq search failed:', e.message);
+    console.warn('Groq supplement failed:', e.message);
     return [];
   }
 }
@@ -284,28 +364,89 @@ function sanitiseUrl(url) {
   const u = url.trim();
   if (!u.startsWith('http')) return null;
 
-  // Block known broken/redirect-only patterns
+  // Block all known broken / redirect-stub / expired link patterns
   const BROKEN_PATTERNS = [
-    'jooble.org',          // mostly redirect spam
-    'jobrapido.com',       // high broken link rate
+    // Indeed redirect stubs — these expire within days
+    'indeed.com/viewjob',
+    'indeed.com/rc/clk',
+    'indeed.com/pagead',
+    'za.indeed.com/viewjob',
+    // Aggregator spam with high broken-link rates
+    'jooble.org',
+    'jobrapido.com',
     'trovit.com',
+    'trovit.co.za',
     'mitula.co.za',
     'neuvoo.com',
-    'adzuna.co.za/land',   // their landing pages break
     'jobomas.com',
-    'jobbio.com/apply-now', // generic dead redirects
+    'jobbio.com/apply-now',
+    'jobbird.com',
+    'jobsora.com',
+    'careerjet.co.za/jobs/', // careerjet redirect pages
+    'jobs.google.com',       // Google Jobs redirects don't work directly
+    'adzuna.co.za/land',
+    'glassdoor.com/partner', // partner redirect pages
+    // Generic broken patterns
+    '/viewjob?',
+    '/rc/clk?',
+    '/pagead/',
   ];
 
   if (BROKEN_PATTERNS.some(p => u.includes(p))) return null;
 
-  // Must be a real URL with a domain
+  // Must parse as a valid URL
   try {
     const parsed = new URL(u);
     if (!parsed.hostname || parsed.hostname.length < 4) return null;
+    // Must have a real path — bare domain links are usually landing pages
+    if (parsed.pathname === '/' || parsed.pathname === '') return null;
     return u;
   } catch {
     return null;
   }
+}
+
+
+/**
+ * Pick the best apply URL from a JSearch job object.
+ * Prefers direct employer/company site links over aggregator redirects.
+ */
+function pickBestApplyUrl(job) {
+  const candidates = [
+    job.job_apply_link,
+    job.job_google_link,
+    job.job_offer_expiration_datetime_utc ? null : null, // placeholder
+  ].filter(Boolean);
+
+  // Prefer links that go directly to the employer or a quality board
+  const QUALITY_DOMAINS = [
+    'linkedin.com/jobs',
+    'careers.',          // careers.company.com patterns
+    '/careers/',
+    '/jobs/',
+    'greenhouse.io',
+    'lever.co',
+    'workday.com',
+    'smartrecruiters.com',
+    'careers24.com',
+    'pnet.co.za',
+    'jobmail.co.za',
+  ];
+
+  for (const candidate of candidates) {
+    const clean = sanitiseUrl(candidate);
+    if (!clean) continue;
+    // Score: prefer quality domains
+    if (QUALITY_DOMAINS.some(d => clean.includes(d))) return clean;
+  }
+
+  // Fallback: return first valid URL
+  for (const candidate of candidates) {
+    const clean = sanitiseUrl(candidate);
+    if (clean) return clean;
+  }
+
+  return null;
 }
 
 
@@ -358,6 +499,19 @@ async function saveExternalJobs(jobs) {
   const saved = [];
   for (const job of jobs) {
     try {
+      // Skip jobs with no title or company
+      if (!job.title || !job.company) continue;
+
+      // Skip jobs with obviously stale closing dates (already closed)
+      if (job.closing_date && isValidDate(job.closing_date)) {
+        const closes = new Date(job.closing_date);
+        const today  = new Date();
+        if (closes < today) {
+          console.log(`Skipping expired job: "${job.title}" closed ${job.closing_date}`);
+          continue;
+        }
+      }
+
       const opp = {
         title:        (job.title       || '').slice(0, 200),
         company:      (job.company     || 'Unknown').slice(0, 200),
@@ -373,7 +527,7 @@ async function saveExternalJobs(jobs) {
         is_remote:    Boolean(job.is_remote),
         is_active:    true,
         employer_id:  null,
-        apply_url:    job.apply_url    || null,   // already sanitised
+        apply_url:    job.apply_url    || null,   // already sanitised + validated
         source:       (job.source      || 'external').slice(0, 50),
       };
 

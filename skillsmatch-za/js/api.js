@@ -545,13 +545,17 @@ async function applyToOpportunity(oppId, matchScore) {
     const learnerId = localStorage.getItem('sm_learner_id');
     if (!learnerId || learnerId === 'null') throw new Error('Learner ID missing — please log in.');
 
+    // Use upsert to handle duplicate applications gracefully (no 409 error)
     const { data, error } = await db
       .from('applications')
-      .insert({ learner_id: learnerId, opp_id: oppId, match_score: matchScore, status: 'applied' })
-      .select().single();
+      .upsert(
+        { learner_id: learnerId, opp_id: oppId, match_score: matchScore, status: 'applied' },
+        { onConflict: 'learner_id,opp_id', ignoreDuplicates: true }
+      )
+      .select().maybeSingle();
 
-    if (error) throw error;
-    return { success: true, data };
+    if (error && error.code !== '23505') throw error;
+    return { success: true, data, alreadyApplied: !data };
   } catch (err) {
     if (err.code === '23505') return { success: true, alreadyApplied: true };
     console.error('applyToOpportunity:', err.message);
@@ -597,7 +601,7 @@ async function getApplicantsForEmployer() {
     const { data, error } = await db
       .from('applications')
       .select(`id, status, match_score, applied_at,
-               learners(id, qualification, skills, users(first_name, last_name, province)),
+               learners(id, user_id, qualification, skills, users(first_name, last_name, province, email)),
                opportunities(id, title, employer_id)`)
       .in('opp_id', oppIds)
       .order('match_score', { ascending: false });
@@ -769,6 +773,104 @@ async function getLearnerStats() {
 /* ============================================================
    UTILITIES
    ============================================================ */
+
+/* ============================================================
+   NOTIFICATIONS
+   ============================================================ */
+
+/**
+ * Fetch unread notifications for the current user.
+ */
+async function getNotifications(limit = 20) {
+  try {
+    await ensureProfile();
+    const uid = localStorage.getItem('sm_uid');
+    if (!uid || uid === 'null') return { success: true, data: [] };
+    const { data, error } = await db
+      .from('notifications')
+      .select('*')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err) {
+    console.error('getNotifications:', err.message);
+    return { success: false, data: [] };
+  }
+}
+
+/**
+ * Mark one or all notifications as read.
+ */
+async function markNotificationsRead(notifId = null) {
+  try {
+    const uid = localStorage.getItem('sm_uid');
+    if (!uid || uid === 'null') return;
+    let q = db.from('notifications').update({ is_read: true }).eq('user_id', uid);
+    if (notifId) q = q.eq('id', notifId);
+    await q;
+  } catch (err) {
+    console.error('markNotificationsRead:', err.message);
+  }
+}
+
+/**
+ * Send a notification to a learner via the Edge Function.
+ * Creates an in-app notification AND sends an email.
+ * Call this after updating an application status.
+ */
+async function notifyLearner({ userId, learnerEmail, learnerName, oppTitle, employerName, newStatus }) {
+  const SUPABASE_FUNCTIONS_URL = SUPABASE_URL + '/functions/v1/claude-proxy';
+
+  const statusMessages = {
+    under_review: { title: 'Your application is under review',      type: 'info' },
+    shortlisted:  { title: 'You have been shortlisted! 🎉',         type: 'success' },
+    interview:    { title: 'You are invited for an interview! 📅',   type: 'success' },
+    approved:     { title: 'Your application has been approved! ✓',  type: 'success' },
+    rejected:     { title: 'Application update from ' + (employerName || 'employer'), type: 'warning' },
+    placed:       { title: 'Congratulations — you have been placed! 🎉', type: 'success' },
+  };
+
+  const meta = statusMessages[newStatus] || { title: 'Application status update', type: 'info' };
+
+  const messages = {
+    under_review: `Hi ${learnerName}, your application for <strong>${oppTitle}</strong> at ${employerName} is now under review. We'll keep you updated.`,
+    shortlisted:  `Great news, ${learnerName}! You have been shortlisted for <strong>${oppTitle}</strong> at ${employerName}. Please keep an eye on your dashboard for next steps.`,
+    interview:    `Exciting news, ${learnerName}! You have been invited for an interview for <strong>${oppTitle}</strong> at ${employerName}. Please check your dashboard for details.`,
+    approved:     `Congratulations, ${learnerName}! Your application for <strong>${oppTitle}</strong> at ${employerName} has been approved. Please await further instructions.`,
+    rejected:     `Thank you for applying, ${learnerName}. After careful consideration, ${employerName} has decided not to move forward with your application for <strong>${oppTitle}</strong>. Don't give up — keep applying!`,
+    placed:       `Congratulations, ${learnerName}! You have been successfully placed at ${employerName} for <strong>${oppTitle}</strong>. Best of luck in your new role!`,
+  };
+
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    const jwt = session?.access_token || '';
+
+    await fetch(SUPABASE_FUNCTIONS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwt}`,
+        'X-Action': 'notify',
+      },
+      body: JSON.stringify({
+        userId,
+        learnerEmail,
+        learnerName,
+        title:        meta.title,
+        message:      messages[newStatus] || meta.title,
+        type:         meta.type,
+        link:         'dashboard.html#l-apps',
+        newStatus,
+        oppTitle,
+        employerName,
+      }),
+    });
+  } catch (err) {
+    console.warn('notifyLearner error:', err.message);
+  }
+}
 
 function downloadCSV(rows, filename = 'export.csv') {
   if (!rows?.length) return;
