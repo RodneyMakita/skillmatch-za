@@ -258,6 +258,10 @@
 
   /* ── Initial load ── */
   async function init() {
+    // Wait for Supabase session to reattach before querying
+    await new Promise(r => setTimeout(r, 200));
+    await ensureProfile();
+
     /* Fetch all opps from Supabase */
     const res = await getOpportunities();
     allOpps = res.data || [];

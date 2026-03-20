@@ -415,7 +415,7 @@
         <div class="g2">
           <div class="form-group">
             <label class="form-label required" for="l-province">Province</label>
-            <select id="l-province">
+            <select id="l-province" onchange="onProvinceChange()">
               <option value="">Select province</option>
               <option>Gauteng</option>
               <option>Western Cape</option>
@@ -430,79 +430,35 @@
           </div>
           <div class="form-group">
             <label class="form-label" for="l-city">City / Town</label>
-            <input type="text" id="l-city" placeholder="Mahikeng"/>
+            <select id="l-city">
+              <option value="">Select city (choose province first)</option>
+            </select>
           </div>
+        </div>
+        <!-- Universities in selected province -->
+        <div id="unis-wrap" style="display:none" class="form-group">
+          <label class="form-label">Universities / Colleges in your province</label>
+          <div id="unis-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+          <p style="font-size:12px;color:var(--ink-muted);margin-top:6px">Click an institution to use it in your qualification below.</p>
         </div>
       </div>
 
       <!-- Education -->
       <div class="form-section">
-        <div class="form-section-title">Education &amp; qualification</div>
-        <div class="g2">
-          <div class="form-group">
-            <label class="form-label required" for="l-inst-type">Institution type</label>
-            <select id="l-inst-type">
-              <option value="">Select type</option>
-              <option value="tvet">TVET College</option>
-              <option value="university">University</option>
-              <option value="seta">SETA Programme</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label required" for="l-institution">Institution name</label>
-            <input type="text" id="l-institution" placeholder="e.g. Orbit TVET College"/>
-          </div>
-        </div>
-        <div class="g2">
-          <div class="form-group">
-            <label class="form-label required" for="l-qualification">Qualification / Programme</label>
-            <input type="text" id="l-qualification" placeholder="e.g. N6 Information Technology"/>
-          </div>
-          <div class="form-group">
-            <label class="form-label required" for="l-status">Study status</label>
-            <select id="l-status">
-              <option value="">Select status</option>
-              <option>Completed</option>
-              <option>Currently studying</option>
-              <option>WIL / Internship phase</option>
-            </select>
-          </div>
-        </div>
-        <div class="g3">
-          <div class="form-group">
-            <label class="form-label" for="l-year">Year completed</label>
-            <select id="l-year">
-              <option value="">Year</option>
-              <option>2025</option><option>2024</option><option>2023</option>
-              <option>2022</option><option>2021</option><option>2020</option>
-              <option>2019</option><option>2018</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="l-nqf">NQF level</label>
-            <select id="l-nqf">
-              <option value="">NQF level</option>
-              <option>Level 3</option><option>Level 4</option><option>Level 5</option>
-              <option>Level 6</option><option>Level 7</option><option>Level 8</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="l-sector">Sector / Field</label>
-            <select id="l-sector">
-              <option value="">Select sector</option>
-              <option>ICT</option>
-              <option>Engineering</option>
-              <option>Business &amp; Commerce</option>
-              <option>Finance &amp; Accounting</option>
-              <option>Health Sciences</option>
-              <option>Agriculture</option>
-              <option>Hospitality</option>
-              <option>Education</option>
-              <option>Construction</option>
-              <option>Creative Arts</option>
-            </select>
-          </div>
+        <div class="form-section-title">Education &amp; qualifications</div>
+        <p style="font-size:13px;color:var(--ink-muted);margin-bottom:14px">Add all your qualifications. Click <strong>+ Add another qualification</strong> to add more.</p>
+
+        <!-- Qualifications list -->
+        <div id="qualList"></div>
+
+        <button type="button" class="btn btn-ghost btn-sm" style="margin-bottom:20px" onclick="addQualEntry()">+ Add another qualification</button>
+
+        <!-- Online certificates section -->
+        <div style="border-top:1px solid rgba(14,17,23,.07);padding-top:18px;margin-top:4px">
+          <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:12px">Online certificates &amp; short courses</div>
+          <p style="font-size:13px;color:var(--ink-muted);margin-bottom:12px">Add certificates from Coursera, Udemy, AWS, Google, Microsoft, etc.</p>
+          <div id="certList"></div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="addCertEntry()">+ Add certificate</button>
         </div>
       </div>
 
@@ -530,6 +486,44 @@
           <button class="skill-suggest-btn" onclick="addSkill('Customer service')">Customer service</button>
           <button class="skill-suggest-btn" onclick="addSkill('Project management')">Project management</button>
           <button class="skill-suggest-btn" onclick="addSkill('Communication')">Communication</button>
+        </div>
+      </div>
+
+      <!-- Professional Links & Documents -->
+      <div class="form-section">
+        <div class="form-section-title">Professional links &amp; documents</div>
+        <div class="g2">
+          <div class="form-group">
+            <label class="form-label" for="l-linkedin">
+              <span style="display:flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#0077b5"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                LinkedIn profile URL
+              </span>
+            </label>
+            <input type="url" id="l-linkedin" placeholder="https://linkedin.com/in/yourname"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="l-github">
+              <span style="display:flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+                GitHub profile URL
+              </span>
+            </label>
+            <input type="url" id="l-github" placeholder="https://github.com/yourusername"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="l-cv">
+            CV / Resume <span style="font-weight:400;color:var(--ink-muted);font-size:13px"> — PDF, Word or Google Drive link</span>
+          </label>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="flex:1">
+              <input type="url" id="l-cv-link" placeholder="Paste Google Drive / Dropbox link to your CV…" style="margin-bottom:8px"/>
+              <div style="text-align:center;font-size:12px;color:var(--ink-muted);margin-bottom:8px">— or upload a file —</div>
+              <input type="file" id="l-cv-file" accept=".pdf,.doc,.docx" style="font-size:13px;color:var(--ink-soft)"/>
+              <div style="font-size:12px;color:var(--ink-muted);margin-top:4px">Max 5 MB. PDF preferred.</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -754,6 +748,262 @@
   </div><!-- /page-wrap -->
 
   <script>
+    /* ── Province → Cities + Universities data ── */
+    const PROVINCE_DATA = {
+      'Gauteng': {
+        cities: ['Johannesburg','Pretoria','Soweto','Ekurhuleni','Sandton','Midrand','Centurion','Roodepoort','Benoni','Boksburg'],
+        unis: ['University of the Witwatersrand','University of Pretoria','University of Johannesburg','Tshwane University of Technology','Vaal University of Technology','Central University of Technology (Gauteng campus)','Rosebank College','CTI Education Group']
+      },
+      'Western Cape': {
+        cities: ['Cape Town','Stellenbosch','George','Paarl','Worcester','Knysna','Bellville','Mitchells Plain','Khayelitsha','Somerset West'],
+        unis: ['University of Cape Town','Stellenbosch University','University of the Western Cape','Cape Peninsula University of Technology','False Bay TVET College','College of Cape Town']
+      },
+      'KwaZulu-Natal': {
+        cities: ['Durban','Pietermaritzburg','Richards Bay','Newcastle','Empangeni','Ladysmith','Umlazi','Pinetown','Amanzimtoti','Tongaat'],
+        unis: ['University of KwaZulu-Natal','Durban University of Technology','Mangosuthu University of Technology','University of Zululand','Coastal KZN TVET College','Umfolozi TVET College']
+      },
+      'Eastern Cape': {
+        cities: ['Port Elizabeth','East London','Mthatha','Uitenhage','Queenstown','Bhisho','King William\'s Town','Grahamstown','Port Alfred','Komani'],
+        unis: ['Nelson Mandela University','University of Fort Hare','Walter Sisulu University','Buffalo City TVET College','Eastcape Midlands TVET College']
+      },
+      'Limpopo': {
+        cities: ['Polokwane','Tzaneen','Thohoyandou','Mokopane','Lephalale','Louis Trichardt','Bela-Bela','Phalaborwa','Giyani','Burgersfort'],
+        unis: ['University of Limpopo','University of Venda','Capricorn TVET College','Vhembe TVET College','Lephalale TVET College','Mopani South East TVET College']
+      },
+      'Mpumalanga': {
+        cities: ['Nelspruit','Witbank','Middelburg','Secunda','Standerton','Barberton','Ermelo','Piet Retief','Hazyview','White River'],
+        unis: ['University of Mpumalanga','Ehlanzeni TVET College','Gert Sibande TVET College','Nkangala TVET College']
+      },
+      'North West': {
+        cities: ['Mahikeng','Rustenburg','Klerksdorp','Potchefstroom','Brits','Lichtenburg','Vryburg','Zeerust','Wolmaransstad','Orkney'],
+        unis: ['North-West University','Sol Plaatje University (campus)','Orbit TVET College','Taletso TVET College','Vuselela TVET College']
+      },
+      'Free State': {
+        cities: ['Bloemfontein','Welkom','Bethlehem','Sasolburg','Kroonstad','Phuthaditjhaba','Botshabelo','Virginia','Odendaalsrus','Parys'],
+        unis: ['University of the Free State','Central University of Technology','Maluti TVET College','Motheo TVET College','Flavius Mareka TVET College']
+      },
+      'Northern Cape': {
+        cities: ['Kimberley','Upington','Springbok','De Aar','Kuruman','Kathu','Prieska','Douglas','Colesberg','Calvinia'],
+        unis: ['Sol Plaatje University','Northern Cape Rural TVET College','Northern Cape Urban TVET College']
+      }
+    };
+
+    function onProvinceChange() {
+      const prov = document.getElementById('l-province').value;
+      const cityEl = document.getElementById('l-city');
+      const unisWrap = document.getElementById('unis-wrap');
+      const unisList = document.getElementById('unis-list');
+
+      cityEl.innerHTML = '<option value="">Select city</option>';
+      unisList.innerHTML = '';
+
+      if (!prov || !PROVINCE_DATA[prov]) {
+        unisWrap.style.display = 'none';
+        return;
+      }
+
+      const data = PROVINCE_DATA[prov];
+
+      // Populate cities
+      data.cities.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = c;
+        cityEl.appendChild(opt);
+      });
+
+      // Populate universities as clickable pills
+      data.unis.forEach(u => {
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = 'skill-suggest-btn';
+        pill.textContent = u;
+        pill.onclick = () => {
+          // Fill institution name in first qual entry
+          const firstInst = document.querySelector('.qual-institution');
+          if (firstInst) firstInst.value = u;
+          // Detect type
+          const firstType = document.querySelector('.qual-inst-type');
+          if (firstType) {
+            if (u.toLowerCase().includes('university') || u.toLowerCase().includes('nwu') || u.toLowerCase().includes('uct') || u.toLowerCase().includes('wits')) firstType.value = 'university';
+            else if (u.toLowerCase().includes('tvet') || u.toLowerCase().includes('college')) firstType.value = 'tvet';
+            else firstType.value = 'seta';
+          }
+          showToast_reg(u + ' selected as institution.');
+        };
+        unisList.appendChild(pill);
+      });
+
+      unisWrap.style.display = 'block';
+    }
+
+    function showToast_reg(msg) {
+      // Simple inline toast for registration page
+      let t = document.getElementById('reg-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'reg-toast';
+        t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--white);padding:10px 18px;border-radius:10px;font-size:13px;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.opacity = '1';
+      setTimeout(() => t.style.opacity = '0', 2500);
+    }
+
+    /* ── Qualification entries builder ── */
+    let qualCount = 0;
+    function addQualEntry(prefillInst) {
+      qualCount++;
+      const id = `qual-${qualCount}`;
+      const div = document.createElement('div');
+      div.id = id;
+      div.style.cssText = 'border:1px solid rgba(14,17,23,.1);border-radius:12px;padding:16px;margin-bottom:12px;background:var(--paper);position:relative';
+      div.innerHTML = `
+        ${qualCount > 1 ? `<button type="button" onclick="document.getElementById('${id}').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;color:var(--ink-muted);font-size:18px;line-height:1">✕</button>` : ''}
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:10px">Qualification ${qualCount}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Institution type</label>
+            <select class="qual-inst-type">
+              <option value="">Select type</option>
+              <option value="tvet">TVET College</option>
+              <option value="university">University</option>
+              <option value="seta">SETA Programme</option>
+              <option value="online">Online / Distance</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Institution name</label>
+            <input type="text" class="qual-institution" placeholder="e.g. Orbit TVET College" value="${prefillInst||''}"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Qualification / Programme</label>
+            <input type="text" class="qual-name" placeholder="e.g. N6 Information Technology"/>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Study status</label>
+            <select class="qual-status">
+              <option value="">Select</option>
+              <option>Completed</option>
+              <option>Currently studying</option>
+              <option>WIL / Internship phase</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Year completed</label>
+            <select class="qual-year">
+              <option value="">Year</option>
+              ${[2025,2024,2023,2022,2021,2020,2019,2018,2017,2016].map(y=>`<option>${y}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">NQF level</label>
+            <select class="qual-nqf">
+              <option value="">NQF level</option>
+              <option>Level 3</option><option>Level 4</option><option>Level 5</option>
+              <option>Level 6</option><option>Level 7</option><option>Level 8</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Field / Sector</label>
+            <select class="qual-sector">
+              <option value="">Select</option>
+              <option>ICT</option><option>Engineering</option><option>Business &amp; Commerce</option>
+              <option>Finance &amp; Accounting</option><option>Health Sciences</option>
+              <option>Agriculture</option><option>Hospitality</option><option>Education</option>
+              <option>Construction</option><option>Creative Arts</option>
+            </select>
+          </div>
+        </div>`;
+      document.getElementById('qualList').appendChild(div);
+    }
+
+    function collectQualifications() {
+      const entries = [];
+      document.querySelectorAll('#qualList > div').forEach(div => {
+        const inst = div.querySelector('.qual-institution')?.value?.trim();
+        const name = div.querySelector('.qual-name')?.value?.trim();
+        if (!inst && !name) return; // skip empty
+        entries.push({
+          instType:      div.querySelector('.qual-inst-type')?.value || '',
+          institution:   inst || '',
+          qualification: name || '',
+          status:        div.querySelector('.qual-status')?.value || '',
+          year:          div.querySelector('.qual-year')?.value || '',
+          nqf:           div.querySelector('.qual-nqf')?.value || '',
+          sector:        div.querySelector('.qual-sector')?.value || '',
+        });
+      });
+      return entries;
+    }
+
+    /* ── Certificate entries builder ── */
+    let certCount = 0;
+    function addCertEntry() {
+      certCount++;
+      const id = `cert-${certCount}`;
+      const div = document.createElement('div');
+      div.id = id;
+      div.style.cssText = 'border:1px solid rgba(14,17,23,.1);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--paper);position:relative';
+      div.innerHTML = `
+        <button type="button" onclick="document.getElementById('${id}').remove()" style="position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;color:var(--ink-muted);font-size:18px;line-height:1">✕</button>
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:10px">Certificate ${certCount}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Certificate name</label>
+            <input type="text" class="cert-name" placeholder="e.g. AWS Cloud Practitioner"/>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Issuing platform / body</label>
+            <select class="cert-platform">
+              <option value="">Select</option>
+              <option>Coursera</option><option>Udemy</option><option>edX</option>
+              <option>Google</option><option>Microsoft</option><option>AWS</option>
+              <option>Cisco</option><option>CompTIA</option><option>LinkedIn Learning</option>
+              <option>FreeCodeCamp</option><option>Khan Academy</option><option>Alison</option>
+              <option>SETA / Learnership</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Year obtained</label>
+            <select class="cert-year">
+              <option value="">Year</option>
+              ${[2025,2024,2023,2022,2021,2020,2019].map(y=>`<option>${y}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Certificate URL (optional)</label>
+            <input type="url" class="cert-url" placeholder="https://coursera.org/verify/…"/>
+          </div>
+        </div>`;
+      document.getElementById('certList').appendChild(div);
+    }
+
+    function collectCertificates() {
+      const entries = [];
+      document.querySelectorAll('#certList > div').forEach(div => {
+        const name = div.querySelector('.cert-name')?.value?.trim();
+        if (!name) return;
+        entries.push({
+          name,
+          platform: div.querySelector('.cert-platform')?.value || '',
+          year:     div.querySelector('.cert-year')?.value || '',
+          url:      div.querySelector('.cert-url')?.value?.trim() || '',
+        });
+      });
+      return entries;
+    }
+
+    // Start with one qualification entry on page load
+    document.addEventListener('DOMContentLoaded', () => addQualEntry());
+
     /* ── Role switcher ── */
     function switchRole(role) {
       document.querySelectorAll('.role-tab').forEach(t =>
@@ -859,27 +1109,35 @@
 
     /* ── Learner submit ── */
     function submitLearner() {
+      // Collect qualifications
+      const qualEntries = collectQualifications();
+      const certEntries = collectCertificates();
+      // Use first qualification as the primary for backward compat
+      const primaryQual = qualEntries[0] || {};
+
       const v = {
         firstName:   document.getElementById('l-firstname').value.trim(),
         lastName:    document.getElementById('l-lastname').value.trim(),
         email:       document.getElementById('l-email').value.trim(),
         province:    document.getElementById('l-province').value,
-        instType:    document.getElementById('l-inst-type').value,
-        institution: document.getElementById('l-institution').value.trim(),
-        qual:        document.getElementById('l-qualification').value.trim(),
-        status:      document.getElementById('l-status').value,
+        instType:    primaryQual.instType || '',
+        institution: primaryQual.institution || '',
+        qual:        primaryQual.qualification || '',
+        status:      primaryQual.status || '',
         password:    document.getElementById('l-password').value,
         confirm:     document.getElementById('l-confirm').value,
         terms:       document.getElementById('l-terms').checked,
+        linkedin:    document.getElementById('l-linkedin').value.trim(),
+        github:      document.getElementById('l-github').value.trim(),
+        cvLink:      document.getElementById('l-cv-link').value.trim(),
+        city:        document.getElementById('l-city').value,
       };
 
       if (!v.firstName || !v.lastName)        return showError('Please enter your full name.');
       if (!v.email || !isValidEmail(v.email)) return showError('Please enter a valid email address.');
       if (!v.province)                        return showError('Please select your province.');
-      if (!v.instType)                        return showError('Please select your institution type.');
-      if (!v.institution)                     return showError('Please enter your institution name.');
-      if (!v.qual)                            return showError('Please enter your qualification.');
-      if (!v.status)                          return showError('Please select your study status.');
+      if (qualEntries.length === 0)           return showError('Please add at least one qualification.');
+      if (!v.qual)                            return showError('Please enter your qualification name.');
       if (skills.size < 1)                    return showError('Please add at least one skill to your profile.');
       if (v.password.length < 6)              return showError('Password must be at least 6 characters.');
       if (v.password !== v.confirm)           return showError('Passwords do not match. Please try again.');
