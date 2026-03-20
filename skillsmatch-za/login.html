@@ -8,399 +8,91 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* ── Page-specific overrides ── */
-    body {
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-    }
+    body { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; }
 
-    /* ── Left panel ── */
-    .login-left {
-      background: var(--ink);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 48px;
-      position: relative;
-      overflow: hidden;
-    }
+    .login-left { background:var(--ink); display:flex; flex-direction:column; justify-content:space-between; padding:48px; position:relative; overflow:hidden; }
+    .login-left::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 70% 50% at 10% 80%, rgba(13,122,95,.35) 0%, transparent 65%),radial-gradient(ellipse 50% 40% at 90% 10%, rgba(200,168,75,.18) 0%, transparent 60%); pointer-events:none; }
+    .left-logo { font-family:var(--font-display); font-size:20px; font-weight:800; color:var(--white); text-decoration:none; letter-spacing:-.5px; position:relative; z-index:1; }
+    .left-logo span { color:var(--teal-glow); }
+    .left-body { position:relative; z-index:1; }
+    .left-body h2 { font-size:clamp(28px,3.5vw,42px); color:var(--white); letter-spacing:-1.5px; line-height:1.08; margin-bottom:16px; }
+    .left-body h2 em { font-style:normal; color:var(--teal-glow); }
+    .left-body p { font-size:16px; color:rgba(255,255,255,.5); line-height:1.65; max-width:360px; }
+    .preview-card { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:18px 20px; margin-top:36px; max-width:340px; backdrop-filter:blur(6px); }
+    .preview-label { font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:rgba(255,255,255,.35); margin-bottom:10px; }
+    .preview-title { font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--white); margin-bottom:3px; }
+    .preview-meta  { font-size:12px; color:rgba(255,255,255,.45); margin-bottom:14px; }
+    .preview-bar-bg  { height:4px; background:rgba(255,255,255,.1); border-radius:99px; overflow:hidden; margin-bottom:6px; }
+    .preview-bar-fill{ height:100%; width:0; background:var(--teal-glow); border-radius:99px; animation:growPreview 1.4s .8s cubic-bezier(.4,0,.2,1) forwards; }
+    @keyframes growPreview { to{width:88%} }
+    .preview-score { font-family:var(--font-display); font-size:13px; font-weight:700; color:var(--teal-glow); text-align:right; }
+    .left-footer { position:relative; z-index:1; font-size:12px; color:rgba(255,255,255,.25); }
 
-    .login-left::before {
-      content: '';
-      position: absolute; inset: 0;
-      background:
-        radial-gradient(ellipse 70% 50% at 10% 80%, rgba(13,122,95,.35) 0%, transparent 65%),
-        radial-gradient(ellipse 50% 40% at 90% 10%, rgba(200,168,75,.18) 0%, transparent 60%);
-      pointer-events: none;
-    }
+    .login-right { display:flex; align-items:center; justify-content:center; padding:48px 40px; background:var(--paper); overflow-y:auto; }
+    .login-form-wrap { width:100%; max-width:400px; animation:fadeUp .5s ease both; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
 
-    .left-logo {
-      font-family: var(--font-display);
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--white);
-      text-decoration: none;
-      letter-spacing: -.5px;
-      position: relative; z-index: 1;
-    }
+    .form-top { margin-bottom:36px; }
+    .form-top h1 { font-size:clamp(26px,3vw,34px); letter-spacing:-1.2px; margin-bottom:8px; }
+    .form-top p  { font-size:15px; color:var(--ink-soft); }
 
-    .left-logo span { color: var(--teal-glow); }
+    .role-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:28px; }
+    .role-option { position:relative; }
+    .role-option input[type="radio"] { position:absolute; opacity:0; width:0; height:0; }
+    .role-option label { display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 8px; border:1.5px solid rgba(14,17,23,.12); border-radius:10px; cursor:pointer; background:var(--white); transition:all .18s; text-align:center; }
+    .role-option label:hover { border-color:rgba(13,122,95,.3); background:var(--teal-lt); }
+    .role-option input:checked + label { border-color:var(--teal); background:var(--teal-lt); box-shadow:0 0 0 3px rgba(13,122,95,.12); }
+    .role-icon { font-size:22px; line-height:1; }
+    .role-name { font-size:12px; font-weight:500; color:var(--ink); line-height:1.2; }
+    .role-option input:checked + label .role-name { color:var(--teal); }
 
-    .left-body {
-      position: relative; z-index: 1;
-    }
+    .input-wrap { position:relative; }
+    .input-wrap input { padding-right:44px; }
+    .pw-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--ink-muted); padding:4px; display:flex; align-items:center; transition:color .15s; }
+    .pw-toggle:hover { color:var(--ink); }
 
-    .left-body h2 {
-      font-size: clamp(28px, 3.5vw, 42px);
-      color: var(--white);
-      letter-spacing: -1.5px;
-      line-height: 1.08;
-      margin-bottom: 16px;
-    }
+    .btn-submit { width:100%; margin-top:8px; justify-content:center; padding:13px; font-size:15px; border-radius:var(--r-md); }
 
-    .left-body h2 em {
-      font-style: normal;
-      color: var(--teal-glow);
-    }
+    .forgot-link { display:block; text-align:right; font-size:13px; color:var(--ink-muted); text-decoration:none; margin-top:-8px; margin-bottom:20px; transition:color .15s; }
+    .forgot-link:hover { color:var(--teal); }
 
-    .left-body p {
-      font-size: 16px;
-      color: rgba(255,255,255,.5);
-      line-height: 1.65;
-      max-width: 360px;
-    }
+    .or-divider { display:flex; align-items:center; gap:14px; margin:24px 0; font-size:13px; color:var(--ink-muted); }
+    .or-divider::before,.or-divider::after { content:''; flex:1; height:1px; background:rgba(14,17,23,.08); }
 
-    /* Mini match card preview */
-    .preview-card {
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.1);
-      border-radius: 14px;
-      padding: 18px 20px;
-      margin-top: 36px;
-      max-width: 340px;
-      backdrop-filter: blur(6px);
-    }
+    .demo-row { display:flex; gap:8px; justify-content:center; }
+    .demo-btn { flex:1; font-size:12px; padding:8px 10px; border-radius:var(--r-sm); border:1px dashed rgba(14,17,23,.2); background:transparent; color:var(--ink-soft); cursor:pointer; transition:all .15s; text-align:center; font-family:var(--font-body); }
+    .demo-btn:hover { background:var(--teal-lt); border-color:rgba(13,122,95,.3); color:var(--teal); }
 
-    .preview-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-      color: rgba(255,255,255,.35);
-      margin-bottom: 10px;
-    }
+    .register-prompt { text-align:center; font-size:14px; color:var(--ink-muted); margin-top:28px; }
+    .register-prompt a { color:var(--teal); font-weight:500; text-decoration:none; }
+    .register-prompt a:hover { text-decoration:underline; }
 
-    .preview-title {
-      font-family: var(--font-display);
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--white);
-      margin-bottom: 3px;
-    }
+    .error-banner { display:none; align-items:center; gap:10px; padding:12px 14px; background:var(--danger-lt); color:var(--danger); border-radius:0 var(--r-md) var(--r-md) 0; font-size:14px; margin-bottom:20px; border-left:3px solid var(--danger); animation:fadeUp .25s ease; }
+    .error-banner.show { display:flex; }
 
-    .preview-meta {
-      font-size: 12px;
-      color: rgba(255,255,255,.45);
-      margin-bottom: 14px;
-    }
-
-    .preview-bar-bg {
-      height: 4px;
-      background: rgba(255,255,255,.1);
-      border-radius: 99px;
-      overflow: hidden;
-      margin-bottom: 6px;
-    }
-
-    .preview-bar-fill {
-      height: 100%;
-      width: 0;
-      background: var(--teal-glow);
-      border-radius: 99px;
-      animation: growPreview 1.4s .8s cubic-bezier(.4,0,.2,1) forwards;
-    }
-
-    @keyframes growPreview {
-      to { width: 88%; }
-    }
-
-    .preview-score {
-      font-family: var(--font-display);
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--teal-glow);
-      text-align: right;
-    }
-
-    .left-footer {
-      position: relative; z-index: 1;
-      font-size: 12px;
-      color: rgba(255,255,255,.25);
-    }
-
-    /* ── Right panel ── */
-    .login-right {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 40px;
-      background: var(--paper);
-      overflow-y: auto;
-    }
-
-    .login-form-wrap {
-      width: 100%;
-      max-width: 400px;
-      animation: fadeUp .5s ease both;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(18px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .form-top {
-      margin-bottom: 36px;
-    }
-
-    .form-top h1 {
-      font-size: clamp(26px, 3vw, 34px);
-      letter-spacing: -1.2px;
-      margin-bottom: 8px;
-    }
-
-    .form-top p {
-      font-size: 15px;
-      color: var(--ink-soft);
-    }
-
-    /* Role selector */
-    .role-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 28px;
-    }
-
-    .role-option {
-      position: relative;
-    }
-
-    .role-option input[type="radio"] {
-      position: absolute;
-      opacity: 0;
-      width: 0; height: 0;
-    }
-
-    .role-option label {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      padding: 14px 8px;
-      border: 1.5px solid rgba(14,17,23,.12);
-      border-radius: 10px;
-      cursor: pointer;
-      background: var(--white);
-      transition: border-color var(--ease), background var(--ease), box-shadow var(--ease);
-      text-align: center;
-    }
-
-    .role-option label:hover {
-      border-color: rgba(13,122,95,.3);
-      background: var(--teal-lt);
-    }
-
-    .role-option input:checked + label {
-      border-color: var(--teal);
-      background: var(--teal-lt);
-      box-shadow: 0 0 0 3px rgba(13,122,95,.12);
-    }
-
-    .role-icon {
-      font-size: 22px;
-      line-height: 1;
-    }
-
-    .role-name {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--ink);
-      line-height: 1.2;
-    }
-
-    .role-option input:checked + label .role-name {
-      color: var(--teal);
-    }
-
-    /* Password field with toggle */
-    .input-wrap {
-      position: relative;
-    }
-
-    .input-wrap input {
-      padding-right: 44px;
-    }
-
-    .pw-toggle {
-      position: absolute;
-      right: 12px; top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--ink-muted);
-      padding: 4px;
-      display: flex;
-      align-items: center;
-      transition: color var(--ease);
-    }
-
-    .pw-toggle:hover { color: var(--ink); }
-
-    /* Submit btn full width */
-    .btn-submit {
-      width: 100%;
-      margin-top: 8px;
-      justify-content: center;
-      padding: 13px;
-      font-size: 15px;
-      border-radius: var(--r-md);
-    }
-
-    /* Forgot password */
-    .forgot-link {
-      display: block;
-      text-align: right;
-      font-size: 13px;
-      color: var(--ink-muted);
-      text-decoration: none;
-      margin-top: -8px;
-      margin-bottom: 20px;
-      transition: color var(--ease);
-    }
-
-    .forgot-link:hover { color: var(--teal); }
-
-    /* Divider */
-    .or-divider {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin: 24px 0;
-      font-size: 13px;
-      color: var(--ink-muted);
-    }
-
-    .or-divider::before,
-    .or-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(14,17,23,.08);
-    }
-
-    /* Demo role quick-fill */
-    .demo-row {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-    }
-
-    .demo-btn {
-      flex: 1;
-      font-size: 12px;
-      padding: 8px 10px;
-      border-radius: var(--r-sm);
-      border: 1px dashed rgba(14,17,23,.2);
-      background: transparent;
-      color: var(--ink-soft);
-      cursor: pointer;
-      transition: background var(--ease), border-color var(--ease), color var(--ease);
-      text-align: center;
-    }
-
-    .demo-btn:hover {
-      background: var(--teal-lt);
-      border-color: rgba(13,122,95,.3);
-      color: var(--teal);
-    }
-
-    /* Register link */
-    .register-prompt {
-      text-align: center;
-      font-size: 14px;
-      color: var(--ink-muted);
-      margin-top: 28px;
-    }
-
-    .register-prompt a {
-      color: var(--teal);
-      font-weight: 500;
-      text-decoration: none;
-    }
-
-    .register-prompt a:hover { text-decoration: underline; }
-
-    /* Error banner */
-    .error-banner {
-      display: none;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      background: var(--danger-lt);
-      color: var(--danger);
-      border-radius: var(--r-md);
-      font-size: 14px;
-      margin-bottom: 20px;
-      border-left: 3px solid var(--danger);
-      border-radius: 0 var(--r-md) var(--r-md) 0;
-      animation: fadeUp .25s ease;
-    }
-
-    .error-banner.show { display: flex; }
-
-    /* Success state on submit */
-    .btn-submit.loading {
-      opacity: .7;
-      pointer-events: none;
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 860px) {
-      body { grid-template-columns: 1fr; }
-      .login-left { display: none; }
-      .login-right { padding: 40px 24px; min-height: 100vh; }
-    }
+    @media(max-width:860px){ body{grid-template-columns:1fr} .login-left{display:none} .login-right{padding:40px 24px;min-height:100vh} }
   </style>
 </head>
 <body>
 
-  <!-- LEFT PANEL -->
+  <!-- LEFT -->
   <div class="login-left">
     <a href="index.html" class="left-logo">Skills<span>Match</span> ZA</a>
-
     <div class="left-body">
       <h2>Find your <em>perfect</em> match in the job market</h2>
       <p>Log in to see your AI-powered matches, track your applications, and connect with employers across South Africa.</p>
-
       <div class="preview-card">
         <div class="preview-label">Your top AI match</div>
         <div class="preview-title">IT Support Learnership</div>
         <div class="preview-meta">Telkom SA &mdash; Mahikeng, North West</div>
-        <div class="preview-bar-bg">
-          <div class="preview-bar-fill"></div>
-        </div>
+        <div class="preview-bar-bg"><div class="preview-bar-fill"></div></div>
         <div class="preview-score">88% match</div>
       </div>
     </div>
-
-    <div class="left-footer">
-      &copy; 2025 SkillsMatch ZA &mdash; MICT SETA National Skills Competition
-    </div>
+    <div class="left-footer">&copy; 2025 SkillsMatch ZA &mdash; MICT SETA National Skills Competition</div>
   </div>
 
-  <!-- RIGHT PANEL -->
+  <!-- RIGHT -->
   <div class="login-right">
     <div class="login-form-wrap">
 
@@ -409,81 +101,42 @@
         <p>Log in to your SkillsMatch ZA account</p>
       </div>
 
-      <!-- Error banner -->
       <div class="error-banner" id="errorBanner">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span id="errorText">Incorrect email or password. Please try again.</span>
+        <span id="errorText">Incorrect email or password.</span>
       </div>
 
-      <!-- Role selector -->
+      <!-- Role selector (visual hint only — actual role comes from Supabase) -->
       <div class="form-group">
         <label class="form-label">I am a</label>
         <div class="role-grid">
-          <div class="role-option">
-            <input type="radio" name="role" id="role-learner" value="learner" checked>
-            <label for="role-learner">
-              <span class="role-icon">&#127891;</span>
-              <span class="role-name">Learner</span>
-            </label>
-          </div>
-          <div class="role-option">
-            <input type="radio" name="role" id="role-employer" value="employer">
-            <label for="role-employer">
-              <span class="role-icon">&#127970;</span>
-              <span class="role-name">Employer</span>
-            </label>
-          </div>
-          <div class="role-option">
-            <input type="radio" name="role" id="role-admin" value="admin">
-            <label for="role-admin">
-              <span class="role-icon">&#128202;</span>
-              <span class="role-name">SETA Admin</span>
-            </label>
-          </div>
+          <div class="role-option"><input type="radio" name="role" id="role-learner" value="learner" checked><label for="role-learner"><span class="role-icon">🎓</span><span class="role-name">Learner</span></label></div>
+          <div class="role-option"><input type="radio" name="role" id="role-employer" value="employer"><label for="role-employer"><span class="role-icon">🏢</span><span class="role-name">Employer</span></label></div>
+          <div class="role-option"><input type="radio" name="role" id="role-admin" value="admin"><label for="role-admin"><span class="role-icon">📊</span><span class="role-name">SETA Admin</span></label></div>
         </div>
       </div>
 
-      <!-- Email -->
       <div class="form-group">
         <label class="form-label required" for="email">Email address</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          placeholder="you@example.com"
-          autocomplete="email"
-          autofocus
-        />
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" autofocus/>
       </div>
 
-      <!-- Password -->
       <div class="form-group">
         <label class="form-label required" for="password">Password</label>
         <div class="input-wrap">
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Enter your password"
-            autocomplete="current-password"
-          />
+          <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password"/>
           <button type="button" class="pw-toggle" id="pwToggle" aria-label="Show password">
-            <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
+            <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
       </div>
 
       <a href="#" class="forgot-link">Forgot your password?</a>
 
-      <!-- Submit -->
-      <button class="btn btn-primary btn-submit" id="loginBtn" type="button">
+      <button class="btn btn-primary btn-submit" id="loginBtn" type="button" onclick="doLogin()">
         Log in
       </button>
 
-      <!-- Demo quick-fill -->
       <div class="or-divider">or try a demo account</div>
       <div class="demo-row">
         <button class="demo-btn" onclick="fillDemo('learner')">Learner demo</button>
@@ -498,95 +151,74 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/api.js"></script>
   <script>
-    /* ── Password show/hide ── */
+    /* Password show/hide */
     const pwInput  = document.getElementById('password');
-    const pwToggle = document.getElementById('pwToggle');
     const eyeIcon  = document.getElementById('eyeIcon');
-
-    const eyeOpen = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
-    const eyeOff  = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
-
-    pwToggle.addEventListener('click', () => {
+    const eyeOpen  = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+    const eyeOff   = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+    document.getElementById('pwToggle').addEventListener('click', () => {
       const show = pwInput.type === 'password';
       pwInput.type = show ? 'text' : 'password';
       eyeIcon.innerHTML = show ? eyeOff : eyeOpen;
     });
 
-    /* ── Demo quick-fill ── */
+    /* Demo fill — these must match real accounts in your Supabase */
     const demos = {
-      learner:  { email: 'thabo.mokoena@demo.co.za',  role: 'learner' },
-      employer: { email: 'hr@telkomsa.co.za',         role: 'employer' },
-      admin:    { email: 'admin@mictseta.org.za',      role: 'admin' },
+      learner:  { email:'thabo.mokoena@demo.co.za',  role:'learner' },
+      employer: { email:'hr@telkomsa.co.za',          role:'employer' },
+      admin:    { email:'admin@mictseta.org.za',       role:'admin' },
     };
-
     function fillDemo(role) {
-      const d = demos[role];
-      document.getElementById('email').value    = d.email;
+      document.getElementById('email').value    = demos[role].email;
       document.getElementById('password').value = 'Demo@1234';
-      document.querySelector(`input[value="${d.role}"]`).checked = true;
+      document.querySelector(`input[value="${demos[role].role}"]`).checked = true;
       hideError();
     }
 
-    /* ── Validation ── */
-    function showError(msg) {
-      const banner = document.getElementById('errorBanner');
-      document.getElementById('errorText').textContent = msg;
-      banner.classList.add('show');
-    }
+    /* Error helpers */
+    function showError(msg) { document.getElementById('errorText').textContent = msg; document.getElementById('errorBanner').classList.add('show'); }
+    function hideError()    { document.getElementById('errorBanner').classList.remove('show'); }
 
-    function hideError() {
-      document.getElementById('errorBanner').classList.remove('show');
-    }
-
-    function validateEmail(v) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-    }
-
-    /* ── Login handler ── */
-    document.getElementById('loginBtn').addEventListener('click', () => {
+    /* ── LOGIN — calls real Supabase loginUser() ── */
+    async function doLogin() {
       hideError();
 
       const email    = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      const role     = document.querySelector('input[name="role"]:checked').value;
 
-      if (!email) { showError('Please enter your email address.'); return; }
-      if (!validateEmail(email)) { showError('Please enter a valid email address.'); return; }
-      if (!password) { showError('Please enter your password.'); return; }
-      if (password.length < 6) { showError('Password must be at least 6 characters.'); return; }
+      if (!email)                                           { showError('Please enter your email address.'); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))       { showError('Please enter a valid email address.'); return; }
+      if (!password)                                        { showError('Please enter your password.'); return; }
+      if (password.length < 6)                              { showError('Password must be at least 6 characters.'); return; }
 
-      /* Loading state */
       const btn = document.getElementById('loginBtn');
       btn.textContent = 'Logging in…';
-      btn.classList.add('loading');
+      btn.disabled    = true;
 
-      /* Simulate API call — replace with real fetch() to Flask backend */
-      setTimeout(() => {
-        localStorage.setItem('sm_role',  role);
-        localStorage.setItem('sm_email', email);
-        localStorage.setItem('sm_auth',  'true');
+      const res = await loginUser({ email, password });
 
-        /* Route by role */
-        const routes = {
-          learner:  'dashboard.html',
-          employer: 'browse.html',
-          admin:    'admin.html',
-        };
+      if (!res.success) {
+        btn.textContent = 'Log in';
+        btn.disabled    = false;
+        /* Supabase returns "Invalid login credentials" for wrong password */
+        const msg = res.error?.toLowerCase().includes('invalid')
+          ? 'Incorrect email or password. Please try again.'
+          : (res.error || 'Login failed — please try again.');
+        showError(msg);
+        return;
+      }
 
-        window.location.href = routes[role] || 'dashboard.html';
-      }, 900);
-    });
+      /* Route by role from Supabase (not the UI radio button) */
+      const role   = res.profile.role;
+      const routes = { learner:'dashboard.html', employer:'dashboard.html', admin:'admin.html' };
+      window.location.href = routes[role] || 'dashboard.html';
+    }
 
-    /* Allow Enter key to submit */
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') document.getElementById('loginBtn').click();
-    });
-
-    /* Nav shadow on scroll */
-    window.addEventListener('scroll', () => {
-      document.querySelector('nav')?.classList.toggle('scrolled', window.scrollY > 10);
-    });
+    /* Enter key triggers login */
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   </script>
 </body>
 </html>

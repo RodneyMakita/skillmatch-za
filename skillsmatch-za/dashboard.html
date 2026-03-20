@@ -466,9 +466,12 @@
 <script>
 /* ── Boot: role detection & auth guard ── */
 (async () => {
+  /* Step 1: restore session from Supabase if localStorage is stale */
+  const ok = await ensureProfile();
   const auth = localStorage.getItem('sm_auth');
-  if (!auth) { window.location.href = 'login.html'; return; }
+  if (!ok && !auth) { window.location.href = 'login.html'; return; }
 
+  /* Step 2: read values AFTER ensureProfile has potentially refreshed them */
   const role  = localStorage.getItem('sm_role')  || 'learner';
   const name  = localStorage.getItem('sm_name')  || 'User';
   const email = localStorage.getItem('sm_email') || '';
@@ -585,7 +588,11 @@ async function bootLearner(fullName) {
       homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, opp, m.id));
     });
   } else {
-    /* No matches yet — run pipeline */
+    /* No matches yet — run AI pipeline if match.js is loaded */
+    if (typeof runMatchingPipeline !== 'function') {
+      homeCards.innerHTML = emptyState('Complete your profile', 'Add skills to your profile to get AI-powered matches.');
+      return;
+    }
     homeCards.innerHTML = `<div style="padding:16px;text-align:center;font-size:13px;color:var(--ink-muted)">Running AI matching… this takes a moment.</div>`;
     const pipeline = await runMatchingPipeline();
     homeCards.innerHTML = '';
@@ -606,6 +613,20 @@ async function loadAllMatches() {
   container.innerHTML = '';
 
   if (!matchRes.success || !matchRes.data.length) {
+    /* Try running the pipeline if match.js is loaded */
+    if (typeof runMatchingPipeline === 'function') {
+      container.innerHTML = `<div style="padding:20px;text-align:center;font-size:13px;color:var(--ink-muted)">Running AI matching… this takes a moment.</div>`;
+      const pipeline = await runMatchingPipeline();
+      container.innerHTML = '';
+      if (pipeline.length) {
+        document.getElementById('matchSubtitle').textContent = `${pipeline.length} opportunities matched to your skills — sorted by AI score.`;
+        pipeline.forEach(m => {
+          if (!m.opportunity) return;
+          container.appendChild(buildMatchCard(m.score, m.ai_insight, m.opportunity, null));
+        });
+        return;
+      }
+    }
     container.innerHTML = emptyState('No matches found', 'Update your profile and skills to generate matches.');
     document.getElementById('matchSubtitle').textContent = 'No matches yet — complete your profile.';
     return;
