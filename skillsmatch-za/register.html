@@ -338,19 +338,21 @@
     .role-panel.active { display: block; }
 
     /* ── Responsive ── */
+    /* Work experience cards */
+    .exp-entry { border:1px solid rgba(14,17,23,.1); border-radius:12px; padding:16px; margin-bottom:12px; background:var(--paper); position:relative; }
+    .exp-entry-title { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); margin-bottom:12px; }
+    .exp-skill-wrap { display:flex; flex-wrap:wrap; gap:5px; padding:8px 10px; background:var(--white); border:1.5px solid rgba(14,17,23,.12); border-radius:8px; min-height:40px; cursor:text; }
+    .exp-skill-pill { display:inline-flex; align-items:center; gap:4px; font-size:12px; padding:3px 9px; border-radius:99px; background:var(--teal-lt); color:var(--teal); font-weight:500; }
+    .exp-skill-x { background:none; border:none; cursor:pointer; color:var(--teal); font-size:13px; padding:0; line-height:1; }
+
     @media (max-width: 700px) {
-      .top-bar { padding: 12px 16px; }
-      .top-bar-logo { font-size:17px; }
-      .top-bar-right { font-size:13px; }
-      .page-wrap { padding: 24px 14px 60px; }
-      .page-heading h1 { font-size:clamp(22px,6vw,32px); }
-      .form-card { padding: 20px 14px; }
+      .top-bar { padding: 14px 20px; }
+      .page-wrap { padding: 36px 16px 60px; }
+      .form-card { padding: 28px 20px; }
       .g2 { grid-template-columns: 1fr; }
       .g3 { grid-template-columns: 1fr; }
-      .role-switcher { max-width:100%; flex-direction:column; gap:8px; }
-      .role-tab { width:100%; justify-content:center; }
+      .role-switcher { max-width: 100%; }
     }
-    @media(max-width:400px){ .top-bar-right { display:none; } }
   </style>
 </head>
 <body>
@@ -492,6 +494,13 @@
           <button class="skill-suggest-btn" onclick="addSkill('Project management')">Project management</button>
           <button class="skill-suggest-btn" onclick="addSkill('Communication')">Communication</button>
         </div>
+      </div>
+
+      <!-- Work Experience -->
+      <div class="form-section">
+        <div class="form-section-title">Work experience <span style="font-weight:400;font-size:13px;color:var(--ink-muted);text-transform:none;letter-spacing:0">(optional — include part-time, volunteering, learnerships)</span></div>
+        <div id="expList"></div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addExpEntry()">+ Add work experience</button>
       </div>
 
       <!-- Professional Links & Documents -->
@@ -949,6 +958,122 @@
       return entries;
     }
 
+    /* ── Work experience builder ── */
+    let expCount  = 0;
+    const expData = {}; // expData[id] = { skills: [] }
+
+    function addExpEntry() {
+      expCount++;
+      const id  = `exp-${expCount}`;
+      expData[id] = { skills: [] };
+
+      const div = document.createElement('div');
+      div.id         = id;
+      div.className  = 'exp-entry';
+      div.innerHTML  = `
+        ${expCount > 1 ? `<button type="button" onclick="removeExp('${id}')" style="position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;color:var(--ink-muted);font-size:18px;line-height:1">✕</button>` : ''}
+        <div class="exp-entry-title">Work experience ${expCount}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Job title</label>
+            <input type="text" class="exp-title" placeholder="e.g. IT Technician"/>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Company / Organisation</label>
+            <input type="text" class="exp-company" placeholder="e.g. Telkom SA"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Start date</label>
+            <input type="month" class="exp-start"/>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">End date</label>
+            <input type="month" class="exp-end" id="exp-end-${id}"/>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-top:6px;cursor:pointer">
+              <input type="checkbox" class="exp-current" onchange="toggleExpCurrent('${id}', this.checked)"> Currently working here
+            </label>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label">Brief description <span style="font-weight:400;color:var(--ink-muted)">(optional)</span></label>
+          <textarea class="exp-desc" rows="2" placeholder="e.g. Provided IT support, installed software, managed network infrastructure…" style="font-size:13px;font-family:inherit;resize:vertical"></textarea>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Skills used in this role <span style="font-weight:400;color:var(--ink-muted)">— type and press Enter</span></label>
+          <div class="exp-skill-wrap" id="expSkillWrap-${id}" onclick="document.getElementById('expSkillIn-${id}').focus()">
+            <input type="text" id="expSkillIn-${id}"
+              placeholder="e.g. Python, Linux, Customer service…"
+              style="border:none;outline:none;background:transparent;font-size:13px;min-width:100px;color:var(--ink)"
+              onkeydown="handleExpSkill(event,'${id}')"/>
+          </div>
+          <div style="font-size:11px;color:var(--ink-muted);margin-top:4px">These skills boost your AI match score for relevant jobs</div>
+        </div>`;
+      document.getElementById('expList').appendChild(div);
+    }
+
+    function removeExp(id) {
+      document.getElementById(id)?.remove();
+      delete expData[id];
+    }
+
+    function toggleExpCurrent(id, checked) {
+      const end = document.getElementById(`exp-end-${id}`);
+      if (end) end.disabled = checked;
+    }
+
+    function handleExpSkill(e, id) {
+      if ((e.key === 'Enter' || e.key === ',') && e.target.value.trim()) {
+        e.preventDefault();
+        const v   = e.target.value.trim().replace(/,/g,'');
+        const arr = expData[id].skills;
+        if (!arr.includes(v)) {
+          arr.push(v);
+          renderExpSkills(id);
+        }
+        e.target.value = '';
+      }
+    }
+
+    function removeExpSkill(id, skill) {
+      expData[id].skills = expData[id].skills.filter(s => s !== skill);
+      renderExpSkills(id);
+    }
+
+    function renderExpSkills(id) {
+      const wrap  = document.getElementById(`expSkillWrap-${id}`);
+      const input = document.getElementById(`expSkillIn-${id}`);
+      if (!wrap || !input) return;
+      wrap.querySelectorAll('.exp-skill-pill').forEach(p => p.remove());
+      expData[id].skills.forEach(s => {
+        const pill = document.createElement('span');
+        pill.className = 'exp-skill-pill';
+        pill.innerHTML = `${s}<button type="button" class="exp-skill-x" onclick="removeExpSkill('${id}','${s.replace(/'/g,"\'")}')">×</button>`;
+        wrap.insertBefore(pill, input);
+      });
+    }
+
+    function collectWorkExperience() {
+      const entries = [];
+      document.querySelectorAll('#expList .exp-entry').forEach(div => {
+        const id      = div.id;
+        const title   = div.querySelector('.exp-title')?.value?.trim() || '';
+        const company = div.querySelector('.exp-company')?.value?.trim() || '';
+        if (!title && !company) return; // skip empty
+        entries.push({
+          title,
+          company,
+          start:       div.querySelector('.exp-start')?.value  || '',
+          end:         div.querySelector('.exp-end')?.value    || '',
+          current:     div.querySelector('.exp-current')?.checked || false,
+          description: div.querySelector('.exp-desc')?.value?.trim() || '',
+          skills:      (expData[id] || {}).skills || [],
+        });
+      });
+      return entries;
+    }
+
     /* ── Certificate entries builder ── */
     let certCount = 0;
     function addCertEntry() {
@@ -1155,6 +1280,7 @@
       btn.classList.add('loading');
       btn.disabled = true;
 
+      const workEntries = collectWorkExperience();
       const res = await registerUser({
         role:            'learner',
         email:           v.email,
@@ -1170,6 +1296,7 @@
         skills:          [...skills],
         qualifications:  qualEntries,
         certificates:    certEntries,
+        work_experience: workEntries,
         linkedin_url:    v.linkedin,
         github_url:      v.github,
         cv_url:          v.cvLink,

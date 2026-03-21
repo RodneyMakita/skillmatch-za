@@ -44,42 +44,6 @@
     .notif-btn { width:34px; height:34px; border-radius:8px; border:1px solid rgba(14,17,23,.1); background:var(--white); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-soft); position:relative; transition:background .15s; }
     .notif-btn:hover { background:var(--paper-2); }
     .notif-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; border-radius:50%; background:var(--coral); border:1.5px solid var(--paper); }
-    .notif-panel { position:absolute; top:52px; right:0; width:320px; background:var(--white); border:1px solid rgba(14,17,23,.1); border-radius:14px; box-shadow:0 8px 32px rgba(14,17,23,.12); z-index:100; overflow:hidden; display:none; }
-    .notif-panel.open { display:block; animation:vIn .2s ease; }
-    .notif-panel-head { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(14,17,23,.07); }
-    .notif-panel-title { font-family:var(--font-display); font-size:14px; font-weight:700; }
-    .notif-mark-all { font-size:12px; color:var(--teal); background:none; border:none; cursor:pointer; font-family:var(--font-body); padding:0; }
-    .notif-mark-all:hover { text-decoration:underline; }
-    .notif-item { display:flex; gap:10px; padding:12px 16px; border-bottom:1px solid rgba(14,17,23,.05); cursor:pointer; transition:background .15s; }
-    .notif-item:last-child { border-bottom:none; }
-    .notif-item:hover { background:var(--paper); }
-    .notif-item.unread { background:var(--teal-lt); }
-    .notif-dot-item { width:8px; height:8px; border-radius:50%; background:var(--teal); flex-shrink:0; margin-top:5px; }
-    .notif-dot-item.read { background:transparent; }
-    .notif-item-content { flex:1; min-width:0; }
-    .notif-item-title { font-size:13px; font-weight:500; color:var(--ink); margin-bottom:2px; }
-    .notif-item-msg { font-size:12px; color:var(--ink-muted); line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .notif-item-time { font-size:11px; color:var(--ink-muted); margin-top:3px; }
-    .notif-empty { padding:32px 16px; text-align:center; color:var(--ink-muted); font-size:13px; }
-    .status-actions { display:inline-flex; gap:4px; flex-wrap:wrap; }
-    .sa-btn { font-size:11px; padding:4px 10px; border-radius:99px; border:1.5px solid; cursor:pointer; font-family:var(--font-body); font-weight:500; transition:all .15s; white-space:nowrap; }
-    .sa-btn:disabled { opacity:.45; cursor:not-allowed; }
-    .sa-review    { border-color:rgba(14,17,23,.2);   color:var(--ink-soft); background:var(--paper-2); }
-    .sa-shortlist { border-color:rgba(13,122,95,.3);  color:var(--teal);     background:var(--teal-lt); }
-    .sa-review:hover,.sa-shortlist:hover { background:var(--teal); color:var(--white); border-color:var(--teal); }
-    .sa-interview { border-color:rgba(124,58,237,.3); color:#7c3aed;         background:#f0eeff; }
-    .sa-interview:hover { background:#7c3aed; color:var(--white); }
-    .sa-approve   { border-color:rgba(13,122,95,.5);  color:var(--white);    background:var(--teal); }
-    .sa-approve:hover { background:#0a6750; }
-    .sa-reject    { border-color:rgba(217,95,59,.3);  color:var(--coral);    background:var(--coral-lt); }
-    .sa-reject:hover { background:var(--coral); color:var(--white); }
-    .pill-applied      { background:var(--paper-2);    color:var(--ink-muted); }
-    .pill-under_review { background:var(--gold-lt);    color:var(--warning); }
-    .pill-shortlisted  { background:var(--teal-lt);    color:var(--teal); }
-    .pill-interview    { background:#f0eeff;            color:#7c3aed; }
-    .pill-approved     { background:var(--success-lt); color:var(--success); }
-    .pill-rejected     { background:var(--coral-lt);   color:var(--coral); }
-    .pill-placed       { background:var(--success-lt); color:var(--success); font-weight:600; }
     .content { padding:30px 34px; }
 
     /* Views */
@@ -131,6 +95,34 @@
     .mc-tag.funded { background:var(--teal-lt); color:var(--teal); }
     .mc-tip     { font-size:12px; color:var(--ink-soft); margin-top:8px; line-height:1.5; border-top:1px solid rgba(14,17,23,.05); padding-top:8px; }
     .mc-tip strong { color:var(--ink); font-weight:500; }
+
+    /* Skill gap tooltip on match cards */
+    .mc-gap-wrap { position:relative; }
+    .mc-gap-btn { display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:4px 10px; border-radius:99px; border:1px solid rgba(14,17,23,.15); background:var(--paper); color:var(--ink-soft); cursor:pointer; font-family:var(--font-body); transition:all .15s; margin-top:6px; }
+    .mc-gap-btn:hover { background:var(--teal-lt); border-color:var(--teal); color:var(--teal); }
+    .mc-gap-dot { width:7px; height:7px; border-radius:50%; background:var(--coral); display:inline-block; }
+    .mc-gap-dot.ok { background:var(--teal); }
+    .mc-gap-tooltip {
+      display:none; position:absolute; bottom:calc(100% + 8px); left:0;
+      width:280px; background:var(--ink); border-radius:12px; padding:14px;
+      box-shadow:0 8px 24px rgba(14,17,23,.25); z-index:50;
+    }
+    .mc-gap-tooltip.open { display:block; animation:vIn .15s ease; }
+    .mc-gap-tooltip::after { content:''; position:absolute; top:100%; left:18px; border:6px solid transparent; border-top-color:var(--ink); }
+    .gap-row { display:flex; align-items:flex-start; gap:8px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+    .gap-row:last-child { border-bottom:none; padding-bottom:0; }
+    .gap-row-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+    .gap-row-dot.missing { background:#f0826a; }
+    .gap-row-dot.partial  { background:#c8a84b; }
+    .gap-row-dot.present  { background:#2dd4a0; }
+    .gap-row-label { font-size:12px; font-weight:500; color:rgba(255,255,255,.9); flex:1; }
+    .gap-row-tip   { font-size:11px; color:rgba(255,255,255,.5); margin-top:2px; line-height:1.4; }
+    .gap-row-status{ font-size:10px; font-weight:600; flex-shrink:0; margin-top:2px; }
+
+    /* Driver license pills */
+    .license-pill { display:inline-flex; align-items:center; gap:5px; font-size:12px; padding:4px 10px; border-radius:99px; background:var(--paper); border:1px solid rgba(14,17,23,.12); color:var(--ink-soft); cursor:pointer; transition:all .15s; user-select:none; }
+    .license-pill input { position:absolute; opacity:0; width:0; height:0; }
+    .license-pill.selected { background:var(--teal-lt); border-color:rgba(13,122,95,.4); color:var(--teal); font-weight:500; }
     .mc-apply   { display:flex; gap:7px; margin-top:9px; }
     .applied-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; padding:4px 10px; border-radius:99px; background:var(--success-lt); color:var(--success); font-weight:500; }
 
@@ -139,6 +131,20 @@
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
     .skel-card { padding:14px 18px; border-bottom:1px solid rgba(14,17,23,.05); }
 
+    /* Best Move */
+    .bm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;padding:20px}
+    .bm-card{background:var(--white);border:1px solid rgba(14,17,23,.08);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px}
+    .bm-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .bm-card-title{font-size:14px;font-weight:600;color:var(--ink);letter-spacing:-.2px}
+    .bm-card-body{font-size:13px;color:var(--ink-soft);line-height:1.6}
+    .bm-tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:500;margin:2px 4px 0 0}
+    .bm-tag.high{background:#e6f4ee;color:#0d7a5f}
+    .bm-tag.medium{background:#fdf4de;color:#9a6f00}
+    .bm-tag.low{background:#f0f0f0;color:#555}
+    .bm-pill{display:inline-block;font-size:12px;padding:4px 12px;border-radius:99px;border:1px solid rgba(14,17,23,.12);color:var(--ink-soft);margin:3px}
+    .bm-pill.priority{border-color:var(--teal);color:var(--teal);background:var(--teal-lt);font-weight:500}
+    .bm-spinner{width:28px;height:28px;border:2.5px solid rgba(13,122,95,.2);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
     /* Profile panel */
     .sp  { font-size:12px; padding:4px 12px; border-radius:99px; background:var(--teal-lt); color:var(--teal); font-weight:500; display:inline-block; margin:2px; }
     .sp-add { font-size:12px; padding:4px 12px; border-radius:99px; background:transparent; color:var(--ink-muted); border:1px dashed rgba(14,17,23,.2); cursor:pointer; transition:all .15s; margin:2px; }
@@ -206,26 +212,43 @@
     .empty-state h3 { font-size:16px; color:var(--ink-soft); margin-bottom:6px; }
     .empty-state p  { font-size:13px; }
 
-    .mob-menu-btn { display:none; background:none; border:1px solid rgba(14,17,23,.12); border-radius:8px; width:34px; height:34px; cursor:pointer; align-items:center; justify-content:center; color:var(--ink-soft); flex-shrink:0; }
-    .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(14,17,23,.5); z-index:29; }
-    .sidebar-overlay.open { display:block; }
-    @media(max-width:1024px){
-      .shell { grid-template-columns:1fr; }
-      .sidebar { display:none; position:fixed; top:0; left:0; height:100vh; width:240px; z-index:30; transform:translateX(-100%); transition:transform .25s ease; }
-      .sidebar.mob-open { display:flex; transform:translateX(0); }
-      .mob-menu-btn { display:flex; }
-      .two-col { grid-template-columns:1fr; }
-      .stats-4 { grid-template-columns:repeat(2,1fr); }
-    }
-    @media(max-width:600px){
-      .content { padding:14px 12px; }
-      .topbar { padding:12px 14px; }
-      .stats-4,.stats-3 { grid-template-columns:repeat(2,1fr); gap:8px; }
-      .scard { padding:12px 14px; }
-      .scard-val { font-size:20px; }
-      .page-head h1 { font-size:18px; }
-      .notif-panel { right:0; width:calc(100vw - 28px); }
-    }
+    /* Work experience entries */
+    .exp-card { background:var(--paper); border:1px solid rgba(14,17,23,.1); border-radius:10px; padding:16px; position:relative; }
+    .pf-qual-card { background:var(--paper); border:1px solid rgba(14,17,23,.1); border-radius:10px; padding:14px 16px; position:relative; }
+    .pf-qual-card + .pf-qual-card { margin-top:8px; }
+    .pf-qual-rm { position:absolute; top:10px; right:10px; background:none; border:none; cursor:pointer; color:var(--ink-muted); font-size:17px; line-height:1; padding:2px 5px; border-radius:4px; }
+    .pf-qual-rm:hover { background:var(--coral-lt); color:var(--coral); }
+    .exp-card + .exp-card { margin-top:10px; }
+    .exp-rm { position:absolute; top:12px; right:12px; background:none; border:none; cursor:pointer; color:var(--ink-muted); font-size:18px; line-height:1; padding:2px 6px; border-radius:4px; }
+    .exp-rm:hover { background:var(--coral-lt); color:var(--coral); }
+    .exp-skill-tag { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:3px 8px; border-radius:99px; background:var(--teal-lt); color:var(--teal); font-weight:500; margin:2px; }
+    .exp-skill-rm { background:none; border:none; cursor:pointer; color:var(--teal); font-size:12px; padding:0; opacity:.7; }
+    .exp-skill-rm:hover { opacity:1; }
+    .exp-skills-wrap { display:flex; flex-wrap:wrap; gap:4px; padding:8px; background:var(--white); border:1px solid rgba(14,17,23,.1); border-radius:8px; min-height:40px; cursor:text; }
+    .add-exp-btn { display:flex; align-items:center; gap:6px; background:none; border:1.5px dashed rgba(14,17,23,.2); border-radius:10px; padding:10px 16px; cursor:pointer; font-size:13px; color:var(--ink-muted); font-family:var(--font-body); width:100%; justify-content:center; transition:all .15s; }
+    .add-exp-btn:hover { border-color:var(--teal); color:var(--teal); background:var(--teal-lt); }
+
+    /* Daily quote card */
+    .quote-card { background:linear-gradient(135deg,var(--ink) 0%,#1a2035 100%); border-radius:14px; padding:18px 20px; margin-bottom:18px; display:flex; align-items:flex-start; gap:14px; }
+    .quote-icon { font-size:22px; flex-shrink:0; margin-top:2px; }
+    .quote-text { font-size:14px; color:rgba(255,255,255,.85); line-height:1.6; font-style:italic; }
+    .quote-author { font-size:12px; color:rgba(255,255,255,.4); margin-top:6px; }
+
+    /* AI insight panel */
+    .ai-insight-panel { background:var(--white); border:1px solid rgba(14,17,23,.08); border-radius:12px; padding:16px 18px; }
+    .ai-insight-header { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+    .ai-insight-header span { font-size:13px; font-weight:600; color:var(--ink); }
+    .skill-gap-item { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid rgba(14,17,23,.05); }
+    .skill-gap-item:last-child { border-bottom:none; padding-bottom:0; }
+    .gap-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+    .gap-dot.missing { background:var(--coral); }
+    .gap-dot.partial { background:var(--gold); }
+    .gap-dot.present { background:var(--teal); }
+    .gap-label { font-size:13px; font-weight:500; color:var(--ink); }
+    .gap-tip { font-size:12px; color:var(--ink-muted); margin-top:2px; line-height:1.4; }
+
+    @media(max-width:1024px){ .shell{grid-template-columns:1fr} .sidebar{display:none} .two-col{grid-template-columns:1fr} .stats-4{grid-template-columns:repeat(2,1fr)} }
+    @media(max-width:600px){ .content{padding:18px 14px} .topbar{padding:14px 16px} .stats-4,.stats-3{grid-template-columns:repeat(2,1fr)} }
   </style>
 </head>
 <body>
@@ -241,6 +264,7 @@
       <button class="sb-link active" onclick="showView('l-home',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Dashboard</button>
       <button class="sb-link" onclick="showView('l-matches',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>My matches</button>
       <button class="sb-link" onclick="showView('l-apps',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Applications</button>
+      <button class="sb-link" onclick="showView('l-bestmove',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Best move</button>
       <button class="sb-link" onclick="showView('l-profile',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>My profile</button>
     </div>
 
@@ -277,30 +301,12 @@
   <!-- MAIN -->
   <main class="main">
     <div class="topbar">
+      <span class="topbar-title" id="topbarTitle">Dashboard</span>
       <div style="display:flex;align-items:center;gap:10px">
-        <button class="mob-menu-btn" onclick="toggleMobSidebar()" aria-label="Menu">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
-        <span class="topbar-title" id="topbarTitle">Dashboard</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="position:relative">
-          <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel(event)" title="Notifications">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <span class="notif-dot" id="notifDot" style="display:none"></span>
-          </button>
-          <div class="notif-panel" id="notifPanel">
-            <div class="notif-panel-head">
-              <span class="notif-panel-title">Notifications</span>
-              <button class="notif-mark-all" onclick="markAllRead()">Mark all read</button>
-            </div>
-            <div id="notifList"><div class="notif-empty">No notifications yet</div></div>
-          </div>
-        </div>
+        <div class="notif-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-dot"></span></div>
         <a href="browse.html" class="btn btn-primary btn-sm">Browse all</a>
       </div>
     </div>
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobSidebar()"></div>
 
     <div class="content">
 
@@ -311,6 +317,25 @@
         <div class="page-head">
           <h1>Good morning, <span id="lFirstName">…</span> 👋</h1>
           <p>Here's your job search snapshot for today.</p>
+        </div>
+        <!-- Daily motivational quote -->
+        <div class="quote-card" id="dailyQuote" style="display:none">
+          <div class="quote-icon">✨</div>
+          <div>
+            <div class="quote-text" id="quoteText">Loading your daily quote…</div>
+            <div class="quote-author" id="quoteAuthor"></div>
+          </div>
+        </div>
+        <!-- AI Insight panel -->
+        <div class="ai-insight-panel" id="aiInsightPanel" style="display:none;margin-bottom:18px">
+          <div class="ai-insight-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <span>AI skill gap analysis</span>
+            <span id="aiInsightJob" style="font-size:11px;color:var(--ink-muted);margin-left:auto"></span>
+          </div>
+          <div id="aiInsightList"></div>
+        </div>
+        <div class="page-head" style="display:none">
         </div>
         <div class="stats-row stats-4" id="lStats">
           <div class="scard"><div class="scard-label">AI match score</div><div class="scard-val skeleton" style="height:32px;width:70px">&nbsp;</div></div>
@@ -368,30 +393,96 @@
         <div class="panel"><div class="panel-head"><span class="panel-title" id="appsTitle">Applications</span></div><div id="appsList"></div></div>
       </div>
 
+      <!-- L: Best Move -->
+      <div class="view" id="view-l-bestmove">
+        <div class="page-head"><h1>Best move</h1><p>Your personalised career strategy — the tactical steps that open the most doors in your field.</p></div>
+        <div id="bestMoveContent">
+          <div style="text-align:center;padding:48px 20px">
+            <div style="font-size:44px;margin-bottom:14px">⚡</div>
+            <div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:8px">Generate your career strategy</div>
+            <div style="font-size:13px;color:var(--ink-soft);max-width:360px;margin:0 auto 24px">AI-powered plan based on your skills, match scores, and the SA job market.</div>
+            <button class="btn btn-primary" onclick="loadBestMove()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Analyse my career path
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- L: Profile -->
       <div class="view" id="view-l-profile">
         <div class="page-head"><h1>My profile</h1><p>Keep your profile updated to improve your match scores.</p></div>
-        <div class="panel" style="max-width:580px">
-          <div class="panel-head"><span class="panel-title">Personal information</span><button class="panel-action" onclick="saveProfile()">Save changes</button></div>
-          <div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div class="form-group"><label class="form-label">First name</label><input type="text" id="pfFirst"/></div>
-              <div class="form-group"><label class="form-label">Last name</label><input type="text" id="pfLast"/></div>
+        <div style="display:flex;flex-direction:column;gap:16px;max-width:620px">
+
+          <!-- Personal info -->
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">Personal information</span><button class="panel-action" onclick="saveProfile()">Save changes</button></div>
+            <div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="form-group"><label class="form-label">First name</label><input type="text" id="pfFirst"/></div>
+                <div class="form-group"><label class="form-label">Last name</label><input type="text" id="pfLast"/></div>
+              </div>
+              <div class="form-group"><label class="form-label">Email</label><input type="email" id="pfEmail" readonly style="opacity:.6"/></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="pfPhone" placeholder="e.g. 082 000 0000"/></div>
+                <div class="form-group"><label class="form-label">City</label><input type="text" id="pfCity" placeholder="e.g. Mahikeng"/></div>
+              </div>
+              <div class="form-group"><label class="form-label">Province</label>
+                <select id="pfProv"><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>North West</option><option>Northern Cape</option><option>Western Cape</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Driver's license codes</label>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="licenseWrap">
+                  <label class="license-pill" id="lic-A"><input type="checkbox" value="A" onchange="toggleLicense(this)"> A — Motorcycle</label>
+                  <label class="license-pill" id="lic-A1"><input type="checkbox" value="A1" onchange="toggleLicense(this)"> A1 — Light motorcycle</label>
+                  <label class="license-pill" id="lic-B"><input type="checkbox" value="B" onchange="toggleLicense(this)"> B — Motor vehicle</label>
+                  <label class="license-pill" id="lic-C"><input type="checkbox" value="C" onchange="toggleLicense(this)"> C — Heavy motor vehicle</label>
+                  <label class="license-pill" id="lic-C1"><input type="checkbox" value="C1" onchange="toggleLicense(this)"> C1 — Mid-heavy vehicle</label>
+                  <label class="license-pill" id="lic-EB"><input type="checkbox" value="EB" onchange="toggleLicense(this)"> EB — Automatic / Car</label>
+                  <label class="license-pill" id="lic-EC"><input type="checkbox" value="EC" onchange="toggleLicense(this)"> EC — Articulated vehicle</label>
+                  <label class="license-pill" id="lic-EC1"><input type="checkbox" value="EC1" onchange="toggleLicense(this)"> EC1 — Semi-articulated</label>
+                  <label class="license-pill" id="lic-PDP"><input type="checkbox" value="PDP" onchange="toggleLicense(this)"> PDP — Professional driving</label>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="form-group"><label class="form-label">LinkedIn URL</label><input type="url" id="pfLinkedin" placeholder="linkedin.com/in/…"/></div>
+                <div class="form-group"><label class="form-label">GitHub URL</label><input type="url" id="pfGithub" placeholder="github.com/…"/></div>
+              </div>
+              <div class="form-group"><label class="form-label">CV / Portfolio link</label><input type="url" id="pfCv" placeholder="Drive, Dropbox or personal site link"/></div>
             </div>
-            <div class="form-group"><label class="form-label">Email</label><input type="email" id="pfEmail" readonly style="opacity:.6"/></div>
-            <div class="form-group"><label class="form-label">Qualification</label><input type="text" id="pfQual" placeholder="e.g. N6 Certificate — IT"/></div>
-            <div class="form-group"><label class="form-label">Institution</label><input type="text" id="pfInst" placeholder="e.g. Orbit TVET College"/></div>
-            <div class="form-group"><label class="form-label">Province</label>
-              <select id="pfProv"><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>North West</option><option>Northern Cape</option><option>Western Cape</option></select>
+          </div>
+
+          <!-- Education -->
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Education &amp; qualifications</span>
+              <button class="panel-action" onclick="addPfQual()">+ Add qualification</button>
             </div>
-            <div class="form-group">
-              <label class="form-label">Skills <span style="font-weight:400;color:var(--ink-muted)">(type and press Enter)</span></label>
-              <div style="display:flex;flex-wrap:wrap;gap:5px;padding:10px;background:var(--paper);border:1.5px solid rgba(14,17,23,.12);border-radius:10px;min-height:48px;cursor:text" id="skillsWrap" onclick="document.getElementById('skillInput').focus()">
-                <input type="text" id="skillInput" placeholder="Add a skill…" style="border:none;outline:none;background:transparent;font-size:13px;min-width:100px;color:var(--ink)"/>
+            <div class="panel-body">
+              <div id="pfQualList" style="margin-bottom:8px"></div>
+              <div class="form-group" style="margin-top:12px">
+                <label class="form-label">Skills <span style="font-weight:400;color:var(--ink-muted)">(type and press Enter)</span></label>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;padding:10px;background:var(--paper);border:1.5px solid rgba(14,17,23,.12);border-radius:10px;min-height:48px;cursor:text" id="skillsWrap" onclick="document.getElementById('skillInput').focus()">
+                  <input type="text" id="skillInput" placeholder="Add a skill…" style="border:none;outline:none;background:transparent;font-size:13px;min-width:100px;color:var(--ink)"/>
+                </div>
               </div>
             </div>
-            <button class="btn btn-primary" onclick="saveProfile()">Save profile</button>
           </div>
+
+          <!-- Work experience -->
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Work experience</span>
+              <button class="panel-action" onclick="addExpEntry()">+ Add role</button>
+            </div>
+            <div class="panel-body">
+              <div id="expList" style="display:flex;flex-direction:column;gap:10px">
+                <p style="font-size:13px;color:var(--ink-muted)">No experience added yet. Click "+ Add role" to begin.</p>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="saveProfile()">Save all changes</button>
         </div>
       </div>
 
@@ -578,7 +669,6 @@
   if (role === 'learner')  await bootLearner(name);
   if (role === 'employer') await bootEmployer();
   if (role === 'admin')    await bootAdmin();
-  loadNotifications();
 })();
 
 /* ── View switcher ── */
@@ -595,6 +685,7 @@ function showView(id, btn) {
   /* Lazy-load on first visit */
   if (id === 'l-matches'    && !document.getElementById('allMatchCards').dataset.loaded)    loadAllMatches();
   if (id === 'l-apps'       && !document.getElementById('appsList').dataset.loaded)         loadApplications();
+  if (id === 'l-bestmove'   && !document.getElementById('bestMoveContent').dataset.loaded)   loadBestMove();
   if (id === 'l-profile'    && !document.getElementById('pfFirst').value)                    loadProfileForm();
   if (id === 'e-listings'   && !document.getElementById('allListings').dataset.loaded)      loadAllListings();
   if (id === 'e-applicants' && !document.getElementById('applicantsTbody').dataset.loaded)  loadApplicants();
@@ -636,12 +727,11 @@ async function bootLearner(fullName) {
     wrap.innerHTML = skills.map(s => `<span class="sp">${esc(s)}</span>`).join('') +
       `<button class="sp-add" onclick="showView('l-profile',document.querySelector('#nav-learner .sb-link:nth-child(4)'))">+ Add skill</button>`;
 
-    /* AI tip from top match */
-    if (skills.length) {
-      document.getElementById('aiTipBox').style.display = 'block';
-      document.getElementById('aiTipText').innerHTML    =
-        `Based on your skills, consider adding <strong>CCNA certification</strong> or a <strong>GitHub portfolio</strong> to boost your average match score.`;
-    }
+    /* Personalised daily quote */
+    loadDailyQuote(l, firstName);
+
+    /* AI skill gap insight — loaded after matches resolve */
+    _learnerProfileCache = l;
   }
 
   /* Stats cards */
@@ -686,11 +776,16 @@ async function bootLearner(fullName) {
         const pipeline = await runMatchingPipeline({ fetchExternal: true });
         clearInterval(_pTimer);
         homeCards.innerHTML = '';
+        _lastPipeline = pipeline;
         pipeline.slice(0, 3).forEach(m => {
           if (!m.opportunity) return;
           homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, m.opportunity, null));
         });
         if (!pipeline.length) homeCards.innerHTML = emptyState('No matches yet', 'Add skills to your profile to get AI-powered matches.');
+        /* Show AI insight for top match */
+        if (pipeline.length && _learnerProfileCache) {
+          showAiInsight(_learnerProfileCache, pipeline[0].opportunity);
+        }
         return;
       } catch(err) {
         console.warn('Pipeline failed, falling back to cached matches:', err.message);
@@ -810,29 +905,57 @@ async function loadProfileForm() {
   if (!res.success) return;
   const l = res.data;
   const u = l.users || {};
-  document.getElementById('pfFirst').value  = u.first_name || '';
-  document.getElementById('pfLast').value   = u.last_name  || '';
-  document.getElementById('pfEmail').value  = u.email      || '';
-  document.getElementById('pfQual').value   = l.qualification || '';
-  document.getElementById('pfInst').value   = l.institution_name || '';
-  document.getElementById('pfProv').value   = u.province   || 'North West';
+  // Null-safe setter — skips silently if input doesn't exist in DOM
+  const _set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
 
-  /* Render skill tags */
-  skills = l.skills || [];
+  _set('pfFirst',    u.first_name);
+  _set('pfLast',     u.last_name);
+  _set('pfEmail',    u.email);
+  _set('pfPhone',    u.phone);
+  _set('pfProv',     u.province || 'Northern Cape');
+  _set('pfCity',     l.city);
+  _set('pfLinkedin', l.linkedin_url);
+  _set('pfGithub',   l.github_url);
+  _set('pfCv',       l.cv_url);
+  // pfQual / pfInst do not exist as inputs — qualifications render as cards below
+
+  skills = Array.isArray(l.skills) ? l.skills : [];
   renderSkillTags();
+
+  // Driver's licenses
+  renderLicenses(l.drivers_license || []);
+
+  // Qualifications — use saved array; fall back to primary qual fields
+  pfQuals = Array.isArray(l.qualifications) && l.qualifications.length
+    ? l.qualifications
+    : [{
+        qualification: l.qualification     || '',
+        institution:   l.institution_name  || '',
+        instType:      l.institution_type  || '',
+        status:        '',
+        year:          '',
+        nqf:           '',
+        sector:        l.study_field       || '',
+      }];
+  renderPfQuals();
+
+  // Work experience
+  workExp = Array.isArray(l.work_experience) ? l.work_experience : [];
+  renderExpList();
+
+  console.log('[Profile] Loaded — quals:', pfQuals.length, 'exp:', workExp.length, 'skills:', skills.length);
 }
 
-/* Skill tag editor */
+/* ── Skill tag editor ── */
 let skills = [];
 function renderSkillTags() {
   const wrap  = document.getElementById('skillsWrap');
   const input = document.getElementById('skillInput');
+  if (!wrap) return;
   wrap.querySelectorAll('.sp').forEach(t => t.remove());
   skills.forEach(s => {
     const tag = document.createElement('span');
-    tag.className = 'sp';
-    tag.style.cursor = 'pointer';
-    tag.title = 'Click to remove';
+    tag.className = 'sp'; tag.style.cursor = 'pointer'; tag.title = 'Click to remove';
     tag.textContent = s;
     tag.onclick = () => { skills = skills.filter(x => x !== s); renderSkillTags(); };
     wrap.insertBefore(tag, input);
@@ -845,19 +968,191 @@ document.getElementById('skillInput')?.addEventListener('keydown', e => {
     if (!skills.includes(v)) { skills.push(v); renderSkillTags(); }
     e.target.value = '';
   }
-  if (e.key === 'Backspace' && !e.target.value && skills.length) {
-    skills.pop(); renderSkillTags();
-  }
+  if (e.key === 'Backspace' && !e.target.value && skills.length) { skills.pop(); renderSkillTags(); }
 });
 
+/* ── Profile qualifications ── */
+let pfQuals = [];
+
+function renderPfQuals() {
+  const list = document.getElementById('pfQualList');
+  if (!list) return;
+  if (!pfQuals.length) {
+    pfQuals = [{ qualification:'', institution:'', instType:'', status:'', year:'', nqf:'', sector:'' }];
+  }
+  list.innerHTML = pfQuals.map((q, i) => `
+    <div class="pf-qual-card">
+      ${i > 0 ? `<button class="pf-qual-rm" onclick="removePfQual(${i})" title="Remove">×</button>` : ''}
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:10px">
+        ${i === 0 ? 'Primary qualification' : 'Qualification ' + (i+1)}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Qualification / Programme</label>
+          <input type="text" value="${esc(q.qualification||'')}" placeholder="e.g. N6 Information Technology"
+            oninput="pfQuals[${i}].qualification=this.value"/>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Institution</label>
+          <input type="text" value="${esc(q.institution||'')}" placeholder="e.g. Orbit TVET College"
+            oninput="pfQuals[${i}].institution=this.value"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Status</label>
+          <select oninput="pfQuals[${i}].status=this.value">
+            <option value="">Select</option>
+            ${['Completed','Currently studying','WIL / Internship phase'].map(s=>`<option ${q.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Year completed</label>
+          <select oninput="pfQuals[${i}].year=this.value">
+            <option value="">Year</option>
+            ${[2025,2024,2023,2022,2021,2020,2019,2018,2017,2016].map(y=>`<option ${q.year==y?'selected':''}>${y}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">NQF level</label>
+          <select oninput="pfQuals[${i}].nqf=this.value">
+            <option value="">NQF</option>
+            ${['Level 3','Level 4','Level 5','Level 6','Level 7','Level 8'].map(l=>`<option ${q.nqf===l?'selected':''}>${l}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function addPfQual() {
+  pfQuals.push({ qualification:'', institution:'', instType:'', status:'', year:'', nqf:'', sector:'' });
+  renderPfQuals();
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.pf-qual-card');
+    if (cards.length) cards[cards.length-1].scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }, 80);
+}
+
+function removePfQual(i) {
+  pfQuals.splice(i, 1);
+  renderPfQuals();
+}
+
+/* ── Work experience ── */
+let workExp = [];
+
+function renderExpList() {
+  const list = document.getElementById('expList');
+  if (!list) return;
+  if (!workExp.length) {
+    list.innerHTML = '<p style="font-size:13px;color:var(--ink-muted)">No experience added yet. Click "+ Add role" to begin.</p>';
+    return;
+  }
+  list.innerHTML = workExp.map((exp, i) => `
+    <div class="exp-card" id="exp-${i}">
+      <button class="exp-rm" onclick="removeExp(${i})" title="Remove">×</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="form-group"><label class="form-label">Job title</label>
+          <input type="text" value="${esc(exp.title||'')}" oninput="workExp[${i}].title=this.value" placeholder="e.g. IT Technician"/></div>
+        <div class="form-group"><label class="form-label">Company</label>
+          <input type="text" value="${esc(exp.company||'')}" oninput="workExp[${i}].company=this.value" placeholder="e.g. Telkom SA"/></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="form-group"><label class="form-label">Start date</label>
+          <input type="month" value="${exp.start||''}" oninput="workExp[${i}].start=this.value"/></div>
+        <div class="form-group"><label class="form-label">End date</label>
+          <input type="month" value="${exp.end||''}" oninput="workExp[${i}].end=this.value" ${exp.current?'disabled':''}/>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-top:5px;cursor:pointer">
+            <input type="checkbox" ${exp.current?'checked':''} onchange="workExp[${i}].current=this.checked;renderExpList()"> Currently working here
+          </label></div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">Description (optional)</label>
+        <textarea rows="2" style="font-size:13px;font-family:var(--font-body);resize:vertical" placeholder="Brief description of responsibilities…" oninput="workExp[${i}].description=this.value">${esc(exp.description||'')}</textarea></div>
+      <div class="form-group"><label class="form-label">Skills used in this role <span style="font-weight:400;color:var(--ink-muted)">(press Enter)</span></label>
+        <div class="exp-skills-wrap" id="expSkills-${i}" onclick="document.getElementById('expSkillIn-${i}').focus()">
+          ${(exp.skills||[]).map(s => `<span class="exp-skill-tag">${esc(s)}<button class="exp-skill-rm" onclick="removeExpSkill(${i},'${s.replace(/'/g,"\'")}')">×</button></span>`).join('')}
+          <input type="text" id="expSkillIn-${i}" placeholder="e.g. Python, Linux…"
+            style="border:none;outline:none;background:transparent;font-size:12px;min-width:80px;color:var(--ink)"
+            onkeydown="handleExpSkillKey(event,${i})"/>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function addExpEntry() {
+  workExp.push({ title:'', company:'', start:'', end:'', current:false, description:'', skills:[] });
+  renderExpList();
+  setTimeout(() => {
+    const last = document.getElementById(`exp-${workExp.length-1}`);
+    if (last) last.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }, 100);
+}
+
+function removeExp(i) {
+  workExp.splice(i, 1);
+  renderExpList();
+}
+
+function removeExpSkill(i, skill) {
+  workExp[i].skills = (workExp[i].skills||[]).filter(s => s !== skill);
+  renderExpList();
+}
+
+function handleExpSkillKey(e, i) {
+  if ((e.key === 'Enter' || e.key === ',') && e.target.value.trim()) {
+    e.preventDefault();
+    const v = e.target.value.trim().replace(',','');
+    if (!workExp[i].skills) workExp[i].skills = [];
+    if (!workExp[i].skills.includes(v)) {
+      workExp[i].skills.push(v);
+      renderExpList();
+      setTimeout(() => { const inp = document.getElementById(`expSkillIn-${i}`); if(inp) inp.focus(); }, 50);
+    }
+    e.target.value = '';
+  }
+}
+
 async function saveProfile() {
-  const updates = {
-    qualification:    document.getElementById('pfQual').value,
-    institution_name: document.getElementById('pfInst').value,
-    skills
+  const btn = event?.target;
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+
+  const userUpdates = {
+    first_name: document.getElementById('pfFirst').value.trim(),
+    last_name:  document.getElementById('pfLast').value.trim(),
+    phone:      document.getElementById('pfPhone').value.trim(),
+    province:   document.getElementById('pfProv').value,
   };
-  const res = await updateLearnerProfile(updates);
-  showToast(res.success ? '✓ Profile saved!' : '✗ Save failed — try again.');
+  /* Collect qualifications */
+  const primaryQual = pfQuals[0] || {};
+  const learnerUpdates = {
+    qualification:    primaryQual.qualification || '',
+    institution_name: primaryQual.institution   || '',
+    qualifications:   pfQuals,
+    city:             document.getElementById('pfCity').value.trim(),
+    linkedin_url:     document.getElementById('pfLinkedin').value.trim(),
+    github_url:       document.getElementById('pfGithub').value.trim(),
+    cv_url:           document.getElementById('pfCv').value.trim(),
+    skills,
+    work_experience:  workExp,
+    drivers_license:  pfLicenses,
+  };
+
+  const [r1, r2] = await Promise.all([
+    updateUserDetails(userUpdates),
+    updateLearnerProfile(learnerUpdates),
+  ]);
+
+  if (btn) { btn.textContent = 'Save all changes'; btn.disabled = false; }
+
+  if (r1.success && r2.success) {
+    showToast('✓ Profile saved!');
+    /* Update sidebar name */
+    localStorage.setItem('sm_name', `${userUpdates.first_name} ${userUpdates.last_name}`.trim());
+    document.getElementById('lName').textContent   = localStorage.getItem('sm_name');
+    document.getElementById('lAvatar').textContent = ini(localStorage.getItem('sm_name'));
+  } else {
+    showToast('✗ Save failed — ' + (r1.error || r2.error || 'try again'));
+  }
 }
 
 /* ══════════════════════════════════════
@@ -918,68 +1213,42 @@ async function loadAllListings() {
   wrap.innerHTML = listings.map(o => oppRow(o, 0, true)).join('');
 }
 
-const STATUS_LABELS = {
-  applied:'Applied', under_review:'Under review', shortlisted:'Shortlisted',
-  interview:'Interview', approved:'Approved', rejected:'Unsuccessful', placed:'Placed',
-};
-function statusActions(appId, st) {
-  const b = (lbl, cls, next) => `<button class="sa-btn ${cls}" onclick="setAppStatus('${appId}','${next}',this)">${lbl}</button>`;
-  switch(st) {
-    case 'applied':      return [b('Review','sa-review','under_review'), b('Shortlist','sa-shortlist','shortlisted'), b('Unsuccessful','sa-reject','rejected')];
-    case 'under_review': return [b('Shortlist','sa-shortlist','shortlisted'), b('Unsuccessful','sa-reject','rejected')];
-    case 'shortlisted':  return [b('Interview','sa-interview','interview'), b('Approve','sa-approve','approved'), b('Unsuccessful','sa-reject','rejected')];
-    case 'interview':    return [b('Approve','sa-approve','approved'), b('Unsuccessful','sa-reject','rejected')];
-    case 'approved':     return [b('Place','sa-approve','placed'), b('Unsuccessful','sa-reject','rejected')];
-    case 'rejected':     return [b('Shortlist','sa-shortlist','shortlisted')];
-    case 'placed':       return [];
-    default:             return [b('Shortlist','sa-shortlist','shortlisted')];
-  }
-}
-let _applicantsCache = {};
 async function loadApplicants() {
   const tbody = document.getElementById('applicantsTbody');
   tbody.dataset.loaded = '1';
-  tbody.innerHTML = `<tr><td colspan="6" style="padding:20px;text-align:center"><div class="skeleton" style="height:12px;width:60%;margin:auto"></div></td></tr>`;
-  const res  = await getApplicantsForEmployer();
+  const res = await getApplicantsForEmployer();
   const apps = res.data || [];
   document.getElementById('applicantsTitle').textContent = `All applicants (${apps.length})`;
   if (!apps.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--ink-muted)">No applicants yet</td></tr>`; return; }
-  _applicantsCache = {};
-  apps.forEach(a => {
-    const u = a.learners?.users;
-    _applicantsCache[a.id] = { userId: a.learners?.user_id||'', email: u?.email||'', name: `${u?.first_name||''} ${u?.last_name||''}`.trim()||'Learner' };
-  });
+
+  const statusPills = {
+    applied:      `<span class="status-pill sp-inactive">Applied</span>`,
+    under_review: `<span class="status-pill sp-searching">Under review</span>`,
+    shortlisted:  `<span class="status-pill sp-matched">Shortlisted</span>`,
+    placed:       `<span class="status-pill sp-placed">Placed</span>`,
+    rejected:     `<span class="status-pill sp-inactive">Not selected</span>`,
+  };
+
   tbody.innerHTML = apps.map(a => {
-    const l = a.learners, u = l?.users;
-    const n  = `${u?.first_name||''} ${u?.last_name||''}`.trim()||'Learner';
-    const mc = (a.match_score||0)>=80?'var(--teal)':(a.match_score||0)>=65?'var(--gold)':'var(--ink-muted)';
-    const st = a.status||'applied';
-    return `<tr id="app-row-${a.id}">
-      <td><div class="td-name">${esc(n)}</div><div style="font-size:11px;color:var(--ink-muted)">${esc(u?.province||'')}</div></td>
-      <td class="td-muted" style="font-size:12px">${esc(a.opportunities?.title||'')}</td>
-      <td><strong style="color:${mc};font-family:var(--font-display)">${a.match_score||'—'}%</strong></td>
-      <td class="td-muted" style="font-size:12px">${esc(l?.qualification||'—')}</td>
-      <td><span class="status-pill pill-${st}">${STATUS_LABELS[st]||st}</span></td>
-      <td><div class="status-actions">${statusActions(a.id,st).join('')}</div></td>
+    const l = a.learners;
+    const u = l?.users;
+    const n = `${u?.first_name||''} ${u?.last_name||''}`.trim() || 'Learner';
+    const mc = (a.match_score||0) >= 80 ? 'var(--teal)' : (a.match_score||0) >= 65 ? 'var(--gold)' : 'var(--ink-muted)';
+    return `<tr>
+      <td class="td-name">${esc(n)}</td>
+      <td class="td-muted">${esc(a.opportunities?.title||'')}</td>
+      <td><strong style="color:${mc}">${a.match_score||'—'}%</strong></td>
+      <td class="td-muted">${esc(l?.qualification||'—')}</td>
+      <td>${statusPills[a.status]||''}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="shortlistApplicant('${a.id}',this)">Shortlist</button></td>
     </tr>`;
   }).join('');
 }
-async function setAppStatus(appId, newStatus, btn) {
-  btn.disabled = true; const orig = btn.textContent; btn.textContent = '…';
-  const res = await updateApplicationStatus(appId, newStatus);
-  if (!res.success) { btn.disabled=false; btn.textContent=orig; showToast('✗ '+(res.error||'try again')); return; }
-  const row = document.getElementById(`app-row-${appId}`);
-  if (row) {
-    row.children[4].innerHTML = `<span class="status-pill pill-${newStatus}">${STATUS_LABELS[newStatus]||newStatus}</span>`;
-    row.children[5].innerHTML = `<div class="status-actions">${statusActions(appId,newStatus).join('')}</div>`;
-  }
-  const toasts = { under_review:'Moved to review', shortlisted:'Shortlisted', interview:'Interview scheduled', approved:'Approved', rejected:'Marked unsuccessful', placed:'Placement confirmed!' };
-  showToast('✓ '+(toasts[newStatus]||'Status updated'));
-  try {
-    const c = _applicantsCache[appId]||{};
-    const oppTitle = row?.children[1]?.textContent?.trim()||'';
-    if (c.userId) await notifyLearner({ userId:c.userId, learnerEmail:c.email, learnerName:c.name, oppTitle, employerName:localStorage.getItem('sm_name')||'Employer', newStatus });
-  } catch(e) { console.warn('Notify:',e.message); }
+
+async function shortlistApplicant(appId, btn) {
+  const res = await updateApplicationStatus(appId, 'shortlisted');
+  if (res.success) { btn.textContent = '✓ Shortlisted'; btn.disabled = true; showToast('✓ Applicant shortlisted'); }
+  else showToast('✗ Error — try again');
 }
 
 async function postOpportunity() {
@@ -1177,10 +1446,22 @@ function buildMatchCard(score, aiInsight, opp, matchId) {
   const srcBadge   = opp.source && opp.source !== 'external'
     ? `<span class="mc-tag" style="background:#f0eeff;color:#534AB7;text-transform:capitalize">${esc(opp.source)}</span>` : '';
 
-  /* AI insight — show a placeholder while we wait if not yet scored */
-  const insightHtml = aiInsight && aiInsight !== 'AI scoring unavailable — score based on keyword overlap.'
+  /* AI insight */
+  const hasInsight = aiInsight && aiInsight !== 'AI scoring unavailable — score based on keyword overlap.';
+  const insightHtml = hasInsight
     ? `<div class="mc-tip"><span style="color:var(--teal);font-weight:600">AI insight:</span> ${esc(aiInsight)}</div>`
     : `<div class="mc-tip" style="color:var(--ink-muted);font-style:italic">Scoring this match…</div>`;
+
+  /* Skill gap button — populated later by showMatchGaps() */
+  const gapBtnHtml = `<div class="mc-gap-wrap" id="gap-wrap-${opp.id||matchId||Math.random().toString(36).slice(2)}">
+    <button class="mc-gap-btn" onclick="toggleGapTooltip(this)">
+      <span class="mc-gap-dot"></span> See skill gaps
+    </button>
+    <div class="mc-gap-tooltip">
+      <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.9);margin-bottom:8px">Skill gap analysis</div>
+      <div class="gap-loading" style="font-size:11px;color:rgba(255,255,255,.5)">Loading…</div>
+    </div>
+  </div>`;
 
   const div = document.createElement('div');
   div.className = 'match-card';
@@ -1202,6 +1483,7 @@ function buildMatchCard(score, aiInsight, opp, matchId) {
       ${srcBadge}
     </div>
     ${insightHtml}
+    ${gapBtnHtml}
     <div class="mc-apply">
       <button class="btn btn-primary btn-sm apply-btn">${isExternal ? '🔗 Apply on site' : 'Apply now'}</button>
       <button class="btn btn-ghost btn-sm" onclick="if(this.classList.toggle('saved')) this.textContent='Saved ✓'">Save</button>
@@ -1270,60 +1552,416 @@ function showToast(msg){
   setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-/* ── Mobile sidebar ── */
-function toggleMobSidebar() {
-  document.querySelector('.sidebar').classList.toggle('mob-open');
-  document.getElementById('sidebarOverlay').classList.toggle('open');
+/* ══════════════════════════════════════
+   DAILY MOTIVATIONAL QUOTE
+══════════════════════════════════════ */
+let _learnerProfileCache = null;
+
+async function loadDailyQuote(learner, firstName) {
+  const card = document.getElementById('dailyQuote');
+  if (!card) return;
+  card.style.display = 'flex';
+
+  /* Check localStorage cache — refresh once per day */
+  const cacheKey = 'sm_quote_' + new Date().toDateString();
+  const cached   = localStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const q = JSON.parse(cached);
+      document.getElementById('quoteText').textContent   = q.text;
+      document.getElementById('quoteAuthor').textContent = q.author;
+      return;
+    } catch(e) {}
+  }
+
+  /* Build personalised context */
+  const field  = learner.study_field || learner.qualification || 'your field';
+  const skills = (learner.skills || []).slice(0,3).join(', ') || 'your skills';
+  const exp    = (learner.work_experience||[]).length > 0
+    ? 'with some work experience' : 'starting their career';
+
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    const jwt = session?.access_token || '';
+
+    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      body: JSON.stringify({
+        system: 'You are a motivational coach for young South African job seekers. Reply ONLY with a JSON object: {"text":"quote here","author":"Person Name"}. No backticks, no extra text.',
+        messages: [{
+          role: 'user',
+          content: 'Give ' + firstName + ' — a ' + field + ' learner ' + exp + ' with skills in ' + skills + ' — one short, powerful motivational quote (under 25 words) from a relevant figure. Make it feel personal to their journey.',
+        }],
+        max_tokens: 120,
+      }),
+    });
+
+    const data = await res.json();
+    const text = data?.content?.[0]?.text || '';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const q = JSON.parse(clean);
+    document.getElementById('quoteText').textContent   = '“' + q.text + '”';
+    document.getElementById('quoteAuthor').textContent = '— ' + q.author;
+    localStorage.setItem(cacheKey, JSON.stringify(q));
+  } catch(e) {
+    /* Fallback pool of SA-relevant quotes */
+    const fallbacks = [
+      { text:'It always seems impossible until it is done.', author:'Nelson Mandela' },
+      { text:'Education is the most powerful weapon which you can use to change the world.', author:'Nelson Mandela' },
+      { text:'The secret of getting ahead is getting started.', author:'Mark Twain' },
+      { text:'Your skills are your currency. Invest in them daily.', author:'SkillsMatch ZA' },
+      { text:'Every expert was once a beginner. Keep going.', author:'SkillsMatch ZA' },
+    ];
+    const q = fallbacks[new Date().getDay() % fallbacks.length];
+    document.getElementById('quoteText').textContent   = '“' + q.text + '”';
+    document.getElementById('quoteAuthor').textContent = '— ' + q.author;
+  }
 }
 
-/* ── Notification panel ── */
-let _notifOpen = false;
-async function loadNotifications() {
+/* ══════════════════════════════════════
+   AI SKILL GAP INSIGHT
+══════════════════════════════════════ */
+async function showAiInsight(learner, topOpp) {
+  const panel = document.getElementById('aiInsightPanel');
+  const list  = document.getElementById('aiInsightList');
+  if (!panel || !list || !topOpp) return;
+
+  panel.style.display = 'block';
+  document.getElementById('aiInsightJob').textContent = 'vs. ' + (topOpp.title||'top match');
+  list.innerHTML = '<div style="font-size:12px;color:var(--ink-muted);padding:8px 0">Analysing skill gaps…</div>';
+
+  const learnerSkills = [
+    ...(learner.skills||[]),
+    ...(learner.work_experience||[]).flatMap(e => e.skills||[]),
+  ].map(s => s.toLowerCase());
+
+  const reqSkills = topOpp.skills_req || [];
+  const oppDesc   = topOpp.description || '';
+
   try {
-    const res = await getNotifications(30);
-    const notifs = res.data || [];
-    const unread = notifs.filter(n => !n.is_read).length;
-    const dot = document.getElementById('notifDot');
-    if (dot) dot.style.display = unread > 0 ? 'block' : 'none';
-    const list = document.getElementById('notifList');
-    if (!list) return;
-    if (!notifs.length) { list.innerHTML = '<div class="notif-empty">No notifications yet</div>'; return; }
-    list.innerHTML = notifs.map(n => `
-      <div class="notif-item ${n.is_read?'':'unread'}" onclick="openNotif('${n.id}','${n.link||''}')">
-        <div class="notif-dot-item ${n.is_read?'read':''}"></div>
-        <div class="notif-item-content">
-          <div class="notif-item-title">${esc(n.title)}</div>
-          <div class="notif-item-msg">${esc((n.message||'').replace(/<[^>]+>/g,' '))}</div>
-          <div class="notif-item-time">${timeAgo(n.created_at)}</div>
+    const { data: { session } } = await db.auth.getSession();
+    const jwt = session?.access_token || '';
+
+    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      body: JSON.stringify({
+        system: 'You are a career coach. Reply ONLY with a valid JSON array. No markdown, no backticks, no explanation before or after. Example: [{"skill":"Python","status":"present","tip":"Keep building projects to stay sharp."}]',
+        messages: [{
+          role: 'user',
+          content: 'Job: ' + (topOpp.title||'') + '. Skills required: ' + (reqSkills.slice(0,10).join(', ')||oppDesc.slice(0,200)) + '. Learner has: ' + learnerSkills.slice(0,15).join(', ') + '. Return a JSON array of exactly 5 objects. Each: skill (string), status ("present","partial","missing"), tip (string, max 12 words). Only the JSON array, nothing else.',
+        }],
+        max_tokens: 800,
+      }),
+    });
+
+    const data = await res.json();
+    let raw  = (data?.content?.[0]?.text || '').trim();
+    console.log('[AI insight] raw response:', raw.slice(0, 200));
+
+    /* Robustly extract JSON array even if wrapped in prose */
+    const arrMatch = raw.match(/\[[\s\S]*\]/);
+    if (!arrMatch) throw new Error('No JSON array found in response. Raw: ' + raw.slice(0,80));
+    const items = JSON.parse(arrMatch[0]);
+    if (!Array.isArray(items) || !items.length) throw new Error('Empty or invalid array returned');
+
+    list.innerHTML = items.map(item => `
+      <div class="skill-gap-item">
+        <div class="gap-dot ${item.status}"></div>
+        <div>
+          <div class="gap-label">${esc(item.skill)}</div>
+          <div class="gap-tip">${esc(item.tip)}</div>
+        </div>
+        <div style="margin-left:auto;font-size:11px;font-weight:600;color:${item.status==='present'?'var(--teal)':item.status==='partial'?'var(--gold)':'var(--coral)'}">
+          ${item.status==='present'?'✓ Have it':item.status==='partial'?'~ Partial':'✗ Missing'}
         </div>
       </div>`).join('');
-  } catch(e) { console.warn('loadNotifications:',e.message); }
+  } catch(e) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--ink-muted);padding:8px 0">Could not load analysis — ' + e.message + '</div>';
+  }
 }
-function toggleNotifPanel(e) {
-  if (e) e.stopPropagation();
-  _notifOpen = !_notifOpen;
-  const panel = document.getElementById('notifPanel');
-  if (panel) panel.classList.toggle('open', _notifOpen);
-  if (_notifOpen) loadNotifications();
+
+
+/* ══════════════════════════════════════
+   DRIVER'S LICENSE
+══════════════════════════════════════ */
+let pfLicenses = [];
+
+function toggleLicense(cb) {
+  const code = cb.value;
+  const pill = cb.closest('.license-pill');
+  if (cb.checked) {
+    if (!pfLicenses.includes(code)) pfLicenses.push(code);
+    pill.classList.add('selected');
+  } else {
+    pfLicenses = pfLicenses.filter(c => c !== code);
+    pill.classList.remove('selected');
+  }
 }
-async function openNotif(notifId, link) {
-  await markNotificationsRead(notifId);
-  const panel = document.getElementById('notifPanel');
-  if (panel) panel.classList.remove('open');
-  _notifOpen = false;
-  loadNotifications();
-  if (link) { const h = (link.split('#')[1]||'').replace(/[^a-z0-9-]/gi,''); if (h) showView(h,null); }
+
+function renderLicenses(codes) {
+  pfLicenses = Array.isArray(codes) ? [...codes] : [];
+  document.querySelectorAll('#licenseWrap input[type="checkbox"]').forEach(cb => {
+    const selected = pfLicenses.includes(cb.value);
+    cb.checked = selected;
+    cb.closest('.license-pill').classList.toggle('selected', selected);
+  });
 }
-async function markAllRead() { await markNotificationsRead(null); loadNotifications(); }
+
+/* ══════════════════════════════════════
+   SKILL GAP TOOLTIP ON MATCH CARDS
+══════════════════════════════════════ */
+let _gapCache = {}; /* oppId → items array */
+
+function toggleGapTooltip(btn) {
+  const wrap    = btn.closest('.mc-gap-wrap');
+  const tooltip = wrap.querySelector('.mc-gap-tooltip');
+  const isOpen  = tooltip.classList.contains('open');
+
+  /* Close all other tooltips first */
+  document.querySelectorAll('.mc-gap-tooltip.open').forEach(t => t.classList.remove('open'));
+
+  if (!isOpen) {
+    tooltip.classList.add('open');
+    /* Load gap data if not yet loaded */
+    const oppId = wrap.id.replace('gap-wrap-','');
+    if (!_gapCache[oppId]) {
+      loadGapForCard(wrap, oppId);
+    }
+  }
+}
+
+/* Close tooltip when clicking outside */
 document.addEventListener('click', e => {
-  if (!_notifOpen) return;
-  const panel = document.getElementById('notifPanel');
-  const btn   = document.getElementById('notifBtn');
-  if (panel && !panel.contains(e.target) && btn && !btn.contains(e.target)) {
-    panel.classList.remove('open'); _notifOpen = false;
+  if (!e.target.closest('.mc-gap-wrap')) {
+    document.querySelectorAll('.mc-gap-tooltip.open').forEach(t => t.classList.remove('open'));
   }
 });
-setInterval(() => { if (localStorage.getItem('sm_auth')) loadNotifications(); }, 60000);
+
+async function loadGapForCard(wrap, oppId) {
+  const tooltip = wrap.querySelector('.mc-gap-tooltip');
+  /* Find the opportunity from _lastPipeline */
+  const opp = (_lastPipeline || []).find(m => (m.opportunity?.id === oppId || m.id === oppId))?.opportunity
+           || { id: oppId, title: wrap.closest('.match-card')?.querySelector('.mc-title')?.textContent || '' };
+
+  if (!_learnerProfileCache || !opp) {
+    tooltip.querySelector('.gap-loading').textContent = 'Profile not loaded yet.';
+    return;
+  }
+
+  try {
+    const learner     = _learnerProfileCache;
+    const learnerSkills = [
+      ...(learner.skills||[]),
+      ...(learner.work_experience||[]).flatMap(e => e.skills||[]),
+    ].map(s => s.toLowerCase());
+
+    const reqSkills = opp.skills_req || [];
+    const oppDesc   = opp.description || '';
+
+    const { data: { session } } = await db.auth.getSession();
+    const jwt = session?.access_token || '';
+
+    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      body: JSON.stringify({
+        system: 'You are a career coach. Reply ONLY with a valid JSON array. No markdown, no backticks, no explanation. Each item: {"skill":"name","status":"present"|"partial"|"missing","tip":"max 12 words"}',
+        messages: [{ role:'user', content:
+          'Job: ' + (opp.title||'') +
+          '. Required: ' + (reqSkills.slice(0,8).join(', ')||oppDesc.slice(0,200)) +
+          '. Learner has: ' + learnerSkills.slice(0,12).join(', ') +
+          '. Return JSON array of exactly 5 skill objects. Only JSON, nothing else.' }],
+        max_tokens: 700,
+      }),
+    });
+
+    const data = await res.json();
+    const raw  = (data?.content?.[0]?.text||'').trim();
+    const arrMatch = raw.match(/\[[\s\S]*?\]/);
+    if (!arrMatch) throw new Error('No array in response');
+    const items = JSON.parse(arrMatch[0]);
+
+    _gapCache[oppId] = items;
+    renderGapTooltip(tooltip, items);
+
+    /* Update the button dot colour */
+    const missingCount = items.filter(i => i.status === 'missing').length;
+    const dot = wrap.querySelector('.mc-gap-dot');
+    dot.className = 'mc-gap-dot' + (missingCount <= 1 ? ' ok' : '');
+    wrap.querySelector('.mc-gap-btn').innerHTML =
+      `<span class="mc-gap-dot${missingCount<=1?' ok':''}"></span> ${missingCount} gap${missingCount!==1?'s':''} found`;
+
+  } catch(e) {
+    tooltip.querySelector('.gap-loading').textContent = 'Could not load — ' + e.message.slice(0,40);
+  }
+}
+
+function renderGapTooltip(tooltip, items) {
+  const statusColor = { present:'#2dd4a0', partial:'#c8a84b', missing:'#f0826a' };
+  const statusLabel = { present:'✓ Have it', partial:'~ Partial', missing:'✗ Missing' };
+  tooltip.innerHTML = `
+    <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.9);margin-bottom:8px">Skill gap analysis</div>
+    ${items.map(item => `
+      <div class="gap-row">
+        <div class="gap-row-dot ${item.status}"></div>
+        <div style="flex:1;min-width:0">
+          <div class="gap-row-label">${esc(item.skill)}</div>
+          <div class="gap-row-tip">${esc(item.tip||'')}</div>
+        </div>
+        <div class="gap-row-status" style="color:${statusColor[item.status]||'#fff'}">${statusLabel[item.status]||''}</div>
+      </div>`).join('')}`;
+}
+
+/* Store pipeline results so gap loader can find opportunities */
+let _lastPipeline = [];
+
+
+/* ══════════════════════════════════════
+   BEST MOVE — Career Strategy Engine
+══════════════════════════════════════ */
+async function loadBestMove() {
+  const container = document.getElementById('bestMoveContent');
+  container.dataset.loaded = '1';
+
+  const skills   = JSON.parse(localStorage.getItem('sm_skills')        || '[]');
+  const qual     = localStorage.getItem('sm_qual')    || '';
+  const field    = localStorage.getItem('sm_field')   || '';
+  const province = localStorage.getItem('sm_institution') || 'South Africa';
+  const certs    = JSON.parse(localStorage.getItem('sm_certificates')  || '[]');
+  const workExp  = JSON.parse(localStorage.getItem('sm_work_exp')      || '[]');
+  const github   = localStorage.getItem('sm_github')  || '';
+  const linkedin = localStorage.getItem('sm_linkedin')|| '';
+
+  const matchRes = await getMyMatches();
+  const matches  = matchRes.data || [];
+  const topScore = matches[0]?.score || 0;
+  const avgScore = matches.length ? Math.round(matches.reduce((a,b)=>a+(b.score||0),0)/matches.length) : 0;
+  const gapFreq  = {};
+  matches.forEach(m => (m.skill_gaps||[]).forEach(g => { gapFreq[g]=(gapFreq[g]||0)+1; }));
+  const topGaps  = Object.entries(gapFreq).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([g])=>g);
+
+  const msgs = ['Analysing your skills and matches…','Scanning SA job market demand…','Identifying your highest-impact moves…','Building your career strategy…'];
+  let mi = 0;
+  container.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:14px"><div class="bm-spinner"></div><div style="font-size:13px;color:var(--ink-soft)" id="bmMsg">${msgs[0]}</div></div>`;
+  const msgTimer = setInterval(() => { const el = document.getElementById('bmMsg'); if (el) el.textContent = msgs[++mi%msgs.length]; }, 1800);
+
+  try {
+    const jwt = localStorage.getItem('sm_access_token') || '';
+    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      body: JSON.stringify({
+        system: 'You are a South African career strategist. Reply ONLY with valid JSON — no markdown, no backticks, no preamble.',
+        messages: [{ role:'user', content:
+`Learner profile:
+- Field: ${field||'Information Technology'}
+- Qualification: ${qual||'Not specified'}
+- Skills: ${skills.join(', ')||'None listed'}
+- Certificates: ${certs.map(c=>c.name||c).join(', ')||'None'}
+- Work experience: ${workExp.length?workExp.map(e=>e.role||e.title||'').filter(Boolean).join(', '):'None yet'}
+- GitHub: ${github?'Yes':'No'} | LinkedIn: ${linkedin?'Yes':'No'}
+- Top match score: ${topScore}% | Average: ${avgScore}%
+- Common skill gaps: ${topGaps.join(', ')||'None identified yet'}
+
+Return this JSON object (exactly 5 moves, ordered by impact descending):
+{"headline":"<10 words>","summary":"<2-3 sentences: honest assessment and biggest opportunity>","market_insight":"<1 SA-specific fact relevant to their field>","moves":[{"title":"<4-6 words>","impact":"high","icon":"<emoji>","body":"<2 sentences: what to do and why it opens SA doors>","effort":"<timeframe>","tags":["tag1","tag2"]}],"priority_skills":["skill1","skill2","skill3","skill4","skill5"],"quick_wins":["<12 words max>","<12 words max>","<12 words max>"]}`
+        }],
+        max_tokens: 1800,
+      }),
+    });
+    clearInterval(msgTimer);
+    const data = await res.json();
+    const raw  = (data?.content?.[0]?.text || '').trim();
+    let plan = null;
+    try {
+      let clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+      const s = clean.indexOf('{'), e = clean.lastIndexOf('}');
+      if (s >= 0 && e > s) clean = clean.slice(s, e+1);
+      plan = JSON.parse(clean);
+    } catch(pe) {
+      console.warn('Best Move parse failed:', raw.slice(0,200));
+    }
+    renderBestMove(container, plan || bmFallback(topGaps, skills, field));
+  } catch(err) {
+    clearInterval(msgTimer);
+    console.error('loadBestMove:', err.message);
+    renderBestMove(container, bmFallback(topGaps, skills, field));
+  }
+}
+
+function renderBestMove(container, p) {
+  const iColor = {high:'#e6f4ee',medium:'#fdf4de',low:'#f5f5f5'};
+  const iText  = {high:'#0d7a5f',medium:'#9a6f00',low:'#555'};
+  const iLabel = {high:'High impact',medium:'Medium impact',low:'Quick win'};
+
+  const movesHtml = (p.moves||[]).map(m=>`
+    <div class="bm-card">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div class="bm-icon" style="background:${iColor[m.impact]||'#f5f5f5'}">${m.icon||'🎯'}</div>
+        <div style="flex:1">
+          <div class="bm-card-title">${esc(m.title||'')}</div>
+          <div style="margin-top:3px">
+            <span class="bm-tag ${m.impact||'medium'}" style="color:${iText[m.impact]||'#555'}">${iLabel[m.impact]||'Move'}</span>
+            <span style="font-size:11px;color:var(--ink-muted)">⏱ ${esc(m.effort||'')}</span>
+          </div>
+        </div>
+      </div>
+      <div class="bm-card-body">${esc(m.body||'')}</div>
+      ${(m.tags||[]).length?`<div>${m.tags.map(t=>`<span class="bm-pill">${esc(t)}</span>`).join('')}</div>`:''}
+    </div>`).join('');
+
+  const qwHtml = (p.quick_wins||[]).map((q,i)=>`
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(14,17,23,.05)">
+      <div style="width:22px;height:22px;border-radius:50%;background:var(--teal-lt);color:var(--teal);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</div>
+      <div style="font-size:13px;color:var(--ink-soft);line-height:1.5">${esc(q)}</div>
+    </div>`).join('');
+
+  container.innerHTML = `
+    <div class="panel">
+      <div style="padding:20px;border-bottom:1px solid rgba(14,17,23,.06)">
+        <div style="font-family:var(--font-display);font-size:20px;font-weight:700;letter-spacing:-.5px;color:var(--ink);margin-bottom:6px">${esc(p.headline||'Your career strategy')}</div>
+        <div style="font-size:13px;color:var(--ink-soft);line-height:1.65;max-width:580px">${esc(p.summary||'')}</div>
+        ${p.market_insight?`<div style="margin-top:12px;padding:10px 14px;background:var(--teal-lt);border-left:3px solid var(--teal);border-radius:0 8px 8px 0;font-size:13px;color:var(--ink-soft)"><strong style="color:var(--teal)">SA market insight:</strong> ${esc(p.market_insight)}</div>`:''}
+      </div>
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);padding:16px 20px 4px">Your 5 best moves — ranked by impact</div>
+      <div class="bm-grid">${movesHtml}</div>
+      <div style="border-top:1px solid rgba(14,17,23,.06)">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);padding:16px 20px 8px">Priority skills to build</div>
+        <div style="padding:0 20px 16px">${(p.priority_skills||[]).map(s=>`<span class="bm-pill priority">${esc(s)}</span>`).join('')}</div>
+      </div>
+      <div style="border-top:1px solid rgba(14,17,23,.06);padding:0 20px 16px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);padding:16px 0 8px">Quick wins this week</div>
+        ${qwHtml}
+      </div>
+      <div style="border-top:1px solid rgba(14,17,23,.06);padding:16px 20px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bestMoveContent').removeAttribute('data-loaded');loadBestMove()">↻ Regenerate</button>
+        <a href="browse.html" class="btn btn-primary btn-sm">Browse matching jobs →</a>
+      </div>
+    </div>`;
+}
+
+function bmFallback(topGaps, skills, field) {
+  return {
+    headline: `Build your ${field||'ICT'} career step by step`,
+    summary: 'Based on your profile, the fastest path combines certifications, a visible portfolio, and SETA learnership applications.',
+    market_insight: 'South Africa has a shortage of 30 000+ ICT professionals — entry-level candidates with portfolios are being hired faster than ever.',
+    moves: [
+      {icon:'🎓',title:'Apply for a SETA learnership',impact:'high',body:'MICT SETA learnerships provide a stipend, work experience, and NQF qualification simultaneously. Apply through the SETA portal or company career pages.',effort:'1–2 weeks to apply',tags:['MICT SETA','NQF','Stipend']},
+      {icon:'💻',title:'Build a GitHub portfolio',impact:'high',body:'Push 3–5 projects demonstrating your top skills. SA ICT employers check GitHub before interviews — it replaces experience when you have none.',effort:'2–4 weeks',tags:['GitHub','Portfolio']},
+      {icon:'📜',title:'Complete a free certification',impact:'medium',body:'Google, Microsoft, and AWS offer free certifications that fill skill gaps fast and signal initiative to employers.',effort:'2–6 weeks',tags:['Google','Microsoft','AWS']},
+      {icon:'🔗',title:'Optimise your LinkedIn profile',impact:'medium',body:'A complete LinkedIn profile with your skills section filled in gets found by SA recruiters. Add a project post for 10× more views.',effort:'1–2 days',tags:['LinkedIn','Networking']},
+      {icon:'🌐',title:'Apply for remote opportunities',impact:'medium',body:'Remote ICT jobs pay Johannesburg rates from any province. Your location is no longer a barrier for junior developer and support roles.',effort:'Ongoing',tags:['Remote','Entry-level']},
+    ],
+    priority_skills: topGaps.length ? topGaps.slice(0,5) : ['Python','SQL','Communication','Git','Cloud basics'],
+    quick_wins: [
+      'Update your LinkedIn headline with your top 3 skills today',
+      'Apply to one SETA learnership listing this week',
+      'Push one project to GitHub before the weekend',
+    ],
+  };
+}
 
 </script>
 </body>

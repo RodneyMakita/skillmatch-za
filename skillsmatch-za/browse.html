@@ -143,6 +143,25 @@
       .results-toolbar { flex-direction:column; align-items:flex-start; gap:8px; }
       .result-count { font-size:12px; }
     }
+  
+    /* ── Skill gap tooltip ── */
+    .mc-gap-wrap { position:relative; display:inline-block; }
+    .mc-gap-btn { display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid rgba(14,17,23,.15);background:var(--paper);color:var(--ink-soft);cursor:pointer;font-family:var(--font-body);transition:all .15s;margin-top:6px; }
+    .mc-gap-btn:hover { background:var(--teal-lt);border-color:var(--teal);color:var(--teal); }
+    .mc-gap-dot { width:7px;height:7px;border-radius:50%;background:var(--coral);display:inline-block; }
+    .mc-gap-dot.ok { background:var(--teal); }
+    .mc-gap-tooltip { display:none;position:absolute;bottom:calc(100% + 8px);left:0;width:280px;background:var(--ink);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(14,17,23,.25);z-index:200; }
+    .mc-gap-tooltip.open { display:block; }
+    .mc-gap-tooltip::after { content:'';position:absolute;top:100%;left:18px;border:6px solid transparent;border-top-color:var(--ink); }
+    .gap-row { display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06); }
+    .gap-row:last-child { border-bottom:none; }
+    .gap-row-dot { width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px; }
+    .gap-row-dot.missing { background:#f0826a; }
+    .gap-row-dot.partial  { background:#c8a84b; }
+    .gap-row-dot.present  { background:#2dd4a0; }
+    .gap-row-label  { font-size:12px;font-weight:500;color:rgba(255,255,255,.9);flex:1; }
+    .gap-row-tip    { font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;line-height:1.4; }
+    .gap-row-status { font-size:10px;font-weight:600;flex-shrink:0;margin-top:2px; }
   </style>
 </head>
 <body>
@@ -413,8 +432,9 @@
             ? `<div class="match-score" style="color:${mc}">${score}%<span class="ms-label">match</span></div>`
             : `<div style="font-size:12px;color:var(--ink-muted)">${esc(o.stipend||'')}</div>`
           }
-        </div>`;
-      card.addEventListener('click', e => { if (!e.target.closest('.save-btn')) openModal(o); });
+        </div>
+        ${role === 'learner' ? '<div class="mc-gap-wrap" id="bgap-' + o.id + '"><button class="mc-gap-btn" onclick="event.stopPropagation();browseToggleGap(this,\'' + o.id + '\')"><span class="mc-gap-dot"></span> Skill gap analysis</button><div class="mc-gap-tooltip"><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.9);margin-bottom:8px">Skill gap analysis</div><div class="gap-loading" style="font-size:11px;color:rgba(255,255,255,.5)">Loading…</div></div></div>' : ''}`;
+      card.addEventListener('click', e => { if (!e.target.closest('.save-btn') && !e.target.closest('.mc-gap-wrap')) openModal(o); });
       grid.appendChild(card);
     });
   }
@@ -525,6 +545,123 @@
 
   /* ── Init ── */
   init();
+
+  /* ── Skill Gap Analysis for Browse page ────────────────── */
+  const _browseGapCache = {};
+
+  function browseToggleGap(btn, oppId) {
+    const wrap    = btn.closest('.mc-gap-wrap');
+    const tooltip = wrap.querySelector('.mc-gap-tooltip');
+    const isOpen  = tooltip.classList.contains('open');
+
+    document.querySelectorAll('.mc-gap-tooltip.open').forEach(t => t.classList.remove('open'));
+    if (isOpen) return;
+
+    tooltip.classList.add('open');
+    if (!_browseGapCache[oppId]) browseLoadGap(wrap, oppId);
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.mc-gap-wrap')) {
+      document.querySelectorAll('.mc-gap-tooltip.open').forEach(t => t.classList.remove('open'));
+    }
+  });
+
+  async function browseLoadGap(wrap, oppId) {
+    const tooltip = wrap.querySelector('.mc-gap-tooltip');
+    const loadEl  = tooltip.querySelector('.gap-loading');
+
+    /* Find opp from allOpps array */
+    const opp = allOpps.find(o => o.id === oppId) || { id: oppId, title: '', skills_req: [] };
+
+    const skills     = JSON.parse(localStorage.getItem('sm_skills') || '[]');
+    const reqSkills  = (opp.skills_req || []).slice(0, 8);
+    const reqText    = reqSkills.join(', ') || (opp.description || '').slice(0, 200) || 'General IT skills';
+
+    if (!skills.length) {
+      loadEl.textContent = 'Add skills to your profile first.';
+      return;
+    }
+
+    try {
+      const jwt = localStorage.getItem('sm_access_token') || '';
+      const res = await fetch(typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL + '/functions/v1/claude-proxy' : '', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+        body: JSON.stringify({
+          system: 'You are a career advisor. Reply ONLY with a valid JSON array, no text before or after it, no markdown. Each item: {"skill":"name","status":"present","tip":"short tip"} — status must be present, partial, or missing.',
+          messages: [{ role: 'user', content:
+            'Job: ' + opp.title +
+            '. Required skills: ' + reqText +
+            '. Learner has: ' + skills.slice(0, 12).join(', ') +
+            '. List exactly 5 skill objects. ONLY the JSON array.' }],
+          max_tokens: 500,
+        }),
+      });
+
+      const data = await res.json();
+      const raw  = (data?.content?.[0]?.text || '').trim();
+
+      let items = [];
+      try {
+        let clean = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        const s = clean.indexOf('['), e = clean.lastIndexOf(']');
+        if (s >= 0 && e > s) clean = clean.slice(s, e + 1);
+        const parsed = JSON.parse(clean);
+        items = Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        items = browseGapFallback(reqSkills, skills);
+      }
+
+      if (!items.length) items = browseGapFallback(reqSkills, skills);
+
+      _browseGapCache[oppId] = items;
+      browseRenderGap(tooltip, items);
+
+      const missing = items.filter(i => i.status === 'missing').length;
+      wrap.querySelector('.mc-gap-btn').innerHTML =
+        '<span class="mc-gap-dot' + (missing <= 1 ? ' ok' : '') + '"></span> ' +
+        missing + ' gap' + (missing !== 1 ? 's' : '') + ' found';
+
+    } catch(e) {
+      const fallback = browseGapFallback(reqSkills, skills);
+      if (fallback.length) { _browseGapCache[oppId] = fallback; browseRenderGap(tooltip, fallback); }
+      else loadEl.textContent = 'Could not load — try again';
+    }
+  }
+
+  function browseGapFallback(reqSkills, learnerSkills) {
+    const lower = learnerSkills.map(s => s.toLowerCase());
+    const list  = reqSkills.length ? reqSkills : ['Communication','Problem Solving','MS Office','Teamwork','IT Support'];
+    return list.slice(0, 5).map(skill => {
+      const sl  = skill.toLowerCase();
+      const has = lower.some(l => l.includes(sl) || sl.includes(l));
+      const partial = !has && lower.some(l => sl.split(' ').some(w => w.length > 3 && l.includes(w)));
+      return {
+        skill,
+        status: has ? 'present' : partial ? 'partial' : 'missing',
+        tip:    has ? 'You already have this' : partial ? 'Build on existing knowledge' : 'Consider adding to profile',
+      };
+    });
+  }
+
+  function browseRenderGap(tooltip, items) {
+    const statusColor = { present:'#2dd4a0', partial:'#c8a84b', missing:'#f0826a' };
+    const statusLabel = { present:'✓ Have it', partial:'~ Partial', missing:'✗ Missing' };
+    tooltip.innerHTML =
+      '<div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.9);margin-bottom:8px">Skill gap analysis</div>' +
+      items.map(item =>
+        '<div class="gap-row">' +
+        '<div class="gap-row-dot ' + item.status + '"></div>' +
+        '<div style="flex:1;min-width:0">' +
+        '<div class="gap-row-label">' + (item.skill||'') + '</div>' +
+        '<div class="gap-row-tip">' + (item.tip||'') + '</div>' +
+        '</div>' +
+        '<div class="gap-row-status" style="color:' + (statusColor[item.status]||'#fff') + '">' + (statusLabel[item.status]||'') + '</div>' +
+        '</div>'
+      ).join('');
+  }
+
 </script>
 </body>
 </html>

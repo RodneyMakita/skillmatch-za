@@ -563,8 +563,21 @@ async function saveExternalJobs(jobs) {
  * @param {Object} opts  - { fetchExternal, progressCallback }
  * @returns {Array}      - sorted match results
  */
+let _pipelineRunning = false;
+let _pipelinePromise  = null;
+
 async function runMatchingPipeline({ fetchExternal = true, progressCallback = null } = {}) {
-  if (!ensureApiKey()) return [];  // prompt for key if missing
+  if (_pipelineRunning && _pipelinePromise) {
+    console.log('[Matching] Already running — reusing');
+    return _pipelinePromise;
+  }
+  _pipelineRunning = true;
+  _pipelinePromise = _runPipelineImpl({ fetchExternal, progressCallback });
+  try { return await _pipelinePromise; }
+  finally { _pipelineRunning = false; _pipelinePromise = null; }
+}
+
+async function _runPipelineImpl({ fetchExternal = true, progressCallback = null } = {}) {
   const progress = (msg, pct) => {
     console.log(`[Matching] ${msg}`);
     if (progressCallback) progressCallback(msg, pct);
@@ -641,9 +654,12 @@ async function runMatchingPipeline({ fetchExternal = true, progressCallback = nu
 
   progress(`Scoring ${toScore.length} new opportunities (${alreadyDone.length} already scored)…`, 45);
 
-  // Only score new/unscored opportunities
-  const newlyScored = toScore.length > 0
-    ? await scoreAllOpportunities(learnerId, learnerContext, toScore, progress)
+  // Cap at 12 new scorings per run to stay under Groq rate limit
+  const toScoreCapped = toScore.slice(0, 12);
+  if (toScore.length > 12)
+    console.log(`[Matching] Capping to 12 (${toScore.length - 12} deferred to next run)`);
+  const newlyScored = toScoreCapped.length > 0
+    ? await scoreAllOpportunities(learnerId, learnerContext, toScoreCapped, progress)
     : [];
 
   const scoredMatches = [...alreadyDone, ...newlyScored];
@@ -723,27 +739,22 @@ function buildLearnerContext(skills, qual, field, province, city, quals, certs, 
  * Score all opportunities in batches of SCORE_BATCH.
  */
 async function scoreAllOpportunities(learnerId, learnerContext, opportunities, progress) {
-  const results  = [];
-  const total    = opportunities.length;
-  // Groq free tier: 30 req/min. With batch of 3 and 1.5s delay = ~20 req/min safely.
-  const DELAY_MS = 1500;
+  const results   = [];
+  const total     = opportunities.length;
+  const batchSize = 2;
+  const delayMs   = 2500;
 
-  for (let i = 0; i < total; i += SCORE_BATCH) {
-    const batch  = opportunities.slice(i, i + SCORE_BATCH);
-    const scored = await Promise.all(
-      batch.map(opp => scoreOneOpportunity(learnerId, learnerContext, opp))
-    );
-    results.push(...scored);
-
-    const pct = 45 + Math.round(((i + SCORE_BATCH) / total) * 40);
-    if (progress) progress(`Scored ${Math.min(i + SCORE_BATCH, total)} / ${total}…`, pct);
-
-    // Pause between batches to stay under Groq's 30 req/min free tier limit
-    if (i + SCORE_BATCH < total) {
-      await new Promise(r => setTimeout(r, DELAY_MS));
+  for (let i = 0; i < total; i += batchSize) {
+    const batch = opportunities.slice(i, i + batchSize);
+    for (const opp of batch) {
+      results.push(await scoreOneOpportunity(learnerId, learnerContext, opp));
+    }
+    const pct = 45 + Math.round(((i + batchSize) / total) * 40);
+    if (progress) progress(`Scored ${Math.min(i + batchSize, total)} / ${total}…`, pct);
+    if (i + batchSize < total) {
+      await new Promise(r => setTimeout(r, delayMs));
     }
   }
-
   return results;
 }
 
@@ -758,10 +769,12 @@ async function scoreOneOpportunity(learnerId, learnerContext, opp) {
   const prompt     = buildScoringPrompt(learnerContext, oppContext);
 
   try {
-    const response = await fetch(CLAUDE_PROXY_URL, {
-      method:  'POST',
-      headers: await claudeHeaders(),
-      body: JSON.stringify({
+    let response = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      response = await fetch(CLAUDE_PROXY_URL, {
+        method:  'POST',
+        headers: await claudeHeaders(),
+        body: JSON.stringify({
         model:      CLAUDE_MODEL,
         max_tokens: CLAUDE_MAX_TOKENS,
         system: `You are an expert career advisor for SkillsMatch ZA, a South African skills-matching platform.
@@ -786,6 +799,11 @@ ALWAYS respond with ONLY valid JSON, no markdown, no preamble:
       })
     });
 
+      if (response.status !== 429) break;
+      const wait = 3000 * Math.pow(2, attempt);
+      console.log(`Groq 429 — retrying in ${wait/1000}s`);
+      await new Promise(r => setTimeout(r, wait));
+    }
     if (!response.ok) throw new Error(`Claude API ${response.status}`);
 
     const apiData = await response.json();
@@ -922,6 +940,11 @@ Write career advice for this learner.`
       })
     });
 
+      if (response.status !== 429) break;
+      const wait = 3000 * Math.pow(2, attempt);
+      console.log(`Groq 429 — retrying in ${wait/1000}s`);
+      await new Promise(r => setTimeout(r, wait));
+    }
     if (!response.ok) throw new Error(`Claude API ${response.status}`);
     const data   = await response.json();
     const parsed = safeParseJSON(data.content?.[0]?.text || '{}');
@@ -1105,24 +1128,35 @@ async function renderAllMatches(containerId, limit = null) {
 function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
 
 function safeParseJSON(str) {
+  if (!str) return {};
   try {
-    const clean = str.replace(/```json|```/g, '').trim();
+    let clean = str.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    const s = clean.indexOf('{'), e = clean.lastIndexOf('}');
+    if (s >= 0 && e > s) clean = clean.slice(s, e+1);
     return JSON.parse(clean);
   } catch {
-    const m = str.match(/\{[\s\S]*\}/);
-    if (m) { try { return JSON.parse(m[0]); } catch { return {}; } }
+    const m = str.match(/\{[\s\S]*?\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch {} }
     return {};
   }
 }
 
 function safeParseJSONArray(str) {
+  if (!str) return [];
   try {
-    const clean = str.replace(/```json|```/g, '').trim();
+    let clean = str.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    const s = clean.indexOf('['), e = clean.lastIndexOf(']');
+    if (s >= 0 && e > s) clean = clean.slice(s, e+1);
     const parsed = JSON.parse(clean);
-    return Array.isArray(parsed) ? parsed : [];
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && typeof parsed === 'object') {
+      const key = Object.keys(parsed).find(k => Array.isArray(parsed[k]));
+      if (key) return parsed[key];
+    }
+    return [];
   } catch {
-    const m = str.match(/\[[\s\S]*\]/);
-    if (m) { try { const p = JSON.parse(m[0]); return Array.isArray(p) ? p : []; } catch { return []; } }
+    const m = str.match(/\[[\s\S]*?\]/);
+    if (m) { try { const p = JSON.parse(m[0]); return Array.isArray(p) ? p : []; } catch {} }
     return [];
   }
 }

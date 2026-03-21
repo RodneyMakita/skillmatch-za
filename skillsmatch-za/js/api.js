@@ -45,7 +45,7 @@ db.auth.getSession().then(({ data: { session } }) => {
  */
 async function registerUser({ email, password, role, firstName, lastName, province, phone,
                                companyName, institutionType, institutionName, qualification, studyField, skills,
-                               qualifications, certificates, linkedin_url, github_url, cv_url, city }) {
+                               qualifications, certificates, work_experience, linkedin_url, github_url, cv_url, city }) {
   try {
     /* Step 1: Create Supabase Auth account */
     const { data: authData, error: authErr } = await db.auth.signUp({ email, password });
@@ -100,6 +100,7 @@ async function registerUser({ email, password, role, firstName, lastName, provin
         .update({
           institution_type: institutionType || '',
           institution_name: institutionName || '',
+          work_experience:  work_experience  || [],
           qualification:    qualification   || '',
           study_field:      studyField      || '',
           skills:           skills          || [],
@@ -302,15 +303,22 @@ async function _resolveRoleId(userId, role) {
   if (role === 'learner') {
     const { data } = await db
       .from('learners')
-      .select('id, skills, qualification, institution_name, avg_match_score, profile_strength')
+      .select('id, skills, qualification, study_field, institution_type, institution_name, qualifications, certificates, work_experience, linkedin_url, github_url, cv_url, city, drivers_license, avg_match_score, profile_strength, status')
       .eq('user_id', userId)
       .single();
     if (data) {
-      localStorage.setItem('sm_learner_id',  data.id);
-      localStorage.setItem('sm_skills',      JSON.stringify(data.skills || []));
-      localStorage.setItem('sm_qual',        data.qualification    || '');
-      localStorage.setItem('sm_field',       data.study_field      || '');
-      localStorage.setItem('sm_institution', data.institution_name || '');
+      localStorage.setItem('sm_learner_id',    data.id);
+      localStorage.setItem('sm_skills',        JSON.stringify(data.skills        || []));
+      localStorage.setItem('sm_qual',          data.qualification    || '');
+      localStorage.setItem('sm_field',         data.study_field      || '');
+      localStorage.setItem('sm_institution',   data.institution_name || '');
+      localStorage.setItem('sm_city',          data.city             || '');
+      localStorage.setItem('sm_linkedin',      data.linkedin_url     || '');
+      localStorage.setItem('sm_github',        data.github_url       || '');
+      localStorage.setItem('sm_cv',            data.cv_url           || '');
+      localStorage.setItem('sm_qualifications',JSON.stringify(data.qualifications  || []));
+      localStorage.setItem('sm_certificates',  JSON.stringify(data.certificates    || []));
+      localStorage.setItem('sm_work_exp',      JSON.stringify(data.work_experience || []));
     }
   }
 
@@ -325,7 +333,7 @@ async function _resolveRoleId(userId, role) {
 }
 
 /** Calculate profile strength 0–100 */
-function _calcStrength({ qualification, institutionName, skills }) {
+function _calcStrength({ qualification, institutionName, skills, workExp }) {
   let score = 20; // base
   if (qualification)    score += 25;
   if (institutionName)  score += 15;
@@ -432,8 +440,19 @@ async function getLearnerProfile() {
       .single();
 
     if (error) throw error;
-    localStorage.setItem('sm_learner_id', data.id);
-    localStorage.setItem('sm_skills', JSON.stringify(data.skills || []));
+    // Cache every field locally so profile form always has data
+    localStorage.setItem('sm_learner_id',    data.id);
+    localStorage.setItem('sm_skills',        JSON.stringify(data.skills        || []));
+    localStorage.setItem('sm_qual',          data.qualification    || '');
+    localStorage.setItem('sm_field',         data.study_field      || '');
+    localStorage.setItem('sm_institution',   data.institution_name || '');
+    localStorage.setItem('sm_city',          data.city             || '');
+    localStorage.setItem('sm_linkedin',      data.linkedin_url     || '');
+    localStorage.setItem('sm_github',        data.github_url       || '');
+    localStorage.setItem('sm_cv',            data.cv_url           || '');
+    localStorage.setItem('sm_qualifications',JSON.stringify(data.qualifications  || []));
+    localStorage.setItem('sm_certificates',  JSON.stringify(data.certificates    || []));
+    localStorage.setItem('sm_work_exp',      JSON.stringify(data.work_experience || []));
     return { success: true, data };
   } catch (err) {
     console.error('getLearnerProfile:', err.message);
@@ -446,12 +465,13 @@ async function updateLearnerProfile(updates) {
     const uid = localStorage.getItem('sm_uid');
     if (!uid || uid === 'null') throw new Error('No user ID.');
 
-    /* Recalculate strength if skills updated */
-    if (updates.skills) {
+    /* Recalculate profile strength */
+    if (updates.skills || updates.qualification || updates.work_experience) {
       updates.profile_strength = _calcStrength({
         qualification:   updates.qualification   || localStorage.getItem('sm_qual') || '',
         institutionName: updates.institution_name || '',
-        skills:          updates.skills
+        skills:          updates.skills || JSON.parse(localStorage.getItem('sm_skills')||'[]'),
+        workExp:         updates.work_experience  || [],
       });
     }
 
@@ -462,7 +482,17 @@ async function updateLearnerProfile(updates) {
       .select().single();
 
     if (error) throw error;
-    if (updates.skills) localStorage.setItem('sm_skills', JSON.stringify(updates.skills));
+    if (updates.skills)          localStorage.setItem('sm_skills',        JSON.stringify(updates.skills));
+    if (updates.qualification)   localStorage.setItem('sm_qual',          updates.qualification);
+    if (updates.study_field)     localStorage.setItem('sm_field',         updates.study_field);
+    if (updates.institution_name)localStorage.setItem('sm_institution',   updates.institution_name);
+    if (updates.city)            localStorage.setItem('sm_city',          updates.city);
+    if (updates.linkedin_url)    localStorage.setItem('sm_linkedin',      updates.linkedin_url);
+    if (updates.github_url)      localStorage.setItem('sm_github',        updates.github_url);
+    if (updates.cv_url)          localStorage.setItem('sm_cv',            updates.cv_url);
+    if (updates.qualifications)  localStorage.setItem('sm_qualifications',JSON.stringify(updates.qualifications));
+    if (updates.work_experience) localStorage.setItem('sm_work_exp',      JSON.stringify(updates.work_experience));
+    if (updates.certificates)    localStorage.setItem('sm_certificates',  JSON.stringify(updates.certificates));
     return { success: true, data };
   } catch (err) {
     console.error('updateLearnerProfile:', err.message);
@@ -512,21 +542,21 @@ async function toggleSaveMatch(matchId, saved) {
 async function saveMatches(learnerId, matchRows) {
   try {
     if (!learnerId || learnerId === 'null' || !matchRows.length) return { success: true };
-    const { error } = await db
-      .from('matches')
-      .upsert(
-        matchRows.map(m => ({
-          learner_id:     learnerId,
-          opp_id:         m.opp_id,
-          score:          m.score,
-          ai_insight:     m.ai_insight,
-          skill_gaps:     m.skill_gaps    || [],
-          skill_matches:  m.skill_matches || [],
-          recommendation: m.recommendation || '',
-        })),
-        { onConflict: 'learner_id,opp_id' }
-      );
-    if (error) throw error;
+    const rows = matchRows.map(m => ({
+      learner_id:     learnerId,
+      opp_id:         m.opp_id,
+      score:          m.score,
+      ai_insight:     m.ai_insight     || '',
+      skill_gaps:     m.skill_gaps     || [],
+      skill_matches:  m.skill_matches  || [],
+      recommendation: m.recommendation || '',
+    }));
+    for (let i = 0; i < rows.length; i += 10) {
+      const { error } = await db
+        .from('matches')
+        .upsert(rows.slice(i, i + 10), { onConflict: 'learner_id,opp_id' });
+      if (error) console.warn('saveMatches batch error:', error.message);
+    }
     return { success: true };
   } catch (err) {
     console.error('saveMatches:', err.message);
@@ -898,57 +928,4 @@ async function updateUserDetails(updates) {
     console.error('updateUserDetails:', err.message);
     return { success: false, error: err.message };
   }
-}
-
-/* ============================================================
-   NOTIFICATIONS
-   ============================================================ */
-async function getNotifications(limit = 20) {
-  try {
-    await ensureProfile();
-    const uid = localStorage.getItem('sm_uid');
-    if (!uid || uid === 'null') return { success: true, data: [] };
-    const { data, error } = await db
-      .from('notifications').select('*').eq('user_id', uid)
-      .order('created_at', { ascending: false }).limit(limit);
-    if (error) throw error;
-    return { success: true, data };
-  } catch (err) {
-    console.error('getNotifications:', err.message);
-    return { success: false, data: [] };
-  }
-}
-async function markNotificationsRead(notifId = null) {
-  try {
-    const uid = localStorage.getItem('sm_uid');
-    if (!uid || uid === 'null') return;
-    let q = db.from('notifications').update({ is_read: true }).eq('user_id', uid);
-    if (notifId) q = q.eq('id', notifId);
-    await q;
-  } catch (err) { console.error('markNotificationsRead:', err.message); }
-}
-async function notifyLearner({ userId, learnerEmail, learnerName, oppTitle, employerName, newStatus }) {
-  const PROXY = SUPABASE_URL + '/functions/v1/claude-proxy';
-  const titles = {
-    under_review:'Your application is under review', shortlisted:'You have been shortlisted!',
-    interview:'Interview invitation!', approved:'Application approved!',
-    rejected:'Application update from ' + (employerName||'employer'),
-    placed:'Congratulations - you have been placed!',
-  };
-  const msgs = {
-    under_review: 'Hi ' + learnerName + ', your application for ' + oppTitle + ' at ' + employerName + ' is under review.',
-    shortlisted:  'Great news, ' + learnerName + '! You have been shortlisted for ' + oppTitle + ' at ' + employerName + '.',
-    interview:    'You are invited for an interview for ' + oppTitle + ' at ' + employerName + ', ' + learnerName + '!',
-    approved:     'Congratulations, ' + learnerName + '! Your application for ' + oppTitle + ' at ' + employerName + ' has been approved.',
-    rejected:     'Thank you, ' + learnerName + '. ' + employerName + ' will not be moving forward with your application for ' + oppTitle + '. Keep going!',
-    placed:       'Congratulations, ' + learnerName + '! You have been placed at ' + employerName + ' for ' + oppTitle + '.',
-  };
-  try {
-    const { data: { session } } = await db.auth.getSession();
-    await fetch(PROXY, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(session?.access_token||''), 'X-Action':'notify' },
-      body: JSON.stringify({ userId, learnerEmail, learnerName, title: titles[newStatus]||'Update', message: msgs[newStatus]||'', type: newStatus==='rejected'?'warning':'success', link:'dashboard.html#l-apps', newStatus, oppTitle, employerName }),
-    });
-  } catch(e) { console.warn('notifyLearner:', e.message); }
 }

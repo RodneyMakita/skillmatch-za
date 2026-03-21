@@ -51,11 +51,12 @@
     .nav-logo span { color: var(--teal); }
 
     .nav-links { display: flex; align-items: center; gap: 10px; }
-    .nav-hamburger { display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:6px; z-index:200; }
-    .nav-hamburger span { display:block; width:22px; height:2px; background:var(--ink); border-radius:2px; transition:all .25s; }
-    .nav-hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
-    .nav-hamburger.open span:nth-child(2) { opacity:0; }
-    .nav-hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+
+    .nav-ham { display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:6px; margin-left:auto; }
+    .nav-ham span { display:block; width:22px; height:2px; background:var(--ink); border-radius:2px; transition:all .25s; }
+    .nav-ham.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+    .nav-ham.open span:nth-child(2) { opacity:0; }
+    .nav-ham.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
 
     .btn {
       font-family: 'DM Sans', sans-serif;
@@ -524,28 +525,75 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 900px) {
-      nav { padding: 14px 20px; position:relative; flex-wrap:wrap; }
-      .nav-logo { font-size:17px; }
-      .nav-hamburger { display:flex; }
-      .nav-links { display:none; flex-direction:column; gap:10px; width:100%; padding:12px 0 4px; }
-      .nav-links.open { display:flex; }
-      .nav-links .btn { width:100%; text-align:center; }
-      .hero { grid-template-columns: 1fr; min-height: auto; }
-      .hero-left { padding: 80px 20px 40px; }
+      /* Nav */
+      nav { padding: 14px 20px; position: relative; flex-wrap: wrap; gap: 0; }
+      .nav-logo { font-size: 17px; flex: 1; }
+      .nav-ham { display: flex; }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        gap: 8px;
+        padding: 12px 0 6px;
+        border-top: 1px solid rgba(14,17,23,.08);
+        margin-top: 10px;
+      }
+      .nav-links.open { display: flex; }
+      .nav-links .btn { width: 100%; text-align: center; padding: 11px 20px; }
+
+      /* Hero */
+      .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 60px; }
+      .hero-left { padding: 44px 20px 40px; }
+      h1 { font-size: clamp(30px, 9vw, 48px); letter-spacing: -1px; }
+      .hero-sub { font-size: 16px; margin-top: 18px; }
+      .hero-ctas { flex-direction: column; gap: 10px; margin-top: 28px; }
+      .hero-ctas .btn { width: 100%; text-align: center; padding: 13px 20px; font-size: 15px; }
+      .hero-proof { margin-top: 36px; gap: 16px; flex-wrap: wrap; }
+      .proof-num { font-size: 22px; }
+      .proof-divider { display: none; }
       .hero-right { display: none; }
-      .hero-left h1 { font-size:clamp(28px,8vw,48px); }
-      .hero-ctas { flex-direction:column; }
-      .hero-ctas .btn { width:100%; text-align:center; }
-      .section { padding: 50px 20px; }
-      .steps-grid { grid-template-columns: 1fr; gap:14px; }
-      .who-section { padding: 50px 20px; }
-      .who-grid { grid-template-columns: 1fr; gap:14px; }
-      .stats-banner { grid-template-columns: 1fr 1fr; padding: 32px 20px; }
-      .institutions { padding: 40px 20px; }
-      .cta-section { padding: 50px 20px; }
-      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; gap:8px; }
+
+      /* Sections */
+      .section { padding: 52px 20px; }
+      h2 { font-size: clamp(26px, 7vw, 40px); letter-spacing: -1px; }
+      .section-sub { font-size: 15px; }
+
+      /* Steps */
+      .steps-grid { grid-template-columns: 1fr; margin-top: 36px; }
+      .step { padding: 28px 24px; }
+      .step-divider { display: none; }
+
+      /* Who */
+      .who-section { padding: 52px 20px; }
+      .who-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 36px; }
+      .who-card { padding: 24px 20px; }
+
+      /* Stats */
+      .stats-banner { grid-template-columns: 1fr 1fr; padding: 32px 20px; gap: 0; }
+      .stat-n { font-size: 32px; }
+      .stat-item { padding: 16px 12px; }
+
+      /* Institutions */
+      .institutions { padding: 44px 20px; }
+      .inst-logos { gap: 10px; }
+      .inst-pill { font-size: 13px; padding: 8px 16px; }
+
+      /* CTA */
+      .cta-section { padding: 52px 20px; }
+      .cta-btns { flex-direction: column; align-items: center; gap: 10px; }
+      .cta-btns .btn { width: 100%; max-width: 340px; text-align: center; }
+
+      /* Footer */
+      footer { padding: 28px 20px; flex-direction: column; align-items: flex-start; gap: 14px; }
+      .footer-links { gap: 16px; }
     }
-    @media(max-width:480px){ .stats-banner{grid-template-columns:1fr} }
+
+    @media (max-width: 480px) {
+      .stats-banner { grid-template-columns: 1fr 1fr; }
+      .stat-n { font-size: 28px; letter-spacing: -1px; }
+      .hero-kicker { font-size: 11px; padding: 5px 12px; }
+      .steps-grid { border-radius: 12px; }
+    }
   </style>
 </head>
 <body>
@@ -553,7 +601,7 @@
   <!-- NAV -->
   <nav id="mainNav">
     <a href="index.html" class="nav-logo">Skills<span>Match</span> ZA</a>
-    <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileNav()" aria-label="Menu">
+    <button class="nav-ham" id="navHam" onclick="toggleNav()" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
     <div class="nav-links" id="navLinks">
@@ -767,6 +815,19 @@
   </footer>
 
   <script>
+    function toggleNav() {
+      document.getElementById('navHam').classList.toggle('open');
+      document.getElementById('navLinks').classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      var nav = document.getElementById('mainNav');
+      if (!nav.contains(e.target)) {
+        document.getElementById('navHam').classList.remove('open');
+        document.getElementById('navLinks').classList.remove('open');
+      }
+    });
+  </script>
+  <script>
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(e => {
         if (e.isIntersecting) {
@@ -779,17 +840,5 @@
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   </script>
 
-  <script>
-    function toggleMobileNav() {
-      document.getElementById('navHamburger').classList.toggle('open');
-      document.getElementById('navLinks').classList.toggle('open');
-    }
-    document.addEventListener('click', e => {
-      if (!document.getElementById('mainNav').contains(e.target)) {
-        document.getElementById('navHamburger').classList.remove('open');
-        document.getElementById('navLinks').classList.remove('open');
-      }
-    });
-  </script>
 </body>
 </html>
