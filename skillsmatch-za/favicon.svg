@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d7a5f"/>
+      <stop offset="100%" style="stop-color:#085c47"/>
+    </linearGradient>
+    <linearGradient id="dot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#c8a84b"/>
+      <stop offset="100%" style="stop-color:#a8882b"/>
+    </linearGradient>
+  </defs>
+  <!-- rounded square background -->
+  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
+  <!-- S letterform -->
+  <path d="M8 11.5 C8 9.5 9.8 8 12 8 L16 8 C17.1 8 18 8.9 18 10 C18 11.1 17.1 12 16 12 L13 12 C11.9 12 11 12.9 11 14 C11 15.1 11.9 16 13 16 L16 16 C18.2 16 20 17.8 20 20 C20 22.2 18.2 24 16 24 L12 24 C10 24 8.5 22.8 8 21.2"
+        stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <!-- M letterform -->
+  <path d="M21 8 L21 24 M21 8 L25 16 L29 8 M29 8 L29 24"
+        stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- gold dot accent -->
+  <circle cx="26" cy="27" r="2.5" fill="url(#dot)"/>
+</svg>

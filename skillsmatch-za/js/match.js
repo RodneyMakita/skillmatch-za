@@ -105,22 +105,48 @@ async function fetchExternalJobs(learner, { maxJobs = 30, forceRefresh = false }
 
   console.log(`fetchExternalJobs: "${field}" | skills: [${skills.slice(0,3).join(',')}] | ${province}`);
 
-  // Run all sources in parallel — each has its own fallback
-  const [rssJobs, groqJobs] = await Promise.allSettled([
+  // ── Phase 1: real job APIs run in parallel ──────────────────────────────
+  // Adzuna (real SA listings) + JSearch (LinkedIn/Indeed/Glassdoor) are the
+  // primary sources. RSS is a lightweight supplement. All three return only
+  // real postings with working apply links.
+  const [adzunaJobs, jsearchJobs, rssJobs] = await Promise.allSettled([
+    fetchFromAdzuna(skills, field, province),
+    fetchFromJSearch(skills, field, province),
     fetchFromRSS(skills, field, qual, province, city),
-    fetchFromGroqSearch(skills, field, qual, province),
   ]);
 
-  const allJobs = [
-    ...(rssJobs.status  === 'fulfilled' ? rssJobs.value  : []),
-    ...(groqJobs.status === 'fulfilled' ? groqJobs.value : []),
+  const realJobs = [
+    ...(adzunaJobs.status  === 'fulfilled' ? adzunaJobs.value  : []),
+    ...(jsearchJobs.status === 'fulfilled' ? jsearchJobs.value : []),
+    ...(rssJobs.status     === 'fulfilled' ? rssJobs.value     : []),
   ];
 
-  console.log(`fetchExternalJobs: ${allJobs.length} total (RSS: ${rssJobs.value?.length||0}, Groq supplement: ${groqJobs.value?.length||0})`);
+  console.log(`fetchExternalJobs real sources — Adzuna:${adzunaJobs.value?.length||0} JSearch:${jsearchJobs.value?.length||0} RSS:${rssJobs.value?.length||0} → ${realJobs.length} total`);
+
+  // ── Phase 2: Groq synthetic supplement — ONLY if real APIs returned nothing ──
+  // Groq generates plausible-looking but synthetic listings. Only use it as a
+  // last resort so learners always see real jobs when the APIs are working.
+  let groqCount = 0;
+  const allJobs = [...realJobs];
+  if (realJobs.length < 5) {
+    console.warn('fetchExternalJobs: real APIs returned fewer than 5 jobs — using Groq supplement as fallback');
+    try {
+      const groqJobs = await fetchFromGroqSearch(skills, field, qual, province);
+      // Tag synthetic jobs clearly so learners know
+      const tagged = groqJobs.map(j => ({ ...j, source: j.source || 'groq-supplement', _synthetic: true }));
+      allJobs.push(...tagged);
+      groqCount = tagged.length;
+    } catch(e) {
+      console.warn('Groq supplement also failed:', e.message);
+    }
+  }
+
+  console.log(`fetchExternalJobs: ${allJobs.length} total (real: ${realJobs.length}, synthetic fallback: ${groqCount})`);
 
   // Deduplicate, validate links, limit
+  // Real jobs are first in the array so they win deduplication over synthetic ones
   const deduped   = deduplicateJobs(allJobs);
-  const validated = deduped.map(j => ({ ...j, apply_url: sanitiseUrl(j.apply_url) }));
+  const validated = deduped.map(j => ({ ...j, apply_url: sanitiseUrl(j.apply_url) })).filter(j => j.apply_url);
   const limited   = validated.slice(0, maxJobs);
 
   if (!limited.length) {
@@ -204,38 +230,81 @@ function extractStipend(desc) {
    Add to Edge Function: supabase secrets set ADZUNA_APP_ID=xxx ADZUNA_APP_KEY=xxx
    ─────────────────────────────────────────────────────────────────────── */
 async function fetchFromAdzuna(skills, field, province) {
-  const headers = await claudeHeaders();
-  const query   = encodeURIComponent(`${field || skills.slice(0,3).join(' ')} South Africa`);
+  // Uses X-Action: 'jobs' — the edge function routes this to Adzuna + Reed
+  const headers   = await claudeHeaders();
+  const keywords  = [field, skills.slice(0,3).join(' ')].filter(Boolean).join(' ') || 'learnership';
 
   try {
-    const res  = await fetch(CLAUDE_PROXY_URL, {
-      method: 'POST',
-      headers: { ...headers, 'X-Action': 'adzuna' },
-      body: JSON.stringify({ query, province, results_per_page: 20 })
+    const res = await fetch(CLAUDE_PROXY_URL, {
+      method:  'POST',
+      headers: { ...headers, 'X-Action': 'jobs' },
+      body:    JSON.stringify({ keywords, province, field, skills }),
     });
 
-    if (!res.ok) return [];  // Adzuna keys not set — silently skip
-    const data  = await res.json();
-    const jobs  = data.results || [];
+    if (!res.ok) { console.warn('Adzuna/Reed HTTP', res.status); return []; }
+    const data = await res.json();
+    if (data.warning) { console.warn('Adzuna/Reed:', data.warning); return []; }
 
-    return jobs.map(j => ({
-      title:       j.title         || 'Unknown Position',
-      company:     j.company?.display_name || 'Unknown Company',
-      location:    j.location?.display_name || province,
-      province:    province,
-      type:        inferType(j.title || ''),
-      sector:      inferSector(j.title || '', j.category?.label || ''),
-      description: (j.description || '').replace(/<[^>]+>/g, '').slice(0, 600),
-      skills_req:  extractSkillsFromDesc(j.description || ''),
-      stipend:     j.salary_min ? `R${Math.round(j.salary_min)}–R${Math.round(j.salary_max||j.salary_min)}/year` : null,
-      closing_date: null,
-      is_funded:   false,
-      is_remote:   /remote/i.test(j.title + j.description),
-      apply_url:   j.redirect_url || null,
-      source:      'adzuna',
-    }));
+    return (data.data || []).map(j => ({
+      title:        (j.title       || '').slice(0, 200),
+      company:      (j.company     || 'Unknown').slice(0, 200),
+      location:     (j.location    || province).slice(0, 200),
+      province:     extractProvince(j.location || '') || province,
+      type:         inferType(j.title || ''),
+      sector:       inferSector(j.title || '', j.description || ''),
+      description:  (j.description || '').slice(0, 600),
+      skills_req:   extractSkillsFromDesc(j.description || ''),
+      stipend:      j.stipend      || null,
+      closing_date: j.closing_date || null,
+      is_funded:    /seta|funded|stipend/i.test(j.description || ''),
+      is_remote:    j.is_remote    || false,
+      apply_url:    sanitiseUrl(j.apply_url),
+      source:       j.source       || 'adzuna',
+    })).filter(j => j.apply_url);
   } catch(e) {
-    console.warn('Adzuna fetch failed:', e.message);
+    console.warn('fetchFromAdzuna failed:', e.message);
+    return [];
+  }
+}
+
+
+/* ── SOURCE: JSearch (LinkedIn + Indeed + Glassdoor via RapidAPI) ────────────
+   Free plan: 200 calls/month — rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
+   Add key: supabase secrets set JSEARCH_API_KEY=your_key
+   ─────────────────────────────────────────────────────────────────────────── */
+async function fetchFromJSearch(skills, field, province) {
+  const headers  = await claudeHeaders();
+  const keywords = [field, skills.slice(0,3).join(' ')].filter(Boolean).join(' ') || 'learnership';
+
+  try {
+    const res = await fetch(CLAUDE_PROXY_URL, {
+      method:  'POST',
+      headers: { ...headers, 'X-Action': 'jsearch' },
+      body:    JSON.stringify({ keywords, field, skills, province }),
+    });
+
+    if (!res.ok) { console.warn('JSearch HTTP', res.status); return []; }
+    const data = await res.json();
+    if (data.warning) { console.warn('JSearch:', data.warning); return []; }
+
+    return (data.data || []).map(j => ({
+      title:        (j.title       || '').slice(0, 200),
+      company:      (j.company     || 'Unknown').slice(0, 200),
+      location:     (j.location    || province).slice(0, 200),
+      province:     extractProvince(j.location || '') || province,
+      type:         inferType(j.title || ''),
+      sector:       inferSector(j.title || '', j.description || ''),
+      description:  (j.description || '').slice(0, 600),
+      skills_req:   j.skills_req?.length ? j.skills_req : extractSkillsFromDesc(j.description || ''),
+      stipend:      j.stipend      || null,
+      closing_date: j.closing_date || null,
+      is_funded:    /seta|funded|stipend/i.test(j.description || ''),
+      is_remote:    j.is_remote    || false,
+      apply_url:    sanitiseUrl(j.apply_url),
+      source:       j.source       || 'linkedin',
+    })).filter(j => j.apply_url);
+  } catch(e) {
+    console.warn('fetchFromJSearch failed:', e.message);
     return [];
   }
 }
@@ -655,9 +724,9 @@ async function _runPipelineImpl({ fetchExternal = true, progressCallback = null 
   progress(`Scoring ${toScore.length} new opportunities (${alreadyDone.length} already scored)…`, 45);
 
   // Cap at 12 new scorings per run to stay under Groq rate limit
-  const toScoreCapped = toScore.slice(0, 12);
-  if (toScore.length > 12)
-    console.log(`[Matching] Capping to 12 (${toScore.length - 12} deferred to next run)`);
+  const toScoreCapped = toScore.slice(0, 8);  // cap lower to reduce 429s on free Groq tier
+  if (toScore.length > 8)
+    console.log(`[Matching] Capping to 8 (${toScore.length - 8} deferred to next run)`);
   const newlyScored = toScoreCapped.length > 0
     ? await scoreAllOpportunities(learnerId, learnerContext, toScoreCapped, progress)
     : [];
@@ -741,8 +810,8 @@ function buildLearnerContext(skills, qual, field, province, city, quals, certs, 
 async function scoreAllOpportunities(learnerId, learnerContext, opportunities, progress) {
   const results   = [];
   const total     = opportunities.length;
-  const batchSize = 2;
-  const delayMs   = 2500;
+  const batchSize = 1;   // one at a time — avoids stacking Groq calls
+  const delayMs   = 4000;  // 4s between each — stays under 30 req/min free tier
 
   for (let i = 0; i < total; i += batchSize) {
     const batch = opportunities.slice(i, i + batchSize);
@@ -915,31 +984,32 @@ async function generateCareerSummary(topMatches, learner) {
     .map(([skill]) => skill);
 
   try {
-    const response = await fetch(CLAUDE_PROXY_URL, {
-      method: 'POST',
-      headers: await claudeHeaders(),
-      body: JSON.stringify({
-        model:      CLAUDE_MODEL,
-        max_tokens: 500,
-        system: `You are a friendly SA career advisor. Write concise, encouraging advice for a job seeker.
+    let response = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      response = await fetch(CLAUDE_PROXY_URL, {
+        method: 'POST',
+        headers: await claudeHeaders(),
+        body: JSON.stringify({
+          model:      CLAUDE_MODEL,
+          max_tokens: 500,
+          system: `You are a friendly SA career advisor. Write concise, encouraging advice for a job seeker.
 Respond with ONLY a JSON object:
 {
   "headline": "<10 words max: positive summary of their job market position>",
   "tip": "<25 words max: single most impactful thing they can do to improve matches>",
   "top_skill_to_add": "<one specific skill or certificate name that appears most in their gaps>"
 }`,
-        messages: [{
-          role: 'user',
-          content: `Learner skills: ${skills.join(', ')}
+          messages: [{
+            role: 'user',
+            content: `Learner skills: ${skills.join(', ')}
 Top match score: ${topScore}%
 Average match score: ${avgScore}%
 Most common skill gaps across top ${topMatches.length} matches: ${topGaps.join(', ')}
 
 Write career advice for this learner.`
-        }]
-      })
-    });
-
+          }]
+        })
+      });
       if (response.status !== 429) break;
       const wait = 3000 * Math.pow(2, attempt);
       console.log(`Groq 429 — retrying in ${wait/1000}s`);
@@ -990,7 +1060,8 @@ function renderMatchCard(match, container, onApply) {
     <div class="mc-header">
       <div style="flex:1;min-width:0">
         <div class="mc-title">${escHtml(opp.title)}
-          ${isExternal ? `<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:var(--gold-lt);color:var(--gold);font-weight:600;margin-left:6px;vertical-align:middle">${escHtml(opp.source?.toUpperCase())}</span>` : ''}
+          ${isExternal && !opp._synthetic ? `<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:var(--gold-lt);color:var(--gold);font-weight:600;margin-left:6px;vertical-align:middle">${escHtml(opp.source?.toUpperCase())}</span>` : ''}
+      ${opp._synthetic ? `<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:rgba(14,17,23,.08);color:var(--ink-muted);font-weight:500;margin-left:6px;vertical-align:middle">AI-generated listing</span>` : ''}
         </div>
         <div class="mc-company">${escHtml(opp.company)} &mdash; ${escHtml(opp.location)}</div>
       </div>
@@ -1019,9 +1090,11 @@ function renderMatchCard(match, container, onApply) {
     </div>
 
     <div class="mc-apply">
-      ${isExternal && opp.apply_url
+      ${isExternal && opp.apply_url && !opp._synthetic
         ? `<a href="${escHtml(opp.apply_url)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Apply on ${escHtml(opp.source)}</a>`
-        : `<button class="btn btn-primary btn-sm apply-btn">Apply now</button>`
+        : opp._synthetic
+          ? `<span style="font-size:12px;color:var(--ink-muted);align-self:center">Check employer site directly</span>`
+          : `<button class="btn btn-primary btn-sm apply-btn">Apply now</button>`
       }
       <button class="btn btn-ghost btn-sm save-btn">Save</button>
     </div>`;

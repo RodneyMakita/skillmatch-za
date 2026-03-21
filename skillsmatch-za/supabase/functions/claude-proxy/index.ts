@@ -138,6 +138,69 @@ serve(async (req: Request) => {
       return json({ data: deduped, count: deduped.length }, 200, origin);
     }
 
+    // ── JSearch (LinkedIn + Indeed + Glassdoor via RapidAPI) ────
+    if (action === 'jsearch') {
+      const jsearchKey = Deno.env.get('JSEARCH_API_KEY') || '';
+      if (!jsearchKey) {
+        return json({ data: [], count: 0, warning: 'JSEARCH_API_KEY not set. Get a free key at rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch' }, 200, origin);
+      }
+
+      const field    = (body.field    || '').trim();
+      const skills   = Array.isArray(body.skills) ? body.skills.slice(0,4).join(' ') : '';
+      const raw      = (body.keywords || '').trim();
+      const keywords = raw || [field, skills].filter(Boolean).join(' ') || 'learnership South Africa';
+      const province = body.province || 'South Africa';
+      const query    = `${keywords} in ${province} South Africa`;
+
+      console.log('[jsearch] query:', query);
+
+      const url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&num_pages=2&date_posted=month&employment_types=FULLTIME,PARTTIME,INTERN,CONTRACTOR`;
+      const r = await fetch(url, {
+        headers: {
+          'X-RapidAPI-Key':  jsearchKey,
+          'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
+        },
+        signal: AbortSignal.timeout(12000),
+      });
+
+      if (!r.ok) {
+        console.warn('[jsearch] HTTP', r.status, await r.text());
+        return json({ data: [], count: 0 }, 200, origin);
+      }
+
+      const d = await r.json();
+      const jobs = (d.data || []).map((j: any) => ({
+        title:        (j.job_title        || '').slice(0, 200),
+        company:      (j.employer_name    || '').slice(0, 200),
+        location:     [j.job_city, j.job_state, j.job_country].filter(Boolean).join(', ') || province,
+        description:  (j.job_description  || '').replace(/<[^>]+>/g, ' ').trim().slice(0, 600),
+        apply_url:    j.job_apply_link    || j.job_google_link || null,
+        source:       j.job_publisher === 'LinkedIn' ? 'linkedin'
+                    : j.job_publisher === 'Indeed'   ? 'indeed'
+                    : (j.job_publisher || 'jsearch').toLowerCase(),
+        closing_date: j.job_offer_expiration_datetime_utc
+                      ? new Date(j.job_offer_expiration_datetime_utc).toISOString().slice(0,10)
+                      : null,
+        is_remote:    j.job_is_remote || /remote/i.test(j.job_title || ''),
+        stipend:      j.job_min_salary
+                      ? `R${Math.round(j.job_min_salary)}–R${Math.round(j.job_max_salary || j.job_min_salary)}/${j.job_salary_period || 'year'}`
+                      : null,
+        skills_req:   Array.isArray(j.job_required_skills) ? j.job_required_skills.slice(0,10) : [],
+        is_funded:    false,
+      })).filter((j: any) => j.apply_url && j.title);
+
+      // Deduplicate by title+company
+      const seen = new Set<string>();
+      const deduped = jobs.filter((j: any) => {
+        const k = `${j.title.toLowerCase()}|${j.company.toLowerCase()}`;
+        if (seen.has(k)) return false;
+        seen.add(k); return true;
+      });
+
+      console.log(`[jsearch] ${jobs.length} raw → ${deduped.length} unique`);
+      return json({ data: deduped, count: deduped.length }, 200, origin);
+    }
+
     // ── Notify: in-app notification + email ───────────────
     if (action === 'notify') {
       const supabaseUrl  = Deno.env.get('SUPABASE_URL') || '';

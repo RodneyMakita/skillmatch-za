@@ -631,6 +631,27 @@
    localStorage fallback, causing 401s when the session hadn't reattached yet.
    This helper mirrors claudeHeaders() in match.js: live session first, then
    the stored token, so calls succeed even on the first tick of page load.   */
+async function proxyFetch(body, { retries = 4 } = {}) {
+  // Wraps every proxy POST with exponential backoff on 429 (Groq rate limit).
+  // Groq free tier allows ~30 req/min — if several dashboard calls fire at once
+  // they stack up and hit the limit. This retries up to 4 times (max ~30s wait).
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
+      method:  'POST',
+      headers: await proxyHeaders(),
+      body:    JSON.stringify(body),
+    });
+    if (res.status !== 429) return res;
+    const wait = 2000 * Math.pow(2, attempt);   // 2s, 4s, 8s, 16s
+    console.warn(`Groq 429 — retrying in ${wait/1000}s (attempt ${attempt + 1}/${retries})`);
+    await new Promise(r => setTimeout(r, wait));
+  }
+  // Final attempt — return whatever we get
+  return fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
+    method: 'POST', headers: await proxyHeaders(), body: JSON.stringify(body),
+  });
+}
+
 async function proxyHeaders() {
   // Retry up to 5×50ms while Supabase rehydrates its session from storage.
   // Without this, calls fired in the first ~200ms of page load race ahead
@@ -1623,18 +1644,14 @@ async function loadDailyQuote(learner, firstName) {
     ? 'with some work experience' : 'starting their career';
 
   try {
-    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
-      method: 'POST',
-      headers: await proxyHeaders(),
-      body: JSON.stringify({
+    const res = await proxyFetch({
         system: 'You are a motivational coach for young South African job seekers. Reply ONLY with a JSON object: {"text":"quote here","author":"Person Name"}. No backticks, no extra text.',
         messages: [{
           role: 'user',
           content: 'Give ' + firstName + ' — a ' + field + ' learner ' + exp + ' with skills in ' + skills + ' — one short, powerful motivational quote (under 25 words) from a relevant figure. Make it feel personal to their journey.',
         }],
         max_tokens: 120,
-      }),
-    });
+      });
 
     const data = await res.json();
     const text = data?.content?.[0]?.text || '';
@@ -1679,18 +1696,14 @@ async function showAiInsight(learner, topOpp) {
   const oppDesc   = topOpp.description || '';
 
   try {
-    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
-      method: 'POST',
-      headers: await proxyHeaders(),
-      body: JSON.stringify({
+    const res = await proxyFetch({
         system: 'You are a career coach. Reply ONLY with a valid JSON array. No markdown, no backticks, no explanation before or after. Example: [{"skill":"Python","status":"present","tip":"Keep building projects to stay sharp."}]',
         messages: [{
           role: 'user',
           content: 'Job: ' + (topOpp.title||'') + '. Skills required: ' + (reqSkills.slice(0,10).join(', ')||oppDesc.slice(0,200)) + '. Learner has: ' + learnerSkills.slice(0,15).join(', ') + '. Return a JSON array of exactly 5 objects. Each: skill (string), status ("present","partial","missing"), tip (string, max 12 words). Only the JSON array, nothing else.',
         }],
         max_tokens: 800,
-      }),
-    });
+      });
 
     const data = await res.json();
     let raw  = (data?.content?.[0]?.text || '').trim();
@@ -1794,10 +1807,7 @@ async function loadGapForCard(wrap, oppId) {
     const reqSkills = opp.skills_req || [];
     const oppDesc   = opp.description || '';
 
-    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
-      method: 'POST',
-      headers: await proxyHeaders(),
-      body: JSON.stringify({
+    const res = await proxyFetch({
         system: 'You are a career coach. Reply ONLY with a valid JSON array. No markdown, no backticks, no explanation. Each item: {"skill":"name","status":"present"|"partial"|"missing","tip":"max 12 words"}',
         messages: [{ role:'user', content:
           'Job: ' + (opp.title||'') +
@@ -1805,8 +1815,7 @@ async function loadGapForCard(wrap, oppId) {
           '. Learner has: ' + learnerSkills.slice(0,12).join(', ') +
           '. Return JSON array of exactly 5 skill objects. Only JSON, nothing else.' }],
         max_tokens: 700,
-      }),
-    });
+      });
 
     const data = await res.json();
     const raw  = (data?.content?.[0]?.text||'').trim();
@@ -1886,10 +1895,7 @@ async function loadBestMove() {
   const msgTimer = setInterval(() => { const el = document.getElementById('bmMsg'); if (el) el.textContent = msgs[++mi%msgs.length]; }, 1800);
 
   try {
-    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
-      method: 'POST',
-      headers: await proxyHeaders(),
-      body: JSON.stringify({
+    const res = await proxyFetch({
         system: 'You are a South African career strategist. Reply ONLY with valid JSON — no markdown, no backticks, no preamble.',
         messages: [{ role:'user', content:
 `Learner profile:
@@ -1906,8 +1912,7 @@ Return this JSON object (exactly 5 moves, ordered by impact descending):
 {"headline":"<10 words>","summary":"<2-3 sentences: honest assessment and biggest opportunity>","market_insight":"<1 SA-specific fact relevant to their field>","moves":[{"title":"<4-6 words>","impact":"high","icon":"<emoji>","body":"<2 sentences: what to do and why it opens SA doors>","effort":"<timeframe>","tags":["tag1","tag2"]}],"priority_skills":["skill1","skill2","skill3","skill4","skill5"],"quick_wins":["<12 words max>","<12 words max>","<12 words max>"]}`
         }],
         max_tokens: 1800,
-      }),
-    });
+      });
     clearInterval(msgTimer);
     const data = await res.json();
     const raw  = (data?.content?.[0]?.text || '').trim();
@@ -2000,22 +2005,6 @@ function bmFallback(topGaps, skills, field) {
   };
 }
 
-</script>
-<script type="text/javascript">
-  (function(d, t) {
-      var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
-      v.onload = function() {
-        window.voiceflow.chat.load({
-          verify: { projectID: '69be3bf9c8a996e054be9621' },
-          url: 'https://general-runtime.voiceflow.com',
-          versionID: 'production',
-          voice: {
-            url: "https://runtime-api.voiceflow.com"
-          }
-        });
-      }
-      v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
-  })(document, 'script');
 </script>
 </body>
 </html>
