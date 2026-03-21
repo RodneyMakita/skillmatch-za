@@ -448,7 +448,6 @@
                 <div class="form-group"><label class="form-label">LinkedIn URL</label><input type="url" id="pfLinkedin" placeholder="linkedin.com/in/…"/></div>
                 <div class="form-group"><label class="form-label">GitHub URL</label><input type="url" id="pfGithub" placeholder="github.com/…"/></div>
               </div>
-              <div class="form-group"><label class="form-label">CV / Portfolio link</label><input type="url" id="pfCv" placeholder="Drive, Dropbox or personal site link"/></div>
             </div>
           </div>
 
@@ -627,6 +626,29 @@
 <script src="js/api.js"></script>
 <script src="js/match.js"></script>
 <script>
+/* ── Shared proxy auth helper ──────────────────────────────────────────────
+   All four inline proxy calls previously duplicated getSession() without a
+   localStorage fallback, causing 401s when the session hadn't reattached yet.
+   This helper mirrors claudeHeaders() in match.js: live session first, then
+   the stored token, so calls succeed even on the first tick of page load.   */
+async function proxyHeaders() {
+  // Retry up to 5×50ms while Supabase rehydrates its session from storage.
+  // Without this, calls fired in the first ~200ms of page load race ahead
+  // with an empty token and the proxy returns 401.
+  let jwt = '';
+  for (let i = 0; i < 5; i++) {
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      jwt = session?.access_token || '';
+    } catch(e) {}
+    if (jwt) break;
+    if (i < 4) await new Promise(r => setTimeout(r, 50));
+  }
+  // Final fallback: token kept current by onAuthStateChange in api.js
+  if (!jwt) jwt = localStorage.getItem('sm_access_token') || '';
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt };
+}
+
 /* ── Boot: role detection & auth guard ── */
 (async () => {
   // Give Supabase ~200ms to reattach the JWT from its own localStorage key
@@ -916,7 +938,6 @@ async function loadProfileForm() {
   _set('pfCity',     l.city);
   _set('pfLinkedin', l.linkedin_url);
   _set('pfGithub',   l.github_url);
-  _set('pfCv',       l.cv_url);
   // pfQual / pfInst do not exist as inputs — qualifications render as cards below
 
   skills = Array.isArray(l.skills) ? l.skills : [];
@@ -974,11 +995,38 @@ document.getElementById('skillInput')?.addEventListener('keydown', e => {
 /* ── Profile qualifications ── */
 let pfQuals = [];
 
+function pfYearOptions(selected) {
+  return [2026,2025,2024,2023,2022,2021,2020,2019,2018,2017,2016]
+    .map(y => `<option ${String(selected)==String(y)?'selected':''}>${y}</option>`).join('');
+}
+
+function pfYearFields(q, i) {
+  const s = q.status || '';
+  const showStart = s === 'Completed' || s === 'Currently studying' || s === 'WIL / Internship phase';
+  const showEnd   = s === 'Completed' || s === 'WIL / Internship phase';
+  const endLabel  = s === 'WIL / Internship phase' ? 'WIL end year' : 'Year completed';
+  return `
+    ${showStart ? `
+    <div class="form-group" style="margin:0">
+      <label class="form-label">Year started</label>
+      <select onchange="pfQuals[${i}].yearStart=this.value;renderPfQuals()">
+        <option value="">Year</option>${pfYearOptions(q.yearStart)}
+      </select>
+    </div>` : ''}
+    ${showEnd ? `
+    <div class="form-group" style="margin:0">
+      <label class="form-label">${endLabel}</label>
+      <select onchange="pfQuals[${i}].year=this.value;renderPfQuals()">
+        <option value="">Year</option>${pfYearOptions(q.year)}
+      </select>
+    </div>` : ''}`;
+}
+
 function renderPfQuals() {
   const list = document.getElementById('pfQualList');
   if (!list) return;
   if (!pfQuals.length) {
-    pfQuals = [{ qualification:'', institution:'', instType:'', status:'', year:'', nqf:'', sector:'' }];
+    pfQuals = [{ qualification:'', institution:'', instType:'', status:'', yearStart:'', year:'', nqf:'', sector:'' }];
   }
   list.innerHTML = pfQuals.map((q, i) => `
     <div class="pf-qual-card">
@@ -1001,18 +1049,12 @@ function renderPfQuals() {
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
         <div class="form-group" style="margin:0">
           <label class="form-label">Status</label>
-          <select oninput="pfQuals[${i}].status=this.value">
+          <select onchange="pfQuals[${i}].status=this.value;renderPfQuals()">
             <option value="">Select</option>
             ${['Completed','Currently studying','WIL / Internship phase'].map(s=>`<option ${q.status===s?'selected':''}>${s}</option>`).join('')}
           </select>
         </div>
-        <div class="form-group" style="margin:0">
-          <label class="form-label">Year completed</label>
-          <select oninput="pfQuals[${i}].year=this.value">
-            <option value="">Year</option>
-            ${[2025,2024,2023,2022,2021,2020,2019,2018,2017,2016].map(y=>`<option ${q.year==y?'selected':''}>${y}</option>`).join('')}
-          </select>
-        </div>
+        ${pfYearFields(q, i)}
         <div class="form-group" style="margin:0">
           <label class="form-label">NQF level</label>
           <select oninput="pfQuals[${i}].nqf=this.value">
@@ -1131,7 +1173,7 @@ async function saveProfile() {
     city:             document.getElementById('pfCity').value.trim(),
     linkedin_url:     document.getElementById('pfLinkedin').value.trim(),
     github_url:       document.getElementById('pfGithub').value.trim(),
-    cv_url:           document.getElementById('pfCv').value.trim(),
+    cv_url:           '',  // CV field removed
     skills,
     work_experience:  workExp,
     drivers_license:  pfLicenses,
@@ -1581,12 +1623,9 @@ async function loadDailyQuote(learner, firstName) {
     ? 'with some work experience' : 'starting their career';
 
   try {
-    const { data: { session } } = await db.auth.getSession();
-    const jwt = session?.access_token || '';
-
     const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      headers: await proxyHeaders(),
       body: JSON.stringify({
         system: 'You are a motivational coach for young South African job seekers. Reply ONLY with a JSON object: {"text":"quote here","author":"Person Name"}. No backticks, no extra text.',
         messages: [{
@@ -1640,12 +1679,9 @@ async function showAiInsight(learner, topOpp) {
   const oppDesc   = topOpp.description || '';
 
   try {
-    const { data: { session } } = await db.auth.getSession();
-    const jwt = session?.access_token || '';
-
     const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      headers: await proxyHeaders(),
       body: JSON.stringify({
         system: 'You are a career coach. Reply ONLY with a valid JSON array. No markdown, no backticks, no explanation before or after. Example: [{"skill":"Python","status":"present","tip":"Keep building projects to stay sharp."}]',
         messages: [{
@@ -1661,9 +1697,7 @@ async function showAiInsight(learner, topOpp) {
     console.log('[AI insight] raw response:', raw.slice(0, 200));
 
     /* Robustly extract JSON array even if wrapped in prose */
-    const arrMatch = raw.match(/\[[\s\S]*\]/);
-    if (!arrMatch) throw new Error('No JSON array found in response. Raw: ' + raw.slice(0,80));
-    const items = JSON.parse(arrMatch[0]);
+    const items = parseGapArray(raw);
     if (!Array.isArray(items) || !items.length) throw new Error('Empty or invalid array returned');
 
     list.innerHTML = items.map(item => `
@@ -1760,12 +1794,9 @@ async function loadGapForCard(wrap, oppId) {
     const reqSkills = opp.skills_req || [];
     const oppDesc   = opp.description || '';
 
-    const { data: { session } } = await db.auth.getSession();
-    const jwt = session?.access_token || '';
-
     const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      headers: await proxyHeaders(),
       body: JSON.stringify({
         system: 'You are a career coach. Reply ONLY with a valid JSON array. No markdown, no backticks, no explanation. Each item: {"skill":"name","status":"present"|"partial"|"missing","tip":"max 12 words"}',
         messages: [{ role:'user', content:
@@ -1779,9 +1810,7 @@ async function loadGapForCard(wrap, oppId) {
 
     const data = await res.json();
     const raw  = (data?.content?.[0]?.text||'').trim();
-    const arrMatch = raw.match(/\[[\s\S]*?\]/);
-    if (!arrMatch) throw new Error('No array in response');
-    const items = JSON.parse(arrMatch[0]);
+    const items = parseGapArray(raw);
 
     _gapCache[oppId] = items;
     renderGapTooltip(tooltip, items);
@@ -1796,6 +1825,15 @@ async function loadGapForCard(wrap, oppId) {
   } catch(e) {
     tooltip.querySelector('.gap-loading').textContent = 'Could not load — ' + e.message.slice(0,40);
   }
+}
+
+/* Robust parser: strips markdown fences, uses greedy regex so tips
+   containing [ ] characters don't truncate the array prematurely. */
+function parseGapArray(raw) {
+  const clean = raw.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'').trim();
+  const m = clean.match(/\[[\s\S]*\]/);   // greedy — match outermost [ ... ]
+  if (!m) throw new Error('No array in response');
+  return JSON.parse(m[0]);
 }
 
 function renderGapTooltip(tooltip, items) {
@@ -1848,10 +1886,9 @@ async function loadBestMove() {
   const msgTimer = setInterval(() => { const el = document.getElementById('bmMsg'); if (el) el.textContent = msgs[++mi%msgs.length]; }, 1800);
 
   try {
-    const jwt = localStorage.getItem('sm_access_token') || '';
     const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      headers: await proxyHeaders(),
       body: JSON.stringify({
         system: 'You are a South African career strategist. Reply ONLY with valid JSON — no markdown, no backticks, no preamble.',
         messages: [{ role:'user', content:

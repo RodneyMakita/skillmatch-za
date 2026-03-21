@@ -526,19 +526,7 @@
             <input type="url" id="l-github" placeholder="https://github.com/yourusername"/>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="l-cv">
-            CV / Resume <span style="font-weight:400;color:var(--ink-muted);font-size:13px"> — PDF, Word or Google Drive link</span>
-          </label>
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <div style="flex:1">
-              <input type="url" id="l-cv-link" placeholder="Paste Google Drive / Dropbox link to your CV…" style="margin-bottom:8px"/>
-              <div style="text-align:center;font-size:12px;color:var(--ink-muted);margin-bottom:8px">— or upload a file —</div>
-              <input type="file" id="l-cv-file" accept=".pdf,.doc,.docx" style="font-size:13px;color:var(--ink-soft)"/>
-              <div style="font-size:12px;color:var(--ink-muted);margin-top:4px">Max 5 MB. PDF preferred.</div>
-            </div>
-          </div>
-        </div>
+
       </div>
 
       <!-- Preferences -->
@@ -901,7 +889,7 @@
           </div>
           <div class="form-group" style="margin:0">
             <label class="form-label">Study status</label>
-            <select class="qual-status">
+            <select class="qual-status" onchange="onQualStatusChange(this)">
               <option value="">Select</option>
               <option>Completed</option>
               <option>Currently studying</option>
@@ -909,15 +897,22 @@
             </select>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-          <div class="form-group" style="margin:0">
-            <label class="form-label">Year completed</label>
-            <select class="qual-year">
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <div class="qual-year-start-wrap form-group" style="margin:0;flex:1;min-width:120px;display:none">
+            <label class="form-label qual-year-start-label">Year started</label>
+            <select class="qual-year-start">
               <option value="">Year</option>
-              ${[2025,2024,2023,2022,2021,2020,2019,2018,2017,2016].map(y=>`<option>${y}</option>`).join('')}
+              ${[2026,2025,2024,2023,2022,2021,2020,2019,2018,2017,2016].map(y=>`<option>${y}</option>`).join('')}
             </select>
           </div>
-          <div class="form-group" style="margin:0">
+          <div class="qual-year-end-wrap form-group" style="margin:0;flex:1;min-width:120px;display:none">
+            <label class="form-label qual-year-end-label">Year completed</label>
+            <select class="qual-year-end">
+              <option value="">Year</option>
+              ${[2026,2025,2024,2023,2022,2021,2020,2019,2018,2017,2016].map(y=>`<option>${y}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;flex:1;min-width:120px">
             <label class="form-label">NQF level</label>
             <select class="qual-nqf">
               <option value="">NQF level</option>
@@ -925,7 +920,7 @@
               <option>Level 6</option><option>Level 7</option><option>Level 8</option>
             </select>
           </div>
-          <div class="form-group" style="margin:0">
+          <div class="form-group" style="margin:0;flex:1;min-width:150px">
             <label class="form-label">Field / Sector</label>
             <select class="qual-sector">
               <option value="">Select</option>
@@ -939,6 +934,31 @@
       document.getElementById('qualList').appendChild(div);
     }
 
+    /* Show/hide year fields based on study status */
+    function onQualStatusChange(sel) {
+      const card    = sel.closest('#qualList > div') || sel.closest('[id^="qual-"]');
+      const startW  = card.querySelector('.qual-year-start-wrap');
+      const endW    = card.querySelector('.qual-year-end-wrap');
+      const endLbl  = card.querySelector('.qual-year-end-label');
+      const status  = sel.value;
+
+      // Reset
+      startW.style.display = 'none';
+      endW.style.display   = 'none';
+
+      if (status === 'Completed') {
+        startW.style.display = 'block';
+        endW.style.display   = 'block';
+        endLbl.textContent   = 'Year completed';
+      } else if (status === 'Currently studying') {
+        startW.style.display = 'block';
+      } else if (status === 'WIL / Internship phase') {
+        startW.style.display = 'block';
+        endW.style.display   = 'block';
+        endLbl.textContent   = 'WIL end year';
+      }
+    }
+
     function collectQualifications() {
       const entries = [];
       document.querySelectorAll('#qualList > div').forEach(div => {
@@ -950,7 +970,8 @@
           institution:   inst || '',
           qualification: name || '',
           status:        div.querySelector('.qual-status')?.value || '',
-          year:          div.querySelector('.qual-year')?.value || '',
+          yearStart:     div.querySelector('.qual-year-start')?.value || '',
+          year:          div.querySelector('.qual-year-end')?.value || '',
           nqf:           div.querySelector('.qual-nqf')?.value || '',
           sector:        div.querySelector('.qual-sector')?.value || '',
         });
@@ -1261,7 +1282,7 @@
         terms:       document.getElementById('l-terms').checked,
         linkedin:    document.getElementById('l-linkedin').value.trim(),
         github:      document.getElementById('l-github').value.trim(),
-        cvLink:      document.getElementById('l-cv-link').value.trim(),
+        cvLink:      '',
         city:        document.getElementById('l-city').value,
       };
 
