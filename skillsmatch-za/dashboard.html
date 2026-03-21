@@ -247,6 +247,28 @@
     .gap-label { font-size:13px; font-weight:500; color:var(--ink); }
     .gap-tip { font-size:12px; color:var(--ink-muted); margin-top:2px; line-height:1.4; }
 
+    .tab-bar {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      height: 60px; background: var(--ink);
+      border-top: 1px solid rgba(255,255,255,.08);
+      z-index: 200; align-items: stretch; justify-content: space-around;
+      padding: 0 4px; padding-bottom: env(safe-area-inset-bottom);
+    }
+    .tab-bar .tab-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px;
+      background: none; border: none; cursor: pointer;
+      color: rgba(255,255,255,.4); font-family: var(--font-body);
+      font-size: 10px; font-weight: 500; letter-spacing: .02em;
+      padding: 6px 2px; transition: color .15s;
+      -webkit-tap-highlight-color: transparent; text-decoration: none;
+    }
+    .tab-bar .tab-item.active { color: var(--teal-glow); }
+    .tab-bar .tab-item.active svg { stroke: var(--teal-glow); }
+    @media(max-width:1024px) {
+      .tab-bar { display: flex; }
+      .main { padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+    }
     @media(max-width:1024px){ .shell{grid-template-columns:1fr} .sidebar{display:none} .two-col{grid-template-columns:1fr} .stats-4{grid-template-columns:repeat(2,1fr)} }
     @media(max-width:600px){ .content{padding:18px 14px} .topbar{padding:14px 16px} .stats-4,.stats-3{grid-template-columns:repeat(2,1fr)} }
   </style>
@@ -315,8 +337,8 @@
       <!-- L: Home -->
       <div class="view active" id="view-l-home">
         <div class="page-head">
-          <h1>Good morning, <span id="lFirstName">…</span> 👋</h1>
-          <p>Here's your job search snapshot for today.</p>
+          <h1 id="greetingText">Good morning, <span id="lFirstName">…</span></h1>
+          <p id="greetingTime">Here's your job search snapshot for today.</p>
         </div>
         <!-- Daily motivational quote -->
         <div class="quote-card" id="dailyQuote" style="display:none">
@@ -448,6 +470,7 @@
                 <div class="form-group"><label class="form-label">LinkedIn URL</label><input type="url" id="pfLinkedin" placeholder="linkedin.com/in/…"/></div>
                 <div class="form-group"><label class="form-label">GitHub URL</label><input type="url" id="pfGithub" placeholder="github.com/…"/></div>
               </div>
+              <div class="form-group"><label class="form-label">CV / Portfolio link</label><input type="url" id="pfCv" placeholder="Drive, Dropbox or personal site link"/></div>
             </div>
           </div>
 
@@ -626,50 +649,6 @@
 <script src="js/api.js"></script>
 <script src="js/match.js"></script>
 <script>
-/* ── Shared proxy auth helper ──────────────────────────────────────────────
-   All four inline proxy calls previously duplicated getSession() without a
-   localStorage fallback, causing 401s when the session hadn't reattached yet.
-   This helper mirrors claudeHeaders() in match.js: live session first, then
-   the stored token, so calls succeed even on the first tick of page load.   */
-async function proxyFetch(body, { retries = 4 } = {}) {
-  // Wraps every proxy POST with exponential backoff on 429 (Groq rate limit).
-  // Groq free tier allows ~30 req/min — if several dashboard calls fire at once
-  // they stack up and hit the limit. This retries up to 4 times (max ~30s wait).
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
-      method:  'POST',
-      headers: await proxyHeaders(),
-      body:    JSON.stringify(body),
-    });
-    if (res.status !== 429) return res;
-    const wait = 2000 * Math.pow(2, attempt);   // 2s, 4s, 8s, 16s
-    console.warn(`Groq 429 — retrying in ${wait/1000}s (attempt ${attempt + 1}/${retries})`);
-    await new Promise(r => setTimeout(r, wait));
-  }
-  // Final attempt — return whatever we get
-  return fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
-    method: 'POST', headers: await proxyHeaders(), body: JSON.stringify(body),
-  });
-}
-
-async function proxyHeaders() {
-  // Retry up to 5×50ms while Supabase rehydrates its session from storage.
-  // Without this, calls fired in the first ~200ms of page load race ahead
-  // with an empty token and the proxy returns 401.
-  let jwt = '';
-  for (let i = 0; i < 5; i++) {
-    try {
-      const { data: { session } } = await db.auth.getSession();
-      jwt = session?.access_token || '';
-    } catch(e) {}
-    if (jwt) break;
-    if (i < 4) await new Promise(r => setTimeout(r, 50));
-  }
-  // Final fallback: token kept current by onAuthStateChange in api.js
-  if (!jwt) jwt = localStorage.getItem('sm_access_token') || '';
-  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt };
-}
-
 /* ── Boot: role detection & auth guard ── */
 (async () => {
   // Give Supabase ~200ms to reattach the JWT from its own localStorage key
@@ -738,11 +717,33 @@ function showView(id, btn) {
 }
 
 /* ══════════════════════════════════════
+   DYNAMIC GREETING
+══════════════════════════════════════ */
+function setGreeting(name) {
+  var h        = new Date().getHours();
+  var greeting = h < 12 ? 'Good morning'   : h < 17 ? 'Good afternoon' : 'Good evening';
+  var emoji    = h < 12 ? '&#9728;&#65039;': h < 17 ? '&#127774;'      : '&#127769;';
+  var subtitle = h < 12 ? "Here's your job search snapshot for today."
+               : h < 17 ? "Keep the momentum going \u2014 here's your snapshot."
+               :           "Winding down? Here's where things stand.";
+  var el  = document.getElementById('greetingText');
+  if (el)  el.innerHTML = greeting + ', <span id="lFirstName">' + name + '</span> ' + emoji;
+  var sub = document.getElementById('greetingTime');
+  if (sub) sub.textContent = subtitle;
+  /* Re-check every 60s in case the page stays open across a time boundary */
+  setTimeout(function() {
+    var n = document.getElementById('lFirstName');
+    setGreeting(n ? n.textContent : name);
+  }, 60000);
+}
+
+/* ══════════════════════════════════════
    LEARNER BOOT
 ══════════════════════════════════════ */
 async function bootLearner(fullName) {
   const firstName = fullName.split(' ')[0];
   document.getElementById('lFirstName').textContent = firstName;
+  setGreeting(firstName);
 
   /* Load profile + stats in parallel */
   const [profileRes, statsRes] = await Promise.all([
@@ -813,38 +814,81 @@ async function bootLearner(fullName) {
   }, 2000);
 
   async function _loadHomeMatches() {
-    /* Try full pipeline first (JSearch + AI scoring) */
-    if (typeof runMatchingPipeline === 'function') {
-      try {
-        const pipeline = await runMatchingPipeline({ fetchExternal: true });
+    if (typeof runMatchingPipeline !== 'function') {
+      /* Fallback: cached matches from DB */
+      const matchRes = await getMyMatches();
+      homeCards.innerHTML = '';
+      if (matchRes.success && matchRes.data.length) {
+        matchRes.data.slice(0, 3).forEach(m => {
+          const opp = m.opportunities;
+          if (!opp) return;
+          homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, opp, m.id));
+        });
+      } else {
+        homeCards.innerHTML = emptyState('Add skills to your profile', "We'll match you to real jobs, learnerships and internships.");
+      }
+      return;
+    }
+
+    /* Streaming pipeline — show cards as they arrive */
+    let seenIds    = new Set();  // prevent duplicates
+    let totalShown = 0;
+    let firstBatch = true;
+
+    function onMatch(matches, type) {
+      if (firstBatch) {
+        /* First results in — clear skeleton immediately */
         clearInterval(_pTimer);
         homeCards.innerHTML = '';
-        _lastPipeline = pipeline;
+        firstBatch = false;
+      }
+      matches.forEach(m => {
+        if (!m.opportunity || seenIds.has(m.opp_id)) return;
+        if (totalShown >= 3) return;  /* home view shows top 3 only */
+        seenIds.add(m.opp_id);
+        totalShown++;
+        const card = buildMatchCard(m.score, m.ai_insight, m.opportunity, null);
+        /* Slide-in animation for newly scored cards */
+        if (type === 'new') card.style.animation = 'vIn .35s ease both';
+        homeCards.appendChild(card);
+        _lastPipeline.push(m);
+      });
+    }
+
+    try {
+      _lastPipeline = [];
+      const pipeline = await runMatchingPipeline({
+        fetchExternal: true,
+        matchCallback: onMatch
+      });
+      clearInterval(_pTimer);
+      /* If streaming never fired (all new), render final sorted result */
+      if (firstBatch) {
+        homeCards.innerHTML = '';
         pipeline.slice(0, 3).forEach(m => {
           if (!m.opportunity) return;
           homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, m.opportunity, null));
         });
-        if (!pipeline.length) homeCards.innerHTML = emptyState('No matches yet', 'Add skills to your profile to get AI-powered matches.');
-        /* Show AI insight for top match */
-        if (pipeline.length && _learnerProfileCache) {
-          showAiInsight(_learnerProfileCache, pipeline[0].opportunity);
-        }
-        return;
-      } catch(err) {
-        console.warn('Pipeline failed, falling back to cached matches:', err.message);
+        _lastPipeline = pipeline;
       }
-    }
-    /* Fallback: cached matches from DB */
-    const matchRes = await getMyMatches();
-    homeCards.innerHTML = '';
-    if (matchRes.success && matchRes.data.length) {
-      matchRes.data.slice(0, 3).forEach(m => {
-        const opp = m.opportunities;
-        if (!opp) return;
-        homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, opp, m.id));
-      });
-    } else {
-      homeCards.innerHTML = emptyState('Add skills to your profile', "We'll match you to real jobs, learnerships and internships.");
+      if (!homeCards.children.length) homeCards.innerHTML = emptyState('No matches yet', 'Add skills to your profile to get AI-powered matches.');
+      /* AI insight for top visible match */
+      const topMatch = _lastPipeline.find(m => m.opportunity);
+      if (topMatch && _learnerProfileCache) showAiInsight(_learnerProfileCache, topMatch.opportunity);
+    } catch(err) {
+      clearInterval(_pTimer);
+      console.warn('Pipeline failed, falling back to cached matches:', err.message);
+      const matchRes = await getMyMatches();
+      homeCards.innerHTML = '';
+      if (matchRes.success && matchRes.data.length) {
+        matchRes.data.slice(0, 3).forEach(m => {
+          const opp = m.opportunities;
+          if (!opp) return;
+          homeCards.appendChild(buildMatchCard(m.score, m.ai_insight, opp, m.id));
+        });
+      } else {
+        homeCards.innerHTML = emptyState('Add skills to your profile', "We'll match you to real jobs, learnerships and internships.");
+      }
     }
   }
   _loadHomeMatches();
@@ -868,44 +912,87 @@ async function loadAllMatches() {
     if (el) el.textContent = _msgs[++_i % _msgs.length];
   }, 2000);
 
-  try {
-    /* Always run full pipeline — gets fresh JSearch jobs + AI scores */
-    let results = [];
-    if (typeof runMatchingPipeline === 'function') {
-      results = await runMatchingPipeline({ fetchExternal: true });
+  /* Streaming: render cached cards instantly, insert new ones as they score */
+  let _allSeenIds  = new Set();
+  let _allTotal    = 0;
+  let _allFirstBatch = true;
+
+  /* Sorting helper — keeps the list sorted by score as new cards arrive */
+  function insertSorted(card, score) {
+    const existing = Array.from(container.querySelectorAll('.match-card'));
+    const scores   = existing.map(el => parseInt(el.dataset.score || '0', 10));
+    const insertAt = scores.findIndex(s => s < score);
+    if (insertAt === -1) {
+      container.appendChild(card);
+    } else {
+      container.insertBefore(card, existing[insertAt]);
     }
+  }
+
+  function onAllMatch(matches, type) {
+    if (_allFirstBatch) {
+      clearInterval(_t);
+      container.innerHTML = '';
+      _allFirstBatch = false;
+    }
+    matches.forEach(m => {
+      if (!m.opportunity || _allSeenIds.has(m.opp_id)) return;
+      _allSeenIds.add(m.opp_id);
+      _allTotal++;
+      const card = buildMatchCard(m.score, m.ai_insight, m.opportunity, null);
+      card.dataset.score = m.score;
+      if (type === 'new') card.style.animation = 'vIn .35s ease both';
+      insertSorted(card, m.score);
+      document.getElementById('matchSubtitle').textContent =
+        `${_allTotal} opportunit${_allTotal===1?'y':'ies'} matched — ${type === 'new' ? 'scoring more…' : 'loading…'}`;
+    });
+  }
+
+  try {
+    const results = typeof runMatchingPipeline === 'function'
+      ? await runMatchingPipeline({ fetchExternal: true, matchCallback: onAllMatch })
+      : [];
 
     clearInterval(_t);
-    container.innerHTML = '';
 
-    if (results.length) {
-      document.getElementById('matchSubtitle').textContent =
-        `${results.length} opportunit${results.length===1?'y':'ies'} matched to your skills — sorted by AI score.`;
+    /* If streaming never fired, render everything now */
+    if (_allFirstBatch) {
+      container.innerHTML = '';
       results.forEach(m => {
         if (!m.opportunity) return;
-        container.appendChild(buildMatchCard(m.score, m.ai_insight, m.opportunity, null));
+        const card = buildMatchCard(m.score, m.ai_insight, m.opportunity, null);
+        card.dataset.score = m.score;
+        container.appendChild(card);
       });
-      return;
+      _allTotal = results.length;
     }
 
-    /* Fallback: cached matches from DB */
-    const matchRes = await getMyMatches();
-    if (matchRes.success && matchRes.data.length) {
-      document.getElementById('matchSubtitle').textContent =
-        `${matchRes.data.length} cached matches — refresh to get latest jobs.`;
-      matchRes.data.forEach(m => {
-        const opp = m.opportunities;
-        if (!opp) return;
-        container.appendChild(buildMatchCard(m.score, m.ai_insight, opp, m.id));
-      });
-    } else {
-      container.innerHTML = emptyState('No matches yet', 'Add skills to your profile to get AI-powered job matches.');
-      document.getElementById('matchSubtitle').textContent = 'Complete your profile to see matches.';
+    if (!container.querySelector('.match-card')) {
+      /* Fallback: cached matches from DB */
+      const matchRes = await getMyMatches();
+      if (matchRes.success && matchRes.data.length) {
+        matchRes.data.forEach(m => {
+          const opp = m.opportunities;
+          if (!opp || _allSeenIds.has(m.id)) return;
+          const card = buildMatchCard(m.score, m.ai_insight, opp, m.id);
+          card.dataset.score = m.score;
+          container.appendChild(card);
+          _allTotal++;
+        });
+      } else {
+        container.innerHTML = emptyState('No matches yet', 'Add skills to your profile to get AI-powered job matches.');
+      }
     }
+
+    document.getElementById('matchSubtitle').textContent =
+      _allTotal ? `${_allTotal} opportunit${_allTotal===1?'y':'ies'} matched to your skills — sorted by AI score.`
+                : 'Complete your profile to see matches.';
+
   } catch(err) {
     clearInterval(_t);
     console.error('loadAllMatches error:', err);
-    container.innerHTML = emptyState('Could not load matches', 'Check your connection and try refreshing the page.');
+    if (!container.querySelector('.match-card'))
+      container.innerHTML = emptyState('Could not load matches', 'Check your connection and try refreshing the page.');
   }
 }
 
@@ -959,6 +1046,7 @@ async function loadProfileForm() {
   _set('pfCity',     l.city);
   _set('pfLinkedin', l.linkedin_url);
   _set('pfGithub',   l.github_url);
+  _set('pfCv',       l.cv_url);
   // pfQual / pfInst do not exist as inputs — qualifications render as cards below
 
   skills = Array.isArray(l.skills) ? l.skills : [];
@@ -1016,38 +1104,11 @@ document.getElementById('skillInput')?.addEventListener('keydown', e => {
 /* ── Profile qualifications ── */
 let pfQuals = [];
 
-function pfYearOptions(selected) {
-  return [2026,2025,2024,2023,2022,2021,2020,2019,2018,2017,2016]
-    .map(y => `<option ${String(selected)==String(y)?'selected':''}>${y}</option>`).join('');
-}
-
-function pfYearFields(q, i) {
-  const s = q.status || '';
-  const showStart = s === 'Completed' || s === 'Currently studying' || s === 'WIL / Internship phase';
-  const showEnd   = s === 'Completed' || s === 'WIL / Internship phase';
-  const endLabel  = s === 'WIL / Internship phase' ? 'WIL end year' : 'Year completed';
-  return `
-    ${showStart ? `
-    <div class="form-group" style="margin:0">
-      <label class="form-label">Year started</label>
-      <select onchange="pfQuals[${i}].yearStart=this.value;renderPfQuals()">
-        <option value="">Year</option>${pfYearOptions(q.yearStart)}
-      </select>
-    </div>` : ''}
-    ${showEnd ? `
-    <div class="form-group" style="margin:0">
-      <label class="form-label">${endLabel}</label>
-      <select onchange="pfQuals[${i}].year=this.value;renderPfQuals()">
-        <option value="">Year</option>${pfYearOptions(q.year)}
-      </select>
-    </div>` : ''}`;
-}
-
 function renderPfQuals() {
   const list = document.getElementById('pfQualList');
   if (!list) return;
   if (!pfQuals.length) {
-    pfQuals = [{ qualification:'', institution:'', instType:'', status:'', yearStart:'', year:'', nqf:'', sector:'' }];
+    pfQuals = [{ qualification:'', institution:'', instType:'', status:'', year:'', nqf:'', sector:'' }];
   }
   list.innerHTML = pfQuals.map((q, i) => `
     <div class="pf-qual-card">
@@ -1070,12 +1131,18 @@ function renderPfQuals() {
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
         <div class="form-group" style="margin:0">
           <label class="form-label">Status</label>
-          <select onchange="pfQuals[${i}].status=this.value;renderPfQuals()">
+          <select oninput="pfQuals[${i}].status=this.value">
             <option value="">Select</option>
             ${['Completed','Currently studying','WIL / Internship phase'].map(s=>`<option ${q.status===s?'selected':''}>${s}</option>`).join('')}
           </select>
         </div>
-        ${pfYearFields(q, i)}
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Year completed</label>
+          <select oninput="pfQuals[${i}].year=this.value">
+            <option value="">Year</option>
+            ${[2025,2024,2023,2022,2021,2020,2019,2018,2017,2016].map(y=>`<option ${q.year==y?'selected':''}>${y}</option>`).join('')}
+          </select>
+        </div>
         <div class="form-group" style="margin:0">
           <label class="form-label">NQF level</label>
           <select oninput="pfQuals[${i}].nqf=this.value">
@@ -1194,7 +1261,7 @@ async function saveProfile() {
     city:             document.getElementById('pfCity').value.trim(),
     linkedin_url:     document.getElementById('pfLinkedin').value.trim(),
     github_url:       document.getElementById('pfGithub').value.trim(),
-    cv_url:           '',  // CV field removed
+    cv_url:           document.getElementById('pfCv').value.trim(),
     skills,
     work_experience:  workExp,
     drivers_license:  pfLicenses,
@@ -1644,14 +1711,21 @@ async function loadDailyQuote(learner, firstName) {
     ? 'with some work experience' : 'starting their career';
 
   try {
-    const res = await proxyFetch({
+    const { data: { session } } = await db.auth.getSession();
+    const jwt = session?.access_token || '';
+
+    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      body: JSON.stringify({
         system: 'You are a motivational coach for young South African job seekers. Reply ONLY with a JSON object: {"text":"quote here","author":"Person Name"}. No backticks, no extra text.',
         messages: [{
           role: 'user',
           content: 'Give ' + firstName + ' — a ' + field + ' learner ' + exp + ' with skills in ' + skills + ' — one short, powerful motivational quote (under 25 words) from a relevant figure. Make it feel personal to their journey.',
         }],
         max_tokens: 120,
-      });
+      }),
+    });
 
     const data = await res.json();
     const text = data?.content?.[0]?.text || '';
@@ -1696,21 +1770,30 @@ async function showAiInsight(learner, topOpp) {
   const oppDesc   = topOpp.description || '';
 
   try {
-    const res = await proxyFetch({
+    const { data: { session } } = await db.auth.getSession();
+    const jwt = session?.access_token || '';
+
+    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      body: JSON.stringify({
         system: 'You are a career coach. Reply ONLY with a valid JSON array. No markdown, no backticks, no explanation before or after. Example: [{"skill":"Python","status":"present","tip":"Keep building projects to stay sharp."}]',
         messages: [{
           role: 'user',
           content: 'Job: ' + (topOpp.title||'') + '. Skills required: ' + (reqSkills.slice(0,10).join(', ')||oppDesc.slice(0,200)) + '. Learner has: ' + learnerSkills.slice(0,15).join(', ') + '. Return a JSON array of exactly 5 objects. Each: skill (string), status ("present","partial","missing"), tip (string, max 12 words). Only the JSON array, nothing else.',
         }],
         max_tokens: 800,
-      });
+      }),
+    });
 
     const data = await res.json();
     let raw  = (data?.content?.[0]?.text || '').trim();
     console.log('[AI insight] raw response:', raw.slice(0, 200));
 
     /* Robustly extract JSON array even if wrapped in prose */
-    const items = parseGapArray(raw);
+    const arrMatch = raw.match(/\[[\s\S]*\]/);
+    if (!arrMatch) throw new Error('No JSON array found in response. Raw: ' + raw.slice(0,80));
+    const items = JSON.parse(arrMatch[0]);
     if (!Array.isArray(items) || !items.length) throw new Error('Empty or invalid array returned');
 
     list.innerHTML = items.map(item => `
@@ -1807,7 +1890,13 @@ async function loadGapForCard(wrap, oppId) {
     const reqSkills = opp.skills_req || [];
     const oppDesc   = opp.description || '';
 
-    const res = await proxyFetch({
+    const { data: { session } } = await db.auth.getSession();
+    const jwt = session?.access_token || '';
+
+    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      body: JSON.stringify({
         system: 'You are a career coach. Reply ONLY with a valid JSON array. No markdown, no backticks, no explanation. Each item: {"skill":"name","status":"present"|"partial"|"missing","tip":"max 12 words"}',
         messages: [{ role:'user', content:
           'Job: ' + (opp.title||'') +
@@ -1815,11 +1904,14 @@ async function loadGapForCard(wrap, oppId) {
           '. Learner has: ' + learnerSkills.slice(0,12).join(', ') +
           '. Return JSON array of exactly 5 skill objects. Only JSON, nothing else.' }],
         max_tokens: 700,
-      });
+      }),
+    });
 
     const data = await res.json();
     const raw  = (data?.content?.[0]?.text||'').trim();
-    const items = parseGapArray(raw);
+    const arrMatch = raw.match(/\[[\s\S]*?\]/);
+    if (!arrMatch) throw new Error('No array in response');
+    const items = JSON.parse(arrMatch[0]);
 
     _gapCache[oppId] = items;
     renderGapTooltip(tooltip, items);
@@ -1834,15 +1926,6 @@ async function loadGapForCard(wrap, oppId) {
   } catch(e) {
     tooltip.querySelector('.gap-loading').textContent = 'Could not load — ' + e.message.slice(0,40);
   }
-}
-
-/* Robust parser: strips markdown fences, uses greedy regex so tips
-   containing [ ] characters don't truncate the array prematurely. */
-function parseGapArray(raw) {
-  const clean = raw.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'').trim();
-  const m = clean.match(/\[[\s\S]*\]/);   // greedy — match outermost [ ... ]
-  if (!m) throw new Error('No array in response');
-  return JSON.parse(m[0]);
 }
 
 function renderGapTooltip(tooltip, items) {
@@ -1895,7 +1978,11 @@ async function loadBestMove() {
   const msgTimer = setInterval(() => { const el = document.getElementById('bmMsg'); if (el) el.textContent = msgs[++mi%msgs.length]; }, 1800);
 
   try {
-    const res = await proxyFetch({
+    const jwt = localStorage.getItem('sm_access_token') || '';
+    const res = await fetch(SUPABASE_URL + '/functions/v1/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+jwt },
+      body: JSON.stringify({
         system: 'You are a South African career strategist. Reply ONLY with valid JSON — no markdown, no backticks, no preamble.',
         messages: [{ role:'user', content:
 `Learner profile:
@@ -1912,7 +1999,8 @@ Return this JSON object (exactly 5 moves, ordered by impact descending):
 {"headline":"<10 words>","summary":"<2-3 sentences: honest assessment and biggest opportunity>","market_insight":"<1 SA-specific fact relevant to their field>","moves":[{"title":"<4-6 words>","impact":"high","icon":"<emoji>","body":"<2 sentences: what to do and why it opens SA doors>","effort":"<timeframe>","tags":["tag1","tag2"]}],"priority_skills":["skill1","skill2","skill3","skill4","skill5"],"quick_wins":["<12 words max>","<12 words max>","<12 words max>"]}`
         }],
         max_tokens: 1800,
-      });
+      }),
+    });
     clearInterval(msgTimer);
     const data = await res.json();
     const raw  = (data?.content?.[0]?.text || '').trim();
@@ -2006,5 +2094,53 @@ function bmFallback(topGaps, skills, field) {
 }
 
 </script>
+
+  <!-- Mobile tab bar -->
+  <nav class="tab-bar" id="tabBar">
+    <button class="tab-item active" id="tab-l-home" data-role="learner" onclick="tabTo('l-home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+    <button class="tab-item" id="tab-l-matches" data-role="learner" onclick="tabTo('l-matches')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Matches</button>
+    <button class="tab-item" id="tab-l-apps" data-role="learner" onclick="tabTo('l-apps')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Applied</button>
+    <button class="tab-item" id="tab-l-bestmove" data-role="learner" onclick="tabTo('l-bestmove')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Best move</button>
+    <button class="tab-item" id="tab-l-profile" data-role="learner" onclick="tabTo('l-profile')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
+    <button class="tab-item active" id="tab-e-home" data-role="employer" onclick="tabTo('e-home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+    <button class="tab-item" id="tab-e-listings" data-role="employer" onclick="tabTo('e-listings')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>Listings</button>
+    <button class="tab-item" id="tab-e-applicants" data-role="employer" onclick="tabTo('e-applicants')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Applicants</button>
+    <button class="tab-item" id="tab-e-post" data-role="employer" onclick="tabTo('e-post')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Post</button>
+    <button class="tab-item active" id="tab-a-home" data-role="admin" onclick="tabTo('a-home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Overview</button>
+    <button class="tab-item" id="tab-a-learners" data-role="admin" onclick="tabTo('a-learners')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Learners</button>
+    <button class="tab-item" id="tab-a-report" data-role="admin" onclick="tabTo('a-report')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Report</button>
+    <button class="tab-item" id="tab-a-province" data-role="admin" onclick="tabTo('a-province')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Province</button>
+  </nav>
+  <script>
+  (function initTabBar() {
+    var role = localStorage.getItem('sm_role') || 'learner';
+    document.querySelectorAll('.tab-bar .tab-item').forEach(function(el) {
+      el.style.display = el.dataset.role === role ? 'flex' : 'none';
+    });
+  })();
+
+  function tabTo(viewId) {
+    var role = localStorage.getItem('sm_role') || 'learner';
+    var nav  = document.getElementById('nav-' + role);
+    var sideBtn = null;
+    if (nav) {
+      nav.querySelectorAll('.sb-link').forEach(function(b) {
+        if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'" + viewId + "'") > -1) sideBtn = b;
+      });
+    }
+    showView(viewId, sideBtn);
+    document.querySelectorAll('.tab-bar .tab-item').forEach(function(el) { el.classList.remove('active'); });
+    var t = document.getElementById('tab-' + viewId);
+    if (t) t.classList.add('active');
+  }
+
+  var _origShowView = showView;
+  showView = function(id, btn) {
+    _origShowView(id, btn);
+    document.querySelectorAll('.tab-bar .tab-item').forEach(function(el) { el.classList.remove('active'); });
+    var t = document.getElementById('tab-' + id);
+    if (t) t.classList.add('active');
+  };
+  </script>
 </body>
 </html>
